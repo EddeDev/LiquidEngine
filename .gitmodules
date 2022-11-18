@@ -1,0 +1,3 @@
+[submodule "Liquid/Libraries/spdlog"]
+	path = Liquid/Libraries/spdlog
+	url = https://github.com/gabime/spdlog
