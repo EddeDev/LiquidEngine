@@ -14,26 +14,26 @@
 #endif
 
 #ifdef LQ_ENABLE_ASSERTS
-	#define LQ_ASSERT(expression, ...)                                                             \
-	{                                                                                              \
-		if (!(expression))                                                                     \
-		{                                                                                      \
+	#define LQ_ASSERT(expression, ...) \
+	{ \
+		if (!(expression)) \
+		{ \
 			LQ_LOG_PREFIX(::Liquid::LogVerbosity::Error, "Assertion failed", __VA_ARGS__); \
-			LQ_PLATFORM_BREAK();                                                           \
-		}                                                                                      \
+			LQ_PLATFORM_BREAK(); \
+		} \
 	}
 #else
 	#define LQ_ASSERT(expression, ...)
 #endif
 
 #ifndef LQ_BUILD_SHIPPING
-	#define LQ_VERIFY(expression, ...)                                                          \
-	{                                                                                           \
-		if (!(expression))                                                                  \
-		{                                                                                   \
+	#define LQ_VERIFY(expression, ...) \
+	{ \
+		if (!(expression)) \
+		{ \
 			LQ_LOG_PREFIX(::Liquid::LogVerbosity::Error, "Verify failed", __VA_ARGS__); \
-			LQ_PLATFORM_BREAK();                                                        \
-		}                                                                                   \
+			LQ_PLATFORM_BREAK(); \
+		} \
 	}
 #else
 	#define LQ_VERIFY(expression, ...)
