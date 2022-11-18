@@ -34,8 +34,8 @@ namespace Liquid {
 	::Liquid::Logger::GetLogger()->log(level, "{0}: {1}", prefix, fmt::format(__VA_ARGS__)); \
 }
 
-#define LQ_LOG_CATEGORY(verbosity, categoryName, ...)                                                \
-{                                                                                                    \
+#define LQ_LOG_CATEGORY(verbosity, categoryName, ...)                                                    \
+{                                                                                                        \
 	auto level = ::Liquid::LogUtils::LogVerbosityToSpdlogLevel(verbosity);                           \
 	::Liquid::Logger::GetLogger()->log(level, "[{0}]: {1}", categoryName, fmt::format(__VA_ARGS__)); \
 }
