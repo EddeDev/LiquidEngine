@@ -3,28 +3,43 @@
 
 namespace Liquid {
 
-	Application::Application(const ApplicationCreateInfo& createInfo)
-		: m_CreateInfo(createInfo)
+	Ref<Window> Application::s_Window;
+	bool Application::s_Running = true;
+
+	void Application::Init(const ApplicationCreateInfo& createInfo)
 	{
 		WindowCreateInfo windowCreateInfo;
 		windowCreateInfo.Width = 1280;
 		windowCreateInfo.Height = 720;
 		windowCreateInfo.Title = "Liquid Engine";
 
-		m_Window = Window::Create(windowCreateInfo);
+		s_Window = Window::Create(windowCreateInfo);
 	}
 
-	Application::~Application()
+	void Application::Shutdown()
 	{
-
+		s_Window = nullptr;
 	}
 
 	void Application::Run()
 	{
-		while (m_Running)
+		while (s_Running)
 		{
-			m_Window->PollEvents();
+			s_Window->PollEvents();
 		}
+	}
+
+	BuildConfiguration Application::GetBuildConfiguration()
+	{
+#ifdef LQ_BUILD_DEBUG
+		return BuildConfiguration::Debug;
+#elif LQ_BUILD_RELEASE
+		return BuildConfiguration::Release;
+#elif LQ_BUILD_SHIPPING
+		return BuildConfiguration::Shipping;
+#else
+		return BuildConfiguration::None;
+#endif
 	}
 
 }

@@ -20,7 +20,7 @@ namespace Liquid {
 		struct WindowData
 		{
 			uint32 Width, Height;
-			std::string Title;
+			String Title;
 		} m_Data;
 
 		GLFWwindow* m_Window = nullptr;

@@ -16,9 +16,11 @@ namespace Liquid {
 		ApplicationCreateInfo createInfo;
 		createInfo.Args = args;
 
-		Application* app = new Application(createInfo);
-		app->Run();
-		delete app;
+		Application::Init(createInfo);
+
+		Application::Run();
+
+		Application::Shutdown();
 
 		LQ_TRACE_ARGS("Shutting down...");
 

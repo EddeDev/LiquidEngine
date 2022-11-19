@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <functional>
 
-#include <string>
 #include <sstream>
 #include <array>
 #include <queue>
@@ -19,6 +18,7 @@
 #include "Liquid/Core/AssertionMacros.h"
 #include "Liquid/Core/PrimitiveTypes.h"
 #include "Liquid/Core/RefCounting.h"
+#include "Liquid/Core/String.h"
 
 #ifdef LQ_PLATFORM_WINDOWS
 #include <Windows.h>

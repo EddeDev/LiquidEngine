@@ -1,12 +1,11 @@
 #pragma once
 
 #include "Liquid/Core/PrimitiveTypes.h"
+#include "Liquid/Core/String.h"
 
 #pragma warning(push, 0)
 #include <spdlog/spdlog.h>
 #pragma warning(pop)
-
-#include <string>
 
 namespace Liquid {
 
@@ -37,7 +36,7 @@ namespace Liquid {
 			return "UnknownVerbosity";
 		}
 
-		static LogVerbosity LogVerbosityFromString(const std::string& verbosityString)
+		static LogVerbosity LogVerbosityFromString(const String& verbosityString)
 		{
 			if (verbosityString == "Trace")
 				return LogVerbosity::Trace;

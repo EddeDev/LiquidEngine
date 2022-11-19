@@ -6,7 +6,7 @@ namespace Liquid {
 	{
 		uint32 Width;
 		uint32 Height;
-		std::string Title;
+		String Title;
 	};
 
 	class Window : public RefCounted

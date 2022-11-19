@@ -33,7 +33,11 @@ project "Liquid"
         "%{prj.name}/Libraries/spdlog/include"
     }
 
-    defines "GLFW_INCLUDE_NONE"
+    defines
+    {
+        "GLFW_INCLUDE_NONE",
+        "_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS"
+    }
 
     links
     {

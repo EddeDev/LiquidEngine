@@ -6,6 +6,23 @@
 
 namespace Liquid {
 
+	enum class BuildConfiguration : uint8
+	{
+		None = 0,
+
+		Debug,
+		Release,
+		Shipping
+	};
+
+	enum class BuildTargetType : uint8
+	{
+		None = 0,
+
+		Game,
+		Editor
+	};
+
 	struct ApplicationCreateInfo
 	{
 		CommandLineArgs Args;
@@ -14,14 +31,15 @@ namespace Liquid {
 	class Application
 	{
 	public:
-		Application(const ApplicationCreateInfo& createInfo);
-		~Application();
+		static void Init(const ApplicationCreateInfo& createInfo);
+		static void Shutdown();
 
-		void Run();
+		static void Run();
+
+		static BuildConfiguration GetBuildConfiguration();
 	private:
-		ApplicationCreateInfo m_CreateInfo;
-		Ref<Window> m_Window;
-		bool m_Running = true;
+		static Ref<Window> s_Window;
+		static bool s_Running;
 	};
 
 }
