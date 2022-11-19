@@ -1,3 +1,9 @@
 [submodule "Liquid/Libraries/spdlog"]
 	path = Liquid/Libraries/spdlog
 	url = https://github.com/gabime/spdlog
+[submodule "Liquid/Libraries/glfw"]
+	path = Liquid/Libraries/glfw
+	url = https://github.com/EddeDev/glfw.git
+[submodule "Liquid/Libraries/glm"]
+	path = Liquid/Libraries/glm
+	url = https://github.com/g-truc/glm.git

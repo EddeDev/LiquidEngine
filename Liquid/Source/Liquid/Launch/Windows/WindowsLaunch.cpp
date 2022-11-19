@@ -4,8 +4,6 @@
 
 #include "Liquid/Launch/CommandLineArgs.h"
 
-#include <Windows.h>
-
 namespace Liquid {
 
 	extern int32 Main(const CommandLineArgs& args);

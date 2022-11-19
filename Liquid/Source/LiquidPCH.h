@@ -19,3 +19,7 @@
 #include "Liquid/Core/AssertionMacros.h"
 #include "Liquid/Core/PrimitiveTypes.h"
 #include "Liquid/Core/RefCounting.h"
+
+#ifdef LQ_PLATFORM_WINDOWS
+#include <Windows.h>
+#endif

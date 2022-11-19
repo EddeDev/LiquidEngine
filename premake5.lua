@@ -19,18 +19,36 @@ project "Liquid"
     files
     {
         "%{prj.name}/Source/**.cpp",
-        "%{prj.name}/Source/**.h"
+        "%{prj.name}/Source/**.h",
+
+        "%{prj.name}/Libraries/glm/glm/**.hpp",
+        "%{prj.name}/Libraries/glm/glm/**.inl"
     }
 
     includedirs
     {
         "%{prj.name}/Source",
+        "%{prj.name}/Libraries/glfw/include",
+        "%{prj.name}/Libraries/glm",
         "%{prj.name}/Libraries/spdlog/include"
+    }
+
+    defines "GLFW_INCLUDE_NONE"
+
+    links
+    {
+        "glfw"
     }
 
     filter "system:windows"
         systemversion "latest"
         defines "LQ_PLATFORM_WINDOWS"
+
+        defines
+        {
+            "LQ_PLATFORM_WINDOWS",
+            "_CRT_SECURE_NO_WARNINGS"
+        }
 
         links
         {
@@ -66,3 +84,7 @@ project "Liquid"
         runtime "Release"
         optimize "On"
         symbols "Off"
+
+group "Libraries"
+    include "Liquid/Libraries/glfw"
+group ""

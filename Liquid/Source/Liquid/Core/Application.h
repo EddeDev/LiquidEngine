@@ -2,6 +2,8 @@
 
 #include "Liquid/Launch/CommandLineArgs.h"
 
+#include "Window/Window.h"
+
 namespace Liquid {
 
 	struct ApplicationCreateInfo
@@ -18,6 +20,8 @@ namespace Liquid {
 		void Run();
 	private:
 		ApplicationCreateInfo m_CreateInfo;
+		Ref<Window> m_Window;
+		bool m_Running = true;
 	};
 
 }
