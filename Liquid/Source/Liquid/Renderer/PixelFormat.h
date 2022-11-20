@@ -9,7 +9,6 @@ namespace Liquid {
 		None = 0,
 
 		// Color formats
-		RGB,
 		RGBA,
 		RGBA16F,
 		RGBA32F,

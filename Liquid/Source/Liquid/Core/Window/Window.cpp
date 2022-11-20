@@ -11,10 +11,10 @@ namespace Liquid {
 	{
 #ifdef LQ_PLATFORM_WINDOWS
 		return Ref<WindowsWindow>::Create(createInfo);
-#endif
-
+#else
 		LQ_VERIFY(false, "Unknown platform");
 		return nullptr;
+#endif
 	}
 
 }

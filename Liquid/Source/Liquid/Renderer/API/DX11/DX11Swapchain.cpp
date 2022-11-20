@@ -66,7 +66,6 @@ namespace Liquid {
 
 		DX_CHECK(dxgiFactory->CreateSwapChain(device.Get(), &swapchainDesc, &m_SwapChain));
 
-		// TODO: V1053 https://pvs-studio.com/en/docs/warnings/v1053/ Calling the 'Resize' virtual function in the constructor may lead to unexpected result at runtime.
 		Resize(createInfo.InitialWidth, createInfo.InitialHeight);
 	}
 
