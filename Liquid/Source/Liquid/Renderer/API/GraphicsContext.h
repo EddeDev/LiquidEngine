@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Liquid/Core/Application.h"
-
 namespace Liquid {
 
 	struct GraphicsContextCreateInfo
@@ -16,13 +14,15 @@ namespace Liquid {
 	public:
 		virtual ~GraphicsContext() {}
 
-		template<typename T>
-		static Ref<T> Get()
+		template<typename TDerived>
+		inline static Ref<TDerived> Get()
 		{
-			return Application::GetContext().As<T>();
+			return s_Instance.As<TDerived>();
 		}
 
 		static Ref<GraphicsContext> Create(const GraphicsContextCreateInfo& createInfo);
+	private:
+		inline static Ref<GraphicsContext> s_Instance;
 	};
 
 }

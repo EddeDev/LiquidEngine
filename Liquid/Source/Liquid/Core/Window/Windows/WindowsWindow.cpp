@@ -16,7 +16,7 @@ namespace Liquid {
 	WindowsWindow::~WindowsWindow()
 	{
 		Shutdown();
-	}
+	} 
 
 	void WindowsWindow::Init(const WindowCreateInfo& createInfo)
 	{

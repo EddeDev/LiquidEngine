@@ -39,7 +39,7 @@ namespace Liquid {
 		mutable int32 m_RefCount = 0;
 	};
 
-	template<typename ReferencedType, typename ReferencedBaseType = RefCounted>
+	template<typename ReferencedType>
 	class Ref
 	{
 	public:
@@ -59,27 +59,27 @@ namespace Liquid {
 			IncrementReferenceCount();
 		}
 
-		Ref(const Ref<ReferencedType, ReferencedBaseType>& other)
+		Ref(const Ref<ReferencedType>& other)
 			: m_Reference(other.m_Reference)
 		{
 			IncrementReferenceCount();
 		}
 
-		Ref(const Ref<ReferencedType, ReferencedBaseType>&& other)
+		Ref(const Ref<ReferencedType>&& other)
 		{
 			m_Reference = other.m_Reference;
 			other->m_Reference = nullptr;
 		}
 
-		template<typename TOther, typename TOtherBase>
-		Ref(const Ref<TOther, TOtherBase>& other)
+		template<typename TOther>
+		Ref(const Ref<TOther>& other)
 		{
 			m_Reference = static_cast<ReferencedType*>(other.m_Reference);
 			IncrementReferenceCount();
 		}
 
-		template<typename TOther, typename TOtherBase>
-		Ref(Ref<TOther, TOtherBase>&& other)
+		template<typename TOther>
+		Ref(Ref<TOther>&& other)
 		{
 			m_Reference = static_cast<ReferencedType*>(other.m_Reference);
 			other.m_Reference = nullptr;
@@ -97,7 +97,7 @@ namespace Liquid {
 			return *this;
 		}
 
-		Ref& operator=(const Ref<ReferencedType, ReferencedBaseType>& other)
+		Ref& operator=(const Ref<ReferencedType>& other)
 		{
 			other.IncrementReferenceCount();
 			DecrementReferenceCount();
@@ -105,7 +105,7 @@ namespace Liquid {
 			return *this;
 		}
 
-		Ref& operator=(const Ref<ReferencedType, ReferencedBaseType>&& other)
+		Ref& operator=(const Ref<ReferencedType>&& other)
 		{
 			DecrementReferenceCount();
 			m_Reference = other.m_Reference;
@@ -113,8 +113,8 @@ namespace Liquid {
 			return *this;
 		}
 
-		template<typename TOther, typename TOtherBase>
-		Ref& operator=(const Ref<TOther, TOtherBase>& other)
+		template<typename TOther>
+		Ref& operator=(const Ref<TOther>& other)
 		{
 			other.IncrementReferenceCount();
 			DecrementReferenceCount();
@@ -122,8 +122,8 @@ namespace Liquid {
 			return *this;
 		}
 
-		template<typename TOther, typename TOtherBase>
-		Ref& operator=(const Ref<TOther, TOtherBase>&& other)
+		template<typename TOther>
+		Ref& operator=(const Ref<TOther>&& other)
 		{
 			DecrementReferenceCount();
 			m_Reference = other.m_Reference;
@@ -144,15 +144,15 @@ namespace Liquid {
 		const ReferencedType* Get() const { return m_Reference; }
 
 		template<typename TOther>
-		Ref<TOther, ReferencedBaseType> As() const
+		Ref<TOther> As() const
 		{
-			return Ref<TOther, ReferencedBaseType>(*this);
+			return Ref<TOther>(*this);
 		}
 
 		template<typename... TArgs>
-		static Ref<ReferencedType, ReferencedBaseType> Create(TArgs&&... args)
+		static Ref<ReferencedType> Create(TArgs&&... args)
 		{
-			return Ref<ReferencedType, ReferencedBaseType>(new ReferencedType(std::forward<TArgs>(args)...));
+			return Ref<ReferencedType>(new ReferencedType(std::forward<TArgs>(args)...));
 		}
 	private:
 		void IncrementReferenceCount() const
@@ -177,7 +177,7 @@ namespace Liquid {
 	private:
 		mutable ReferencedType* m_Reference;
 
-		template<class TOther, class TOtherBase>
+		template<class TOther>
 		friend class Ref;
 	};
 

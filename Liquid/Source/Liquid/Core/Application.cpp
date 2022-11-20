@@ -1,8 +1,7 @@
 #include "LiquidPCH.h"
 #include "Application.h"
 
-#include "Liquid/Renderer/API/GraphicsContext.h"
-#include "Liquid/Renderer/API/Swapchain.h"
+#include "Window/Window.h"
 
 #include <glfw/glfw3.h>
 

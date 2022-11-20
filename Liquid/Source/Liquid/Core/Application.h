@@ -3,6 +3,8 @@
 #include "Liquid/Launch/CommandLineArgs.h"
 
 #include "Liquid/Renderer/API/GraphicsAPI.h"
+#include "Liquid/Renderer/API/GraphicsContext.h"
+#include "Liquid/Renderer/API/Swapchain.h"
 
 #include "Window/Window.h"
 
@@ -30,10 +32,6 @@ namespace Liquid {
 		CommandLineArgs Args;
 	};
 
-	// Forward declarations
-	class GraphicsContext;
-	class Swapchain;
-
 	class Application
 	{
 	public:
@@ -46,9 +44,8 @@ namespace Liquid {
 		static GraphicsAPI GetGraphicsAPI();
 
 		static Ref<Window> GetWindow() { return s_Window; }
-
-		static Ref<GraphicsContext>& GetContext() { return s_Context; }
-		static Ref<Swapchain>& GetSwapchain() { return s_Swapchain; }
+		static Ref<GraphicsContext> GetContext() { return s_Context; }
+		static Ref<Swapchain> GetSwapchain() { return s_Swapchain; }
 	private:
 		static Ref<Window> s_Window;
 		static Ref<GraphicsContext> s_Context;

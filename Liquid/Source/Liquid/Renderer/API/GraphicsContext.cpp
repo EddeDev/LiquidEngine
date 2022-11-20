@@ -11,10 +11,9 @@ namespace Liquid {
 	{
 		switch (Application::GetGraphicsAPI())
 		{
-		case GraphicsAPI::DX11: return Ref<DX11Context>::Create(createInfo);
+		case GraphicsAPI::DX11: s_Instance = Ref<DX11Context>::Create(createInfo); break;
 		}
-		LQ_VERIFY(false, "Unknown GraphicsAPI");
-		return nullptr;
+		return s_Instance;
 	}
 
 }
