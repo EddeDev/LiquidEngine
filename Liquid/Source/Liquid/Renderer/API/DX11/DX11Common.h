@@ -29,8 +29,8 @@ namespace Liquid {
 		if (!SUCCEEDED(hr)) \
 		{ \
 			_com_error error(hr); \
-			LPCTSTR errorMessage = error.ErrorMessage(); \
-			/* LQ_ASSERT(false, StringUtils::FromWideString(errorMessage).c_str()); */ \
+			String errorMessage = StringUtils::FromWideString(error.ErrorMessage()).c_str(); \
+			LQ_ASSERT(false, "{0}", errorMessage); \
 		} \
 	}
 #else

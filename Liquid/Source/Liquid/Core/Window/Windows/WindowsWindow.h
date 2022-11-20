@@ -2,9 +2,6 @@
 
 #include "Liquid/Core/Window/Window.h"
 
-#include "Liquid/Renderer/API/GraphicsContext.h"
-#include "Liquid/Renderer/API/Swapchain.h"
-
 struct GLFWwindow;
 
 namespace Liquid {
@@ -16,21 +13,24 @@ namespace Liquid {
 		virtual ~WindowsWindow();
 
 		virtual void PollEvents() const override;
-		virtual void SwapBuffers() const override;
-
 		virtual bool IsCloseRequested() const override;
 
-		virtual Ref<GraphicsContext> GetContext() const override { return m_Context; }
-		virtual Ref<Swapchain> GetSwapchain() const override { return m_Swapchain; }
+		virtual void* GetPlatformHandle() const override;
+
+		virtual void SetVisible(bool visible) override;
+		virtual bool IsVisible() const override;
+
+		virtual void SetTitle(const String& title) override;
+		virtual const String& GetTitle() const override { return m_Data.Title; }
+
+		virtual uint32 GetWidth() const override { return m_Data.Width; }
+		virtual uint32 GetHeight() const override { return m_Data.Height; }
+
+		virtual uint32 GetFramebufferWidth() const override { return m_Data.FramebufferWidth; }
+		virtual uint32 GetFramebufferHeight() const override { return m_Data.FramebufferHeight; }
 	private:
 		void Init(const WindowCreateInfo& createInfo);
 		void Shutdown();
-
-		void CreateContext();
-		void CreateSwapchain();
-
-		void CenterWindow();
-		void SetVisible(bool visible);
 	private:
 		struct WindowData
 		{
@@ -40,9 +40,6 @@ namespace Liquid {
 		} m_Data;
 
 		GLFWwindow* m_Window = nullptr;
-
-		Ref<GraphicsContext> m_Context;
-		Ref<Swapchain> m_Swapchain;
 	};
 
 }

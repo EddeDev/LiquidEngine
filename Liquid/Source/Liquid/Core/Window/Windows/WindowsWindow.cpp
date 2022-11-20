@@ -49,10 +49,11 @@ namespace Liquid {
 		m_Data.FramebufferWidth = framebufferWidth;
 		m_Data.FramebufferHeight = framebufferHeight;
 
-		CenterWindow();
-		CreateContext();
-		CreateSwapchain();
-		SetVisible(true);
+		// Center window
+		auto videomode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+		int32 xpos = (videomode->width - m_Data.Width) / 2;
+		int32 ypos = (videomode->height - m_Data.Height) / 2;
+		glfwSetWindowPos(m_Window, xpos, ypos);
 	}
 
 	void WindowsWindow::Shutdown()
@@ -69,43 +70,14 @@ namespace Liquid {
 		glfwPollEvents();
 	}
 
-	void WindowsWindow::SwapBuffers() const
+	bool WindowsWindow::IsCloseRequested() const
 	{
-		m_Swapchain->Present();
+		return glfwWindowShouldClose(m_Window);
 	}
 
-	void WindowsWindow::CreateContext()
+	void* WindowsWindow::GetPlatformHandle() const
 	{
-		GraphicsContextCreateInfo contextCreateInfo;
-		contextCreateInfo.WindowHandle = glfwGetWin32Window(m_Window);
-#ifdef LQ_BUILD_DEBUG
-		contextCreateInfo.EnableDebugLayers = true;
-#else
-		contextCreateInfo.EnableDebugLayers = false;
-#endif
-		m_Context = GraphicsContext::Create(contextCreateInfo);
-	}
-
-	void WindowsWindow::CreateSwapchain()
-	{
-		SwapchainCreateInfo swapchainCreateInfo;
-		swapchainCreateInfo.Context = m_Context;
-		swapchainCreateInfo.WindowHandle = glfwGetWin32Window(m_Window);
-		swapchainCreateInfo.InitialWidth = m_Data.FramebufferWidth;
-		swapchainCreateInfo.InitialHeight = m_Data.FramebufferHeight;
-		swapchainCreateInfo.ColorFormat = PixelFormat::RGBA;
-		swapchainCreateInfo.DepthFormat = PixelFormat::DEPTH24_STENCIL8;
-		swapchainCreateInfo.BufferCount = 3;
-		swapchainCreateInfo.SampleCount = 1;
-		m_Swapchain = Swapchain::Create(swapchainCreateInfo);
-	}
-
-	void WindowsWindow::CenterWindow()
-	{
-		auto videomode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-		int32 xpos = (videomode->width - m_Data.Width) / 2;
-		int32 ypos = (videomode->height - m_Data.Height) / 2;
-		glfwSetWindowPos(m_Window, xpos, ypos);
+		return glfwGetWin32Window(m_Window);
 	}
 
 	void WindowsWindow::SetVisible(bool visible)
@@ -116,9 +88,18 @@ namespace Liquid {
 			glfwHideWindow(m_Window);
 	}
 
-	bool WindowsWindow::IsCloseRequested() const
+	bool WindowsWindow::IsVisible() const
 	{
-		return glfwWindowShouldClose(m_Window);
+		return glfwGetWindowAttrib(m_Window, GLFW_VISIBLE);
+	}
+
+	void WindowsWindow::SetTitle(const String& title)
+	{
+		if (m_Data.Title != title)
+		{
+			glfwSetWindowTitle(m_Window, title.c_str());
+			m_Data.Title = title;
+		}
 	}
 
 }

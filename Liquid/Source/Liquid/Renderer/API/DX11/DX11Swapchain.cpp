@@ -12,6 +12,7 @@ namespace Liquid {
 			switch (format)
 			{
 			case PixelFormat::RGBA:                   return DXGI_FORMAT_R8G8B8A8_UNORM;
+			case PixelFormat::RGBA16F:                return DXGI_FORMAT_R16G16B16A16_FLOAT;
 			case PixelFormat::RGBA32F:                return DXGI_FORMAT_R32G32B32A32_FLOAT;
 			case PixelFormat::DEPTH24_STENCIL8:       return DXGI_FORMAT_D24_UNORM_S8_UINT;
 			case PixelFormat::DEPTH32F_STENCIL8_UINT: return DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
@@ -26,7 +27,7 @@ namespace Liquid {
 	DX11Swapchain::DX11Swapchain(const SwapchainCreateInfo& createInfo)
 		: m_CreateInfo(createInfo)
 	{
-		Ref<DX11Context> context = createInfo.Context.As<DX11Context>();
+		Ref<DX11Context> context = GraphicsContext::Get<DX11Context>();
 		DXRef<ID3D11Device> device = context->GetDevice();
 
 		DXGI_RATIONAL refreshRate;
@@ -65,6 +66,7 @@ namespace Liquid {
 
 		DX_CHECK(dxgiFactory->CreateSwapChain(device.Get(), &swapchainDesc, &m_SwapChain));
 
+		// TODO: V1053 https://pvs-studio.com/en/docs/warnings/v1053/ Calling the 'Resize' virtual function in the constructor may lead to unexpected result at runtime.
 		Resize(createInfo.InitialWidth, createInfo.InitialHeight);
 	}
 
@@ -73,7 +75,7 @@ namespace Liquid {
 		if (width == 0 || height == 0)
 			return;
 
-		Ref<DX11Context> context = m_CreateInfo.Context.As<DX11Context>();
+		Ref<DX11Context> context = GraphicsContext::Get<DX11Context>();
 		DXRef<ID3D11Device> device = context->GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = context->GetDeviceContext();
 
@@ -119,7 +121,7 @@ namespace Liquid {
 
 	void DX11Swapchain::Present() const
 	{
-		Ref<DX11Context> context = m_CreateInfo.Context.As<DX11Context>();
+		Ref<DX11Context> context = GraphicsContext::Get<DX11Context>();
 		DXRef<ID3D11Device> device = context->GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = context->GetDeviceContext();
 

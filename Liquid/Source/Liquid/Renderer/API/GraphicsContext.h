@@ -19,8 +19,7 @@ namespace Liquid {
 		template<typename T>
 		static Ref<T> Get()
 		{
-			Ref<Window> window = Application::GetWindow();
-			return window->GetContext().As<T>();
+			return Application::GetContext().As<T>();
 		}
 
 		static Ref<GraphicsContext> Create(const GraphicsContextCreateInfo& createInfo);

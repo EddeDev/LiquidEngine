@@ -9,21 +9,27 @@ namespace Liquid {
 		String Title;
 	};
 
-	class GraphicsContext;
-	class Swapchain;
-
 	class Window : public RefCounted
 	{
 	public:
 		virtual ~Window() {}
 
 		virtual void PollEvents() const = 0;
-		virtual void SwapBuffers() const = 0;
-
 		virtual bool IsCloseRequested() const = 0;
 
-		virtual Ref<GraphicsContext> GetContext() const = 0;
-		virtual Ref<Swapchain> GetSwapchain() const = 0;
+		virtual void* GetPlatformHandle() const = 0;
+
+		virtual void SetVisible(bool visible) = 0;
+		virtual bool IsVisible() const = 0;
+
+		virtual void SetTitle(const String& title) = 0;
+		virtual const String& GetTitle() const = 0;
+
+		virtual uint32 GetWidth() const = 0;
+		virtual uint32 GetHeight() const = 0;
+
+		virtual uint32 GetFramebufferWidth() const = 0;
+		virtual uint32 GetFramebufferHeight() const = 0;
 
 		static Ref<Window> Create(const WindowCreateInfo& createInfo);
 	};

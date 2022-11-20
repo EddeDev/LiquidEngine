@@ -97,7 +97,7 @@ namespace Liquid {
 			return *this;
 		}
 
-		Ref& operator=(const Ref<ReferencedType>& other)
+		Ref& operator=(const Ref<ReferencedType, ReferencedBaseType>& other)
 		{
 			other.IncrementReferenceCount();
 			DecrementReferenceCount();
@@ -105,8 +105,25 @@ namespace Liquid {
 			return *this;
 		}
 
-		template<typename TOther>
-		Ref& operator=(const Ref<TOther>& other)
+		Ref& operator=(const Ref<ReferencedType, ReferencedBaseType>&& other)
+		{
+			DecrementReferenceCount();
+			m_Reference = other.m_Reference;
+			other.m_Reference = nullptr;
+			return *this;
+		}
+
+		template<typename TOther, typename TOtherBase>
+		Ref& operator=(const Ref<TOther, TOtherBase>& other)
+		{
+			other.IncrementReferenceCount();
+			DecrementReferenceCount();
+			m_Reference = other.m_Reference;
+			return *this;
+		}
+
+		template<typename TOther, typename TOtherBase>
+		Ref& operator=(const Ref<TOther, TOtherBase>&& other)
 		{
 			DecrementReferenceCount();
 			m_Reference = other.m_Reference;

@@ -1,15 +1,12 @@
 #pragma once
 
-#include "GraphicsContext.h"
-
 #include "Liquid/Renderer/PixelFormat.h"
 
 namespace Liquid {
 
 	struct SwapchainCreateInfo
 	{
-		Ref<GraphicsContext> Context;
-		void* WindowHandle;
+		void* WindowHandle = nullptr;
 
 		uint32 InitialWidth = 0;
 		uint32 InitialHeight = 0;

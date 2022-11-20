@@ -1,13 +1,16 @@
 #include "LiquidPCH.h"
 #include "Application.h"
 
-#include "Window/Window.h"
+#include "Liquid/Renderer/API/GraphicsContext.h"
+#include "Liquid/Renderer/API/Swapchain.h"
 
 #include <glfw/glfw3.h>
 
 namespace Liquid {
 
 	Ref<Window> Application::s_Window;
+	Ref<GraphicsContext> Application::s_Context;
+	Ref<Swapchain> Application::s_Swapchain;
 	bool Application::s_Running = true;
 
 	void Application::Init(const ApplicationCreateInfo& createInfo)
@@ -18,6 +21,27 @@ namespace Liquid {
 		windowCreateInfo.Title = "Liquid Engine";
 
 		s_Window = Window::Create(windowCreateInfo);
+
+		GraphicsContextCreateInfo contextCreateInfo;
+		contextCreateInfo.WindowHandle = s_Window->GetPlatformHandle();
+#ifdef LQ_BUILD_DEBUG
+		contextCreateInfo.EnableDebugLayers = true;
+#else
+		contextCreateInfo.EnableDebugLayers = false;
+#endif
+		s_Context = GraphicsContext::Create(contextCreateInfo);
+
+		SwapchainCreateInfo swapchainCreateInfo;
+		swapchainCreateInfo.WindowHandle = s_Window->GetPlatformHandle();
+		swapchainCreateInfo.InitialWidth = s_Window->GetFramebufferWidth();
+		swapchainCreateInfo.InitialHeight = s_Window->GetFramebufferHeight();
+		swapchainCreateInfo.ColorFormat = PixelFormat::RGBA;
+		swapchainCreateInfo.DepthFormat = PixelFormat::DEPTH24_STENCIL8;
+		swapchainCreateInfo.BufferCount = 3;
+		swapchainCreateInfo.SampleCount = 1;
+		s_Swapchain = Swapchain::Create(swapchainCreateInfo);
+
+		s_Window->SetVisible(true);
 	}
 
 	void Application::Shutdown()
@@ -27,12 +51,12 @@ namespace Liquid {
 
 	void Application::Run()
 	{
-		float lastTime = glfwGetTime();
+		float lastTime = static_cast<float>(glfwGetTime());
 		uint32 frames = 0;
 
 		while (s_Running)
 		{
-			float time = glfwGetTime();
+			float time = static_cast<float>(glfwGetTime());
 			frames++;
 			if (time >= lastTime + 1.0f)
 			{
@@ -45,7 +69,7 @@ namespace Liquid {
 			if (s_Window->IsCloseRequested())
 				s_Running = false;
 
-			s_Window->SwapBuffers();
+			s_Swapchain->Present();
 		}
 	}
 
