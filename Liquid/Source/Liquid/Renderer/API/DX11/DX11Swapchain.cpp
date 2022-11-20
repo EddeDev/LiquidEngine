@@ -55,7 +55,10 @@ namespace Liquid {
 		swapchainDesc.OutputWindow = static_cast<HWND>(createInfo.WindowHandle);
 		swapchainDesc.Windowed = true;
 		swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+		
 		swapchainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+		if (m_AllowTearing)
+			swapchainDesc.Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
 		DXRef<IDXGIDevice> dxgiDevice;
 		DXRef<IDXGIAdapter> dxgiAdapter;
@@ -82,14 +85,18 @@ namespace Liquid {
 		m_DepthStencilView.Reset();
 		m_DepthStencilBuffer.Reset();
 
-		DX_CHECK(m_SwapChain->ResizeBuffers(m_CreateInfo.BufferCount, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0));
+		uint32 flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+		if (m_AllowTearing)
+			flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+
+		DX_CHECK(m_SwapChain->ResizeBuffers(m_CreateInfo.BufferCount, width, height, Utils::DX11PixelFormat(m_CreateInfo.ColorFormat), flags));
 
 		DXRef<ID3D11Texture2D> backBuffer;
 		DX_CHECK(m_SwapChain->GetBuffer(0, DX_RIID(ID3D11Texture2D), &backBuffer));
 		DX_CHECK(device->CreateRenderTargetView(backBuffer.Get(), nullptr, &m_BackBuffer));
 
 		uint32 msaaQuality;
-		DX_CHECK(device->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, m_CreateInfo.SampleCount, &msaaQuality));
+		DX_CHECK(device->CheckMultisampleQualityLevels(Utils::DX11PixelFormat(m_CreateInfo.ColorFormat), m_CreateInfo.SampleCount, &msaaQuality));
 
 		D3D11_TEXTURE2D_DESC depthStencilDesc;
 		depthStencilDesc.Width = width;
@@ -124,30 +131,60 @@ namespace Liquid {
 		DXRef<ID3D11Device> device = context->GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = context->GetDeviceContext();
 
-		static float red, green, blue;
-		static float colormodr = 1, colormodg = 1, colormodb = 1;
-		red += colormodr * 0.005f;
-		green += colormodg * 0.002f;
-		blue += colormodb * 0.001f;
-		if (red >= 1.0f || red <= 0.0f)
-			colormodr *= -1;
-		if (green >= 1.0f || green <= 0.0f)
-			colormodg *= -1;
-		if (blue >= 1.0f || blue <= 0.0f)
-			colormodb *= -1;
+		uint32 flags = 0;
+		if (m_AllowTearing && !m_VSync && !m_IsFullscreen)
+			flags |= DXGI_PRESENT_ALLOW_TEARING;
 
-		const float color[4] = { red, green, blue, 1.0f };
-		deviceContext->ClearRenderTargetView(m_BackBuffer.Get(), color);
+		HRESULT result = m_SwapChain->Present(m_VSync ? 1 : 0, flags);
+		if (FAILED(result))
+		{
+			DXGI_SWAP_CHAIN_DESC desc;
+			if (!FAILED(m_SwapChain->GetDesc(&desc)))
+			{
+				LQ_ERROR_ARGS("Swapchain Desc:");
+				LQ_ERROR_ARGS("  BufferDesc.Width = {0}", desc.BufferDesc.Width);
+				LQ_ERROR_ARGS("  BufferDesc.Height = {0}", desc.BufferDesc.Height);
+				LQ_ERROR_ARGS("  BufferDesc.RefreshRate.Numerator = {0}", desc.BufferDesc.RefreshRate.Numerator);
+				LQ_ERROR_ARGS("  BufferDesc.RefreshRate.Denominator = {0}", desc.BufferDesc.RefreshRate.Denominator);
+				LQ_ERROR_ARGS("  BufferDesc.Format = {0}", desc.BufferDesc.Format);
+				LQ_ERROR_ARGS("  BufferDesc.ScanlineOrdering = {0}", desc.BufferDesc.ScanlineOrdering);
+				LQ_ERROR_ARGS("  BufferDesc.Scaling = {0}", desc.BufferDesc.Scaling);
+				LQ_ERROR_ARGS("  SampleDesc.Count = {0}", desc.SampleDesc.Count);
+				LQ_ERROR_ARGS("  SampleDesc.Quality = {0}", desc.SampleDesc.Quality);
+				LQ_ERROR_ARGS("  BufferUsage = {0}", desc.BufferUsage);
+				LQ_ERROR_ARGS("  BufferCount = {0}", desc.BufferCount);
+				LQ_ERROR_ARGS("  OutputWindow = {0}", static_cast<void*>(desc.OutputWindow));
+				LQ_ERROR_ARGS("  Windowed = {0}", desc.Windowed ? "true" : "false");
+				LQ_ERROR_ARGS("  SwapEffect = {0}", desc.SwapEffect);
+				LQ_ERROR_ARGS("  Flags = {0}", desc.Flags);
+			}
+			
+			DX_CHECK(result);
+		}
 
-		uint32 clearFlags = D3D11_CLEAR_DEPTH;
-		if (PixelFormatUtils::IsStencilFormat(m_CreateInfo.DepthFormat))
+		deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+	}
+
+	void DX11Swapchain::Clear(uint32 buffer)
+	{
+		Ref<DX11Context> context = GraphicsContext::Get<DX11Context>();
+		DXRef<ID3D11Device> device = context->GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = context->GetDeviceContext();
+
+		if (buffer & BUFFER_COLOR)
+		{
+			const float color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+			deviceContext->ClearRenderTargetView(m_BackBuffer.Get(), color);
+		}
+
+		uint32 clearFlags = 0;
+		if (buffer & BUFFER_DEPTH)
+			clearFlags |= D3D11_CLEAR_DEPTH;
+		if (buffer & BUFFER_STENCIL)
 			clearFlags |= D3D11_CLEAR_STENCIL;
 
-		const float depth = 1.0f;
-		const uint8 stencil = 0;
-		deviceContext->ClearDepthStencilView(m_DepthStencilView.Get(), clearFlags, depth, stencil);
-
-		m_SwapChain->Present(1, 0);
+		if (clearFlags)
+			deviceContext->ClearDepthStencilView(m_DepthStencilView.Get(), clearFlags, 1.0f, 0);
 	}
 
 }

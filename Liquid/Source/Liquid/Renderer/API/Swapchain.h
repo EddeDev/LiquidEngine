@@ -18,13 +18,23 @@ namespace Liquid {
 		uint32 SampleCount = 1;
 	};
 
+	enum SwapchainBufferType
+	{
+		BUFFER_NONE = 0,
+		BUFFER_COLOR = 1 << 0,
+		BUFFER_DEPTH = 1 << 1,
+		BUFFER_STENCIL = 1 << 2
+	};
+
 	class Swapchain : public RefCounted
 	{
 	public:
 		virtual ~Swapchain() {}
 
 		virtual void Resize(uint32 width, uint32 height) = 0;
+
 		virtual void Present() const = 0;
+		virtual void Clear(uint32 buffer) = 0;
 
 		static Ref<Swapchain> Create(const SwapchainCreateInfo& createInfo);
 	};

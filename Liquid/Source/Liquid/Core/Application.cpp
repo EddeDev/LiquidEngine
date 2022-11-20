@@ -68,6 +68,7 @@ namespace Liquid {
 			if (s_Window->IsCloseRequested())
 				s_Running = false;
 
+			s_Swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
 			s_Swapchain->Present();
 		}
 	}
