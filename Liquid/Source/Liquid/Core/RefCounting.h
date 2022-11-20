@@ -132,10 +132,10 @@ namespace Liquid {
 			return Ref<TOther, ReferencedBaseType>(*this);
 		}
 
-		template<typename... Args>
-		static Ref<ReferencedType, ReferencedBaseType> Create(Args&&... args)
+		template<typename... TArgs>
+		static Ref<ReferencedType, ReferencedBaseType> Create(TArgs&&... args)
 		{
-			return Ref<ReferencedType, ReferencedBaseType>(new ReferencedType(std::forward<Args>(args)...));
+			return Ref<ReferencedType, ReferencedBaseType>(new ReferencedType(std::forward<TArgs>(args)...));
 		}
 	private:
 		void IncrementReferenceCount() const

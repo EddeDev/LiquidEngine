@@ -20,6 +20,8 @@ namespace Liquid {
 		virtual void PollEvents() const = 0;
 		virtual void SwapBuffers() const = 0;
 
+		virtual bool IsCloseRequested() const = 0;
+
 		virtual Ref<GraphicsContext> GetContext() const = 0;
 		virtual Ref<Swapchain> GetSwapchain() const = 0;
 

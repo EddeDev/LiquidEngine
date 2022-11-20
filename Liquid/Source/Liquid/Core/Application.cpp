@@ -3,6 +3,8 @@
 
 #include "Window/Window.h"
 
+#include <glfw/glfw3.h>
+
 namespace Liquid {
 
 	Ref<Window> Application::s_Window;
@@ -25,9 +27,24 @@ namespace Liquid {
 
 	void Application::Run()
 	{
+		float lastTime = glfwGetTime();
+		uint32 frames = 0;
+
 		while (s_Running)
 		{
+			float time = glfwGetTime();
+			frames++;
+			if (time >= lastTime + 1.0f)
+			{
+				LQ_INFO_ARGS("{0} fps", frames);
+				frames = 0;
+				lastTime = time;
+			}
+
 			s_Window->PollEvents();
+			if (s_Window->IsCloseRequested())
+				s_Running = false;
+
 			s_Window->SwapBuffers();
 		}
 	}

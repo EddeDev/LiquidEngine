@@ -18,6 +18,8 @@ namespace Liquid {
 		virtual void PollEvents() const override;
 		virtual void SwapBuffers() const override;
 
+		virtual bool IsCloseRequested() const override;
+
 		virtual Ref<GraphicsContext> GetContext() const override { return m_Context; }
 		virtual Ref<Swapchain> GetSwapchain() const override { return m_Swapchain; }
 	private:

@@ -116,4 +116,9 @@ namespace Liquid {
 			glfwHideWindow(m_Window);
 	}
 
+	bool WindowsWindow::IsCloseRequested() const
+	{
+		return glfwWindowShouldClose(m_Window);
+	}
+
 }
