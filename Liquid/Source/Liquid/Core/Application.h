@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Liquid/Launch/CommandLineArgs.h"
+#include "Liquid/Renderer/API/GraphicsAPI.h"
 
 #include "Window/Window.h"
 
@@ -37,6 +38,9 @@ namespace Liquid {
 		static void Run();
 
 		static BuildConfiguration GetBuildConfiguration();
+		static GraphicsAPI GetGraphicsAPI();
+
+		static Ref<Window> GetWindow() { return s_Window; }
 	private:
 		static Ref<Window> s_Window;
 		static bool s_Running;

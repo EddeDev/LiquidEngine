@@ -51,6 +51,7 @@ project "Liquid"
         defines
         {
             "LQ_PLATFORM_WINDOWS",
+            "GLFW_EXPOSE_NATIVE_WIN32",
             "_CRT_SECURE_NO_WARNINGS"
         }
 
@@ -59,7 +60,13 @@ project "Liquid"
             "Winmm.lib",
             "Ws2_32.lib",
             "Version.lib",
-            "Bcrypt.lib"
+            "Bcrypt.lib",
+
+            "d3d11.lib",
+            "d3d12.lib",
+            "dxgi.lib",
+            "dxguid.lib",
+            "d3dcompiler.lib"
         }
 
     filter "system:macosx"

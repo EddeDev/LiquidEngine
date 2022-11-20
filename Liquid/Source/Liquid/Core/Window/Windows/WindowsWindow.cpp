@@ -2,6 +2,7 @@
 #include "WindowsWindow.h"
 
 #include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 
 namespace Liquid {
 
@@ -36,15 +37,22 @@ namespace Liquid {
 		LQ_VERIFY(m_Window, "Failed to create GLFW window");
 		s_GLFWWindowCount++;
 
+		// Get window size
 		int32 width, height;
 		glfwGetWindowSize(m_Window, &width, &height);
 		m_Data.Width = width;
 		m_Data.Height = height;
 
-		auto videomode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-		glfwSetWindowPos(m_Window, (videomode->width - width) / 2, (videomode->height - height) / 2);
+		// Get framebuffer size
+		int32 framebufferWidth, framebufferHeight;
+		glfwGetFramebufferSize(m_Window, &framebufferWidth, &framebufferHeight);
+		m_Data.FramebufferWidth = framebufferWidth;
+		m_Data.FramebufferHeight = framebufferHeight;
 
-		glfwShowWindow(m_Window);
+		CenterWindow();
+		CreateContext();
+		CreateSwapchain();
+		SetVisible(true);
 	}
 
 	void WindowsWindow::Shutdown()
@@ -59,6 +67,53 @@ namespace Liquid {
 	void WindowsWindow::PollEvents() const
 	{
 		glfwPollEvents();
+	}
+
+	void WindowsWindow::SwapBuffers() const
+	{
+		m_Swapchain->Present();
+	}
+
+	void WindowsWindow::CreateContext()
+	{
+		GraphicsContextCreateInfo contextCreateInfo;
+		contextCreateInfo.WindowHandle = glfwGetWin32Window(m_Window);
+#ifdef LQ_BUILD_DEBUG
+		contextCreateInfo.EnableDebugLayers = true;
+#else
+		contextCreateInfo.EnableDebugLayers = false;
+#endif
+		m_Context = GraphicsContext::Create(contextCreateInfo);
+	}
+
+	void WindowsWindow::CreateSwapchain()
+	{
+		SwapchainCreateInfo swapchainCreateInfo;
+		swapchainCreateInfo.Context = m_Context;
+		swapchainCreateInfo.WindowHandle = glfwGetWin32Window(m_Window);
+		swapchainCreateInfo.InitialWidth = m_Data.FramebufferWidth;
+		swapchainCreateInfo.InitialHeight = m_Data.FramebufferHeight;
+		swapchainCreateInfo.ColorFormat = PixelFormat::RGBA;
+		swapchainCreateInfo.DepthFormat = PixelFormat::DEPTH24_STENCIL8;
+		swapchainCreateInfo.BufferCount = 3;
+		swapchainCreateInfo.SampleCount = 1;
+		m_Swapchain = Swapchain::Create(swapchainCreateInfo);
+	}
+
+	void WindowsWindow::CenterWindow()
+	{
+		auto videomode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+		int32 xpos = (videomode->width - m_Data.Width) / 2;
+		int32 ypos = (videomode->height - m_Data.Height) / 2;
+		glfwSetWindowPos(m_Window, xpos, ypos);
+	}
+
+	void WindowsWindow::SetVisible(bool visible)
+	{
+		if (visible)
+			glfwShowWindow(m_Window);
+		else
+			glfwHideWindow(m_Window);
 	}
 
 }

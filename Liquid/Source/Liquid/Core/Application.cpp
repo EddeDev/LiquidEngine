@@ -1,6 +1,8 @@
 #include "LiquidPCH.h"
 #include "Application.h"
 
+#include "Window/Window.h"
+
 namespace Liquid {
 
 	Ref<Window> Application::s_Window;
@@ -26,6 +28,7 @@ namespace Liquid {
 		while (s_Running)
 		{
 			s_Window->PollEvents();
+			s_Window->SwapBuffers();
 		}
 	}
 
@@ -40,6 +43,11 @@ namespace Liquid {
 #else
 		return BuildConfiguration::None;
 #endif
+	}
+
+	GraphicsAPI Application::GetGraphicsAPI()
+	{
+		return GraphicsAPI::DX11;
 	}
 
 }
