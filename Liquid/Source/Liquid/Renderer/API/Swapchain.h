@@ -21,9 +21,9 @@ namespace Liquid {
 	enum SwapchainBufferType
 	{
 		BUFFER_NONE = 0,
-		BUFFER_COLOR = 1 << 0,
-		BUFFER_DEPTH = 1 << 1,
-		BUFFER_STENCIL = 1 << 2
+		BUFFER_COLOR = BIT(0),
+		BUFFER_DEPTH = BIT(1),
+		BUFFER_STENCIL = BIT(2)
 	};
 
 	class Swapchain : public RefCounted
@@ -35,6 +35,9 @@ namespace Liquid {
 
 		virtual void Present() const = 0;
 		virtual void Clear(uint32 buffer) = 0;
+
+		virtual void SetVSync(bool enabled) = 0;
+		virtual bool IsVSyncEnabled() const = 0;
 
 		static Ref<Swapchain> Create(const SwapchainCreateInfo& createInfo);
 	};

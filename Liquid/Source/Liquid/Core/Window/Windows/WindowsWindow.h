@@ -13,9 +13,12 @@ namespace Liquid {
 		virtual ~WindowsWindow();
 
 		virtual void PollEvents() const override;
-		virtual bool IsCloseRequested() const override;
 
 		virtual void* GetPlatformHandle() const override;
+
+		virtual void AddCloseCallback(const std::function<void()>& callback) override { m_Data.CloseCallbacks.push_back(callback); }
+		virtual void AddWindowSizeCallback(const std::function<void(uint32, uint32)>& callback) override { m_Data.WindowSizeCallbacks.push_back(callback); }
+		virtual void AddFramebufferSizeCallback(const std::function<void(uint32, uint32)>& callback) override { m_Data.FramebufferSizeCallbacks.push_back(callback); }
 
 		virtual void SetVisible(bool visible) override;
 		virtual bool IsVisible() const override;
@@ -37,6 +40,10 @@ namespace Liquid {
 			uint32 Width, Height;
 			uint32 FramebufferWidth, FramebufferHeight;
 			String Title;
+
+			std::vector<std::function<void()>> CloseCallbacks;
+			std::vector<std::function<void(int32, uint32)>> WindowSizeCallbacks;
+			std::vector<std::function<void(uint32, uint32)>> FramebufferSizeCallbacks;
 		} m_Data;
 
 		GLFWwindow* m_Window = nullptr;

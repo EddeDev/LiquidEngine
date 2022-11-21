@@ -47,6 +47,10 @@ namespace Liquid {
 		static Ref<GraphicsContext> GetContext() { return s_Context; }
 		static Ref<Swapchain> GetSwapchain() { return s_Swapchain; }
 	private:
+		static void OnWindowCloseCallback();
+		static void OnWindowSizeCallback(uint32 width, uint32 height);
+		static void OnFramebufferSizeCallback(uint32 width, uint32 height);
+	private:
 		static Ref<Window> s_Window;
 		static Ref<GraphicsContext> s_Context;
 		static Ref<Swapchain> s_Swapchain;

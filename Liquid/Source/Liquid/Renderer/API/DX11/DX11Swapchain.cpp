@@ -77,6 +77,8 @@ namespace Liquid {
 		if (width == 0 || height == 0)
 			return;
 
+		LQ_INFO_ARGS("Resizing swapchain to [{0}, {1}]", width, height);
+
 		Ref<DX11Context> context = GraphicsContext::Get<DX11Context>();
 		DXRef<ID3D11Device> device = context->GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = context->GetDeviceContext();
@@ -89,7 +91,7 @@ namespace Liquid {
 		if (m_AllowTearing)
 			flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
-		DX_CHECK(m_SwapChain->ResizeBuffers(m_CreateInfo.BufferCount, width, height, Utils::DX11PixelFormat(m_CreateInfo.ColorFormat), flags));
+		DX_CHECK(m_SwapChain->ResizeBuffers(0, width, height, Utils::DX11PixelFormat(m_CreateInfo.ColorFormat), flags));
 
 		DXRef<ID3D11Texture2D> backBuffer;
 		DX_CHECK(m_SwapChain->GetBuffer(0, DX_RIID(ID3D11Texture2D), &backBuffer));
@@ -173,7 +175,7 @@ namespace Liquid {
 
 		if (buffer & BUFFER_COLOR)
 		{
-			const float color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+			const float color[4] = { 0.0f, 0.5f, 0.0f, 1.0f };
 			deviceContext->ClearRenderTargetView(m_BackBuffer.Get(), color);
 		}
 

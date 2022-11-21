@@ -8,7 +8,7 @@
 
 namespace Liquid {
 
-	std::shared_ptr<spdlog::logger> Logger::s_Logger;
+	Shared<spdlog::logger> Logger::s_Logger;
 
 	void Logger::Init()
 	{
@@ -20,8 +20,8 @@ namespace Liquid {
 
 		std::vector<spdlog::sink_ptr> sinks =
 		{
-			std::make_shared<spdlog::sinks::stdout_color_sink_mt>(),
-			std::make_shared<spdlog::sinks::basic_file_sink_mt>(filepath.string(), true)
+			CreateShared<spdlog::sinks::stdout_color_sink_mt>(),
+			CreateShared<spdlog::sinks::basic_file_sink_mt>(filepath.string(), true)
 		};
 
 		sinks[0]->set_pattern("%^[%T] %n: %v%$");

@@ -2,20 +2,31 @@
 
 #include "Logger.h"
 
-#define LQ_TRACE_ARGS(...)    LQ_LOG_ARGS(::Liquid::LogVerbosity::Trace,    __VA_ARGS__)
-#define LQ_INFO_ARGS(...)     LQ_LOG_ARGS(::Liquid::LogVerbosity::Info,     __VA_ARGS__)
-#define LQ_WARNING_ARGS(...)  LQ_LOG_ARGS(::Liquid::LogVerbosity::Warning,  __VA_ARGS__)
-#define LQ_ERROR_ARGS(...)    LQ_LOG_ARGS(::Liquid::LogVerbosity::Error,    __VA_ARGS__)
-#define LQ_CRITICAL_ARGS(...) LQ_LOG_ARGS(::Liquid::LogVerbosity::Critical, __VA_ARGS__)
+#if !defined(LQ_BUILD_SHIPPING)
+#define LQ_TRACE_ENABLED
+#endif
 
-#define LQ_TRACE_CATEGORY(category, ...)    LQ_LOG_CATEGORY(::Liquid::LogVerbosity::Trace,    category, __VA_ARGS__)
-#define LQ_INFO_CATEGORY(category, ...)     LQ_LOG_CATEGORY(::Liquid::LogVerbosity::Info,     category, __VA_ARGS__)
-#define LQ_WARNING_CATEGORY(category, ...)  LQ_LOG_CATEGORY(::Liquid::LogVerbosity::Warning,  category, __VA_ARGS__)
-#define LQ_ERROR_CATEGORY(category, ...)    LQ_LOG_CATEGORY(::Liquid::LogVerbosity::Error,    category, __VA_ARGS__)
-#define LQ_CRITICAL_CATEGORY(category, ...) LQ_LOG_CATEGORY(::Liquid::LogVerbosity::Critical, category, __VA_ARGS__)
+#ifdef LQ_TRACE_ENABLED
+#define LQ_TRACE_ARGS(...) LQ_LOG_ARGS(Trace, __VA_ARGS__)
+#define LQ_TRACE_CATEGORY(category, ...) LQ_LOG_CATEGORY(Trace, category, __VA_ARGS__)
+#define LQ_TRACE_PREFIX(prefix, ...) LQ_LOG_PREFIX(Trace, prefix, __VA_ARGS__)
+#else
+#define LQ_TRACE_ARGS(...)
+#define LQ_TRACE_CATEGORY(category, ...)
+#define LQ_TRACE_PREFIX(prefix, ...)
+#endif
 
-#define LQ_TRACE_PREFIX(prefix, ...)    LQ_LOG_PREFIX(::Liquid::LogVerbosity::Trace,    prefix, __VA_ARGS__)
-#define LQ_INFO_PREFIX(prefix, ...)     LQ_LOG_PREFIX(::Liquid::LogVerbosity::Info,     prefix, __VA_ARGS__)
-#define LQ_WARNING_PREFIX(prefix, ...)  LQ_LOG_PREFIX(::Liquid::LogVerbosity::Warning,  prefix, __VA_ARGS__)
-#define LQ_ERROR_PREFIX(prefix, ...)    LQ_LOG_PREFIX(::Liquid::LogVerbosity::Error,    prefix, __VA_ARGS__)
-#define LQ_CRITICAL_PREFIX(prefix, ...) LQ_LOG_PREFIX(::Liquid::LogVerbosity::Critical, prefix, __VA_ARGS__)
+#define LQ_INFO_ARGS(...)     LQ_LOG_ARGS(Info,     __VA_ARGS__)
+#define LQ_WARNING_ARGS(...)  LQ_LOG_ARGS(Warning,  __VA_ARGS__)
+#define LQ_ERROR_ARGS(...)    LQ_LOG_ARGS(Error,    __VA_ARGS__)
+#define LQ_CRITICAL_ARGS(...) LQ_LOG_ARGS(Critical, __VA_ARGS__)
+
+#define LQ_INFO_CATEGORY(category, ...)     LQ_LOG_CATEGORY(Info,     category, __VA_ARGS__)
+#define LQ_WARNING_CATEGORY(category, ...)  LQ_LOG_CATEGORY(Warning,  category, __VA_ARGS__)
+#define LQ_ERROR_CATEGORY(category, ...)    LQ_LOG_CATEGORY(Error,    category, __VA_ARGS__)
+#define LQ_CRITICAL_CATEGORY(category, ...) LQ_LOG_CATEGORY(Critical, category, __VA_ARGS__)
+
+#define LQ_INFO_PREFIX(prefix, ...)     LQ_LOG_PREFIX(Info,     prefix, __VA_ARGS__)
+#define LQ_WARNING_PREFIX(prefix, ...)  LQ_LOG_PREFIX(Warning,  prefix, __VA_ARGS__)
+#define LQ_ERROR_PREFIX(prefix, ...)    LQ_LOG_PREFIX(Error,    prefix, __VA_ARGS__)
+#define LQ_CRITICAL_PREFIX(prefix, ...) LQ_LOG_PREFIX(Critical, prefix, __VA_ARGS__)

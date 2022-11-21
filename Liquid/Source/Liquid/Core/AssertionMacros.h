@@ -18,7 +18,7 @@
 	{ \
 		if (!(expression)) \
 		{ \
-			LQ_LOG_PREFIX(::Liquid::LogVerbosity::Error, "Assertion failed", __VA_ARGS__); \
+			LQ_LOG_PREFIX(Error, "Assertion failed", __VA_ARGS__); \
 			LQ_PLATFORM_BREAK(); \
 		} \
 	}
@@ -31,7 +31,7 @@
 	{ \
 		if (!(expression)) \
 		{ \
-			LQ_LOG_PREFIX(::Liquid::LogVerbosity::Error, "Verify failed", __VA_ARGS__); \
+			LQ_LOG_PREFIX(Error, "Verify failed", __VA_ARGS__); \
 			LQ_PLATFORM_BREAK(); \
 		} \
 	}

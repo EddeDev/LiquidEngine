@@ -2,6 +2,8 @@
 
 #include "PrimitiveTypes.h"
 
+#include <memory>
+
 #ifdef LQ_PLATFORM_WINDOWS
 #include <intrin.h>
 #endif
@@ -180,5 +182,23 @@ namespace Liquid {
 		template<class TOther>
 		friend class Ref;
 	};
+
+	template<typename ReferencedType>
+	using Unique = std::unique_ptr<ReferencedType>;
+
+	template<typename ReferencedType>
+	using Shared = std::shared_ptr<ReferencedType>;
+
+	template<typename ReferencedType, typename... TArgs>
+	constexpr Unique<ReferencedType> CreateUnique(TArgs&&... args)
+	{
+		return std::make_unique<ReferencedType>(std::forward<TArgs>(args)...);
+	}
+
+	template<typename ReferencedType, typename... TArgs>
+	constexpr Shared<ReferencedType> CreateShared(TArgs&&... args)
+	{
+		return std::make_shared<ReferencedType>(std::forward<TArgs>(args)...);
+	}
 
 }

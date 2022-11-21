@@ -16,6 +16,9 @@ namespace Liquid {
 
 		virtual void Present() const override;
 		virtual void Clear(uint32 buffer) override;
+
+		virtual void SetVSync(bool enabled) override { m_VSync = enabled; }
+		virtual bool IsVSyncEnabled() const override { return m_VSync; }
 	private:
 		SwapchainCreateInfo m_CreateInfo;
 

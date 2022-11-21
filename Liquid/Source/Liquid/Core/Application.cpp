@@ -20,6 +20,9 @@ namespace Liquid {
 		windowCreateInfo.Title = "Liquid Engine";
 
 		s_Window = Window::Create(windowCreateInfo);
+		s_Window->AddCloseCallback(LQ_BIND_CALLBACK(OnWindowCloseCallback));
+		s_Window->AddWindowSizeCallback(LQ_BIND_CALLBACK(OnWindowSizeCallback));
+		s_Window->AddFramebufferSizeCallback(LQ_BIND_CALLBACK(OnFramebufferSizeCallback));
 
 		GraphicsContextCreateInfo contextCreateInfo;
 		contextCreateInfo.WindowHandle = s_Window->GetPlatformHandle();
@@ -65,12 +68,24 @@ namespace Liquid {
 			}
 
 			s_Window->PollEvents();
-			if (s_Window->IsCloseRequested())
-				s_Running = false;
 
 			s_Swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
 			s_Swapchain->Present();
 		}
+	}
+
+	void Application::OnWindowCloseCallback()
+	{
+		s_Running = false;
+	}
+
+	void Application::OnWindowSizeCallback(uint32 width, uint32 height)
+	{
+	}
+
+	void Application::OnFramebufferSizeCallback(uint32 width, uint32 height)
+	{
+		s_Swapchain->Resize(width, height);
 	}
 
 	BuildConfiguration Application::GetBuildConfiguration()

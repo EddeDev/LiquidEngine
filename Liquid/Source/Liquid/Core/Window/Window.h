@@ -15,9 +15,12 @@ namespace Liquid {
 		virtual ~Window() {}
 
 		virtual void PollEvents() const = 0;
-		virtual bool IsCloseRequested() const = 0;
 
 		virtual void* GetPlatformHandle() const = 0;
+
+		virtual void AddCloseCallback(const std::function<void()>& callback) = 0;
+		virtual void AddWindowSizeCallback(const std::function<void(uint32, uint32)>& callback) = 0;
+		virtual void AddFramebufferSizeCallback(const std::function<void(uint32, uint32)>& callback) = 0;
 
 		virtual void SetVisible(bool visible) = 0;
 		virtual bool IsVisible() const = 0;

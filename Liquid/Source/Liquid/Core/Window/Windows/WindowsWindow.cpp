@@ -26,8 +26,13 @@ namespace Liquid {
 
 		if (s_GLFWWindowCount == 0)
 		{
+			LQ_INFO_ARGS("Initializing GLFW...");
 			int32 initialized = glfwInit();
 			LQ_VERIFY(initialized, "Could not initialize GLFW");
+
+			int32 major, minor, revision;
+			glfwGetVersion(&major, &minor, &revision);
+			LQ_INFO_ARGS("GLFW version: {0}.{1}.{2}", major, minor, revision);
 		}
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -54,6 +59,33 @@ namespace Liquid {
 		int32 xpos = (videomode->width - m_Data.Width) / 2;
 		int32 ypos = (videomode->height - m_Data.Height) / 2;
 		glfwSetWindowPos(m_Window, xpos, ypos);
+
+		glfwSetWindowUserPointer(m_Window, &m_Data);
+
+		glfwSetWindowCloseCallback(m_Window, [](auto window)
+		{
+			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			for (auto& callback : data.CloseCallbacks)
+				callback();
+		});
+
+		glfwSetWindowSizeCallback(m_Window, [](auto window, auto width, auto height)
+		{
+			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			data.Width = width;
+			data.Height = height;
+			for (auto& callback : data.WindowSizeCallbacks)
+				callback(width, height);
+		});
+
+		glfwSetFramebufferSizeCallback(m_Window, [](auto window, auto width, auto height)
+		{
+			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			data.FramebufferWidth = width;
+			data.FramebufferHeight = height;
+			for (auto& callback : data.FramebufferSizeCallbacks)
+				callback(width, height);
+		});
 	}
 
 	void WindowsWindow::Shutdown()
@@ -68,11 +100,6 @@ namespace Liquid {
 	void WindowsWindow::PollEvents() const
 	{
 		glfwPollEvents();
-	}
-
-	bool WindowsWindow::IsCloseRequested() const
-	{
-		return glfwWindowShouldClose(m_Window);
 	}
 
 	void* WindowsWindow::GetPlatformHandle() const

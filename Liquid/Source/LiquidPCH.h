@@ -1,7 +1,6 @@
 #pragma once
 
 #include <iostream>
-#include <memory>
 #include <utility>
 #include <algorithm>
 #include <functional>
@@ -14,11 +13,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "Liquid/Core/Logging/LogMacros.h"
-#include "Liquid/Core/AssertionMacros.h"
-#include "Liquid/Core/PrimitiveTypes.h"
-#include "Liquid/Core/RefCounting.h"
-#include "Liquid/Core/String.h"
+#include "Liquid/Core/Core.h"
 
 #ifdef LQ_PLATFORM_WINDOWS
 #include <Windows.h>
