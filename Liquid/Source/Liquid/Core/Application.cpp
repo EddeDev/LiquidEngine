@@ -14,6 +14,9 @@ namespace Liquid {
 
 	void Application::Init(const ApplicationCreateInfo& createInfo)
 	{
+		std::string currentGraphicsAPI = GraphicsAPIUtils::GetGraphicsAPIName(GetGraphicsAPI());
+		LQ_INFO_ARGS("Graphics API: {0}", currentGraphicsAPI);
+
 		WindowCreateInfo windowCreateInfo;
 		windowCreateInfo.Width = 1280;
 		windowCreateInfo.Height = 720;

@@ -3,6 +3,7 @@
 #include "Liquid/Renderer/API/GraphicsContext.h"
 
 #include "DX11Common.h"
+#include "DX11Device.h"
 
 namespace Liquid {
 
@@ -12,15 +13,10 @@ namespace Liquid {
 		DX11Context(const GraphicsContextCreateInfo& createInfo);
 		virtual ~DX11Context() {}
 
-		DXRef<ID3D11Device> GetDevice() const { return m_Device; }
-		DXRef<ID3D11DeviceContext> GetDeviceContext() const { return m_DeviceContext; }
+		virtual Ref<GraphicsDevice> GetDevice() const { return m_Device; }
 	private:
 		GraphicsContextCreateInfo m_CreateInfo;
-
-		D3D_FEATURE_LEVEL m_FeatureLevel;
-
-		DXRef<ID3D11Device> m_Device;
-		DXRef<ID3D11DeviceContext> m_DeviceContext;
+		Ref<DX11Device> m_Device;
 		DXRef<ID3D11Debug> m_DebugLayer;
 	};
 

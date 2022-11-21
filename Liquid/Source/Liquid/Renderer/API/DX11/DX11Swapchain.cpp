@@ -1,7 +1,7 @@
 #include "LiquidPCH.h"
 #include "DX11Swapchain.h"
 
-#include "DX11Context.h"
+#include "DX11Device.h"
 
 namespace Liquid {
 
@@ -27,8 +27,7 @@ namespace Liquid {
 	DX11Swapchain::DX11Swapchain(const SwapchainCreateInfo& createInfo)
 		: m_CreateInfo(createInfo)
 	{
-		Ref<DX11Context> context = GraphicsContext::Get<DX11Context>();
-		DXRef<ID3D11Device> device = context->GetDevice();
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 
 		DXGI_RATIONAL refreshRate;
 		refreshRate.Numerator = 60;
@@ -79,9 +78,8 @@ namespace Liquid {
 
 		LQ_INFO_ARGS("Resizing swapchain to [{0}, {1}]", width, height);
 
-		Ref<DX11Context> context = GraphicsContext::Get<DX11Context>();
-		DXRef<ID3D11Device> device = context->GetDevice();
-		DXRef<ID3D11DeviceContext> deviceContext = context->GetDeviceContext();
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
 		m_BackBuffer.Reset();
 		m_DepthStencilView.Reset();
@@ -129,9 +127,7 @@ namespace Liquid {
 
 	void DX11Swapchain::Present() const
 	{
-		Ref<DX11Context> context = GraphicsContext::Get<DX11Context>();
-		DXRef<ID3D11Device> device = context->GetDevice();
-		DXRef<ID3D11DeviceContext> deviceContext = context->GetDeviceContext();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
 		uint32 flags = 0;
 		if (m_AllowTearing && !m_VSync && !m_IsFullscreen)
@@ -169,9 +165,7 @@ namespace Liquid {
 
 	void DX11Swapchain::Clear(uint32 buffer)
 	{
-		Ref<DX11Context> context = GraphicsContext::Get<DX11Context>();
-		DXRef<ID3D11Device> device = context->GetDevice();
-		DXRef<ID3D11DeviceContext> deviceContext = context->GetDeviceContext();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
 		if (buffer & BUFFER_COLOR)
 		{
