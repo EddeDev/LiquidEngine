@@ -17,7 +17,6 @@ namespace Liquid {
 	private:
 		GraphicsContextCreateInfo m_CreateInfo;
 		Ref<DX11Device> m_Device;
-		DXRef<ID3D11Debug> m_DebugLayer;
 	};
 
 }

@@ -29,4 +29,20 @@ namespace Liquid {
 		return conv.from_bytes(string);
 	}
 
+	String StringUtils::FormatBytes(size_t bytes)
+	{
+		constexpr size_t KB = 1024;     
+		constexpr size_t MB = KB * 1024;
+		constexpr size_t GB = MB * 1024;
+
+		if (bytes >= GB)
+			return fmt::format("{0} GB", bytes / GB);
+		if (bytes >= MB)
+			return fmt::format("{0} MB", bytes / MB);
+		if (bytes >= KB)
+			return fmt::format("{0} KB", bytes / KB);
+
+		return fmt::format("{0} byte{1}", bytes, bytes != 1 ? "s" : "");
+	}
+
 }

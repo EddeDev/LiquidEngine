@@ -10,12 +10,12 @@ namespace Liquid {
 	{
 	public:
 		DX11Device(const GraphicsDeviceCreateInfo& createInfo, DXRef<IDXGIAdapter> adapter);
-		virtual ~DX11Device();
 
 		virtual const GraphicsDeviceInfo& GetInfo() const override { return m_Info; }
 
 		DXRef<ID3D11Device> GetDevice() const { return m_Device; }
 		DXRef<ID3D11DeviceContext> GetDeviceContext() const { return m_DeviceContext; }
+		DXRef<ID3D11Debug> GetDebugLayer() const { return m_DebugLayer; }
 
 		inline static DX11Device& Get()
 		{
@@ -33,6 +33,7 @@ namespace Liquid {
 
 		DXRef<ID3D11Device> m_Device;
 		DXRef<ID3D11DeviceContext> m_DeviceContext;
+		DXRef<ID3D11Debug> m_DebugLayer;
 	};
 
 }

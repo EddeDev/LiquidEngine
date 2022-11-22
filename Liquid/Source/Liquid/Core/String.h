@@ -17,6 +17,8 @@ namespace Liquid {
 		U16String ToUTF16String(const String& string);
 		U32String ToUTF32String(const String& string);
 
+		String FormatBytes(size_t bytes);
+
 	}
 
 }

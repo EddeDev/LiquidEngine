@@ -2,7 +2,7 @@
 
 namespace Liquid {
 
-	enum class GraphicsDeviceVendor : int32
+	enum class GraphicsDeviceVendor : uint32
 	{
 		None = 0,
 
@@ -12,9 +12,15 @@ namespace Liquid {
 		Microsoft = 0x1414 // Microsoft Basic Render Driver
 	};
 
+	// TODO: capabilities
+
 	struct GraphicsDeviceInfo
 	{
 		GraphicsDeviceVendor Vendor;
+
+		uint64 DedicatedVideoMemory;
+		uint64 DedicatedSystemMemory;
+		uint64 SharedSystemMemory;
 	};
 
 	struct GraphicsDeviceCreateInfo

@@ -65,6 +65,8 @@ namespace Liquid {
 			frames++;
 			if (time >= lastTime + 1.0f)
 			{
+				// auto& deviceInfo = s_Context->GetDevice()->GetInfo();
+				// LQ_TRACE_ARGS("Dedicated video memory: {0}", StringUtils::FormatBytes(deviceInfo.DedicatedVideoMemory));
 				LQ_INFO_ARGS("{0} fps", frames);
 				frames = 0;
 				lastTime = time;
