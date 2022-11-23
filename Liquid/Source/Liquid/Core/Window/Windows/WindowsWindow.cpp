@@ -2,6 +2,8 @@
 #include "WindowsWindow.h"
 
 #include <GLFW/glfw3.h>
+
+#define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 
 namespace Liquid {
@@ -42,6 +44,7 @@ namespace Liquid {
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 		glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
+		glfwWindowHint(GLFW_DECORATED, createInfo.Decorated);
 
 		LQ_TRACE_CATEGORY("Window", "Monitors:");
 		int32 monitorCount;

@@ -7,11 +7,16 @@ namespace Liquid {
 	public:
 		virtual ~ImGuiRenderer();
 
-		virtual void BeginFrame() = 0;
-		virtual void EndFrame() = 0;
+		void BeginFrame();
+		void EndFrame();
 
-	private:
 		static Ref<ImGuiRenderer> Create();
+	protected:
+		virtual void Init() = 0;
+		virtual void NewFrame() = 0;
+		virtual void Render() = 0;
+	private:
+		void InitContext();
 	};
 
 }

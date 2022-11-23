@@ -15,6 +15,7 @@ namespace Liquid {
 
 		virtual void PollEvents() const override;
 
+		virtual void* GetHandle() const override { return m_Window; }
 		virtual void* GetPlatformHandle() const override;
 
 		virtual void AddCloseCallback(const std::function<void()>& callback) override { m_Data.CloseCallbacks.push_back(callback); }

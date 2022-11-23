@@ -5,11 +5,15 @@
 
 #include <glfw/glfw3.h>
 
+#include <imgui.h>
+#include <imgui_internal.h>
+
 namespace Liquid {
 
 	Ref<Window> Application::s_Window;
 	Ref<GraphicsContext> Application::s_Context;
 	Ref<Swapchain> Application::s_Swapchain;
+	Ref<ImGuiRenderer> Application::s_ImGuiRenderer;
 	bool Application::s_Running = true;
 	bool Application::s_Minimized = false;
 
@@ -23,6 +27,7 @@ namespace Liquid {
 		windowCreateInfo.Height = 720;
 		windowCreateInfo.Title = "Liquid Engine";
 		windowCreateInfo.Fullscreen = false;
+		// windowCreateInfo.Decorated = false;
 
 		s_Window = Window::Create(windowCreateInfo);
 		s_Window->AddCloseCallback(LQ_BIND_CALLBACK(OnWindowCloseCallback));
@@ -49,6 +54,8 @@ namespace Liquid {
 		swapchainCreateInfo.SampleCount = 1;
 		s_Swapchain = Swapchain::Create(swapchainCreateInfo);
 
+		s_ImGuiRenderer = ImGuiRenderer::Create();
+
 		s_Window->SetVisible(true);
 	}
 
@@ -61,6 +68,7 @@ namespace Liquid {
 	{
 		float lastTime = static_cast<float>(glfwGetTime());
 		uint32 frames = 0;
+		uint32 fps = 0;
 
 		while (s_Running)
 		{
@@ -68,9 +76,8 @@ namespace Liquid {
 			frames++;
 			if (time >= lastTime + 1.0f)
 			{
-				// s_Window->SetFullscreen(!s_Window->IsFullscreen());
-
-				LQ_INFO_ARGS("{0} fps", frames);
+				// LQ_INFO_ARGS("{0} fps", frames);
+				fps = frames;
 				frames = 0;
 				lastTime = time;
 			}
@@ -79,7 +86,22 @@ namespace Liquid {
 
 			if (!s_Minimized)
 			{
+				s_Swapchain->BeginFrame();
 				s_Swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
+
+				s_ImGuiRenderer->BeginFrame();
+
+				ImGui::Begin("Liquid Engine");
+				ImGui::Text("%d fps", fps);
+
+				bool vsync = s_Swapchain->IsVSyncEnabled();
+				if (ImGui::Checkbox("V-Sync", &vsync))
+					s_Swapchain->SetVSync(vsync);
+
+				ImGui::End();
+
+				s_ImGuiRenderer->EndFrame();
+
 				s_Swapchain->Present();
 			}
 		}

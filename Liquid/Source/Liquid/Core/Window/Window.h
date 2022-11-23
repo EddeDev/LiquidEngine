@@ -8,6 +8,7 @@ namespace Liquid {
 		uint32 Height = 720;
 		String Title = "Liquid Engine";
 		bool Fullscreen = false;
+		bool Decorated = true;
 	};
 
 	class Window : public RefCounted
@@ -17,6 +18,7 @@ namespace Liquid {
 
 		virtual void PollEvents() const = 0;
 
+		virtual void* GetHandle() const = 0;
 		virtual void* GetPlatformHandle() const = 0;
 
 		virtual void AddCloseCallback(const std::function<void()>& callback) = 0;

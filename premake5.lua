@@ -29,7 +29,7 @@ project "Liquid"
     {
         "%{prj.name}/Source",
         "%{prj.name}/Libraries/glfw/include",
-        "%{prj.name}/Libraries/imgui/include",
+        "%{prj.name}/Libraries/imgui",
         "%{prj.name}/Libraries/glm",
         "%{prj.name}/Libraries/spdlog/include"
     }
@@ -53,7 +53,6 @@ project "Liquid"
         defines
         {
             "LQ_PLATFORM_WINDOWS",
-            "GLFW_EXPOSE_NATIVE_WIN32",
             "_CRT_SECURE_NO_WARNINGS"
         }
 

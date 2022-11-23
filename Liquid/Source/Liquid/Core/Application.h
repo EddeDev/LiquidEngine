@@ -5,6 +5,7 @@
 #include "Liquid/Renderer/API/GraphicsAPI.h"
 #include "Liquid/Renderer/API/GraphicsContext.h"
 #include "Liquid/Renderer/API/Swapchain.h"
+#include "Liquid/Renderer/API/ImGuiRenderer.h"
 
 #include "Window/Window.h"
 
@@ -49,11 +50,11 @@ namespace Liquid {
 	private:
 		static void OnWindowCloseCallback();
 		static void OnWindowSizeCallback(uint32 width, uint32 height);
-		static void OnFramebufferSizeCallback(uint32 width, uint32 height);
 	private:
 		static Ref<Window> s_Window;
 		static Ref<GraphicsContext> s_Context;
 		static Ref<Swapchain> s_Swapchain;
+		static Ref<ImGuiRenderer> s_ImGuiRenderer;
 		static bool s_Running;
 		static bool s_Minimized;
 	};

@@ -36,6 +36,7 @@ namespace Liquid {
 
 		virtual void Resize(uint32 width, uint32 height, bool fullscreen) = 0;
 
+		virtual void BeginFrame() const = 0;
 		virtual void Present() const = 0;
 		virtual void Clear(uint32 buffer) = 0;
 

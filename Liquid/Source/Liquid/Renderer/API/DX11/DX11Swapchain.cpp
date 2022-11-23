@@ -154,6 +154,12 @@ namespace Liquid {
 		deviceContext->RSSetViewports(1, &viewport);
 	}
 
+	void DX11Swapchain::BeginFrame() const
+	{
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+		deviceContext->OMSetRenderTargets(1, m_BackBuffer.GetAddressOf(), m_DepthStencilView.Get());
+	}
+
 	void DX11Swapchain::Present() const
 	{
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
@@ -201,7 +207,7 @@ namespace Liquid {
 
 		if (buffer & BUFFER_COLOR)
 		{
-			const float color[4] = { 0.0f, 0.5f, 0.0f, 1.0f };
+			const float color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 			deviceContext->ClearRenderTargetView(m_BackBuffer.Get(), color);
 		}
 

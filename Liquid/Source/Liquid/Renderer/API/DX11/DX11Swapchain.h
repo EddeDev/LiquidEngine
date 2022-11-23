@@ -14,6 +14,7 @@ namespace Liquid {
 
 		virtual void Resize(uint32 width, uint32 height, bool fullscreen) override;
 
+		virtual void BeginFrame() const override;
 		virtual void Present() const override;
 		virtual void Clear(uint32 buffer) override;
 
