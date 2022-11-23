@@ -11,21 +11,22 @@ namespace Liquid {
 	Ref<GraphicsContext> Application::s_Context;
 	Ref<Swapchain> Application::s_Swapchain;
 	bool Application::s_Running = true;
+	bool Application::s_Minimized = false;
 
 	void Application::Init(const ApplicationCreateInfo& createInfo)
 	{
-		std::string currentGraphicsAPI = GraphicsAPIUtils::GetGraphicsAPIName(GetGraphicsAPI());
+		String currentGraphicsAPI = GraphicsAPIUtils::GetGraphicsAPIName(GetGraphicsAPI());
 		LQ_INFO_ARGS("Graphics API: {0}", currentGraphicsAPI);
 
 		WindowCreateInfo windowCreateInfo;
 		windowCreateInfo.Width = 1280;
 		windowCreateInfo.Height = 720;
 		windowCreateInfo.Title = "Liquid Engine";
+		windowCreateInfo.Fullscreen = false;
 
 		s_Window = Window::Create(windowCreateInfo);
 		s_Window->AddCloseCallback(LQ_BIND_CALLBACK(OnWindowCloseCallback));
 		s_Window->AddWindowSizeCallback(LQ_BIND_CALLBACK(OnWindowSizeCallback));
-		s_Window->AddFramebufferSizeCallback(LQ_BIND_CALLBACK(OnFramebufferSizeCallback));
 
 		GraphicsContextCreateInfo contextCreateInfo;
 		contextCreateInfo.WindowHandle = s_Window->GetPlatformHandle();
@@ -38,8 +39,10 @@ namespace Liquid {
 
 		SwapchainCreateInfo swapchainCreateInfo;
 		swapchainCreateInfo.WindowHandle = s_Window->GetPlatformHandle();
-		swapchainCreateInfo.InitialWidth = s_Window->GetFramebufferWidth();
-		swapchainCreateInfo.InitialHeight = s_Window->GetFramebufferHeight();
+		swapchainCreateInfo.InitialWidth = s_Window->GetWidth();
+		swapchainCreateInfo.InitialHeight = s_Window->GetHeight();
+		swapchainCreateInfo.InitialFullscreenState = s_Window->IsFullscreen();
+		swapchainCreateInfo.AllowTearing = true;
 		swapchainCreateInfo.ColorFormat = PixelFormat::RGBA;
 		swapchainCreateInfo.DepthFormat = PixelFormat::DEPTH24_STENCIL8;
 		swapchainCreateInfo.BufferCount = 3;
@@ -65,8 +68,8 @@ namespace Liquid {
 			frames++;
 			if (time >= lastTime + 1.0f)
 			{
-				// auto& deviceInfo = s_Context->GetDevice()->GetInfo();
-				// LQ_TRACE_ARGS("Dedicated video memory: {0}", StringUtils::FormatBytes(deviceInfo.DedicatedVideoMemory));
+				// s_Window->SetFullscreen(!s_Window->IsFullscreen());
+
 				LQ_INFO_ARGS("{0} fps", frames);
 				frames = 0;
 				lastTime = time;
@@ -74,8 +77,11 @@ namespace Liquid {
 
 			s_Window->PollEvents();
 
-			s_Swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
-			s_Swapchain->Present();
+			if (!s_Minimized)
+			{
+				s_Swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
+				s_Swapchain->Present();
+			}
 		}
 	}
 
@@ -86,11 +92,16 @@ namespace Liquid {
 
 	void Application::OnWindowSizeCallback(uint32 width, uint32 height)
 	{
-	}
+		if (width == 0 || height == 0)
+		{
+			s_Minimized = true;
+			return;
+		}
 
-	void Application::OnFramebufferSizeCallback(uint32 width, uint32 height)
-	{
-		s_Swapchain->Resize(width, height);
+		if (s_Minimized)
+			s_Minimized = false;
+
+		s_Swapchain->Resize(width, height, s_Window->IsFullscreen());
 	}
 
 	BuildConfiguration Application::GetBuildConfiguration()
@@ -102,6 +113,7 @@ namespace Liquid {
 #elif LQ_BUILD_SHIPPING
 		return BuildConfiguration::Shipping;
 #else
+		static_assert(false, "Unknown build configuration");
 		return BuildConfiguration::None;
 #endif
 	}

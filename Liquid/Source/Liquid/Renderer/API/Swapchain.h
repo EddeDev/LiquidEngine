@@ -11,6 +11,9 @@ namespace Liquid {
 		uint32 InitialWidth = 0;
 		uint32 InitialHeight = 0;
 
+		bool InitialFullscreenState = false;
+		bool AllowTearing = true;
+
 		PixelFormat ColorFormat = PixelFormat::RGBA;
 		PixelFormat DepthFormat = PixelFormat::DEPTH24_STENCIL8;
 
@@ -31,7 +34,7 @@ namespace Liquid {
 	public:
 		virtual ~Swapchain() {}
 
-		virtual void Resize(uint32 width, uint32 height) = 0;
+		virtual void Resize(uint32 width, uint32 height, bool fullscreen) = 0;
 
 		virtual void Present() const = 0;
 		virtual void Clear(uint32 buffer) = 0;

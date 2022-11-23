@@ -6,17 +6,22 @@ namespace Liquid {
 	{
 		None = 0,
 
-		Nvidia = 0x10DE,
 		AMD = 0x1002,
 		Intel = 0x8086,
-		Microsoft = 0x1414 // Microsoft Basic Render Driver
+		Nvidia = 0x10DE,
+		Microsoft = 0x1414
 	};
 
-	// TODO: capabilities
+	struct GraphicsDeviceCapabiltiies
+	{
+		uint32 MaxSamplers;
+	};
 
 	struct GraphicsDeviceInfo
 	{
 		GraphicsDeviceVendor Vendor;
+		String Renderer;
+		String PlatformVersion;
 
 		uint64 DedicatedVideoMemory;
 		uint64 DedicatedSystemMemory;

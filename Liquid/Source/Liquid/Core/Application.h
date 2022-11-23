@@ -55,6 +55,7 @@ namespace Liquid {
 		static Ref<GraphicsContext> s_Context;
 		static Ref<Swapchain> s_Swapchain;
 		static bool s_Running;
+		static bool s_Minimized;
 	};
 
 }

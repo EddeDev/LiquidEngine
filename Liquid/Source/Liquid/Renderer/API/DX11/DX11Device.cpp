@@ -97,19 +97,6 @@ namespace Liquid {
 				microsoftAdapterIndex = i;
 			else
 				discreteAdapters.push_back(i);
-
-#if 0
-			LQ_TRACE_ARGS("Adapter {0}:", i);
-			LQ_TRACE_ARGS("  Description: {0}", StringUtils::FromWideString(desc.Description));
-			LQ_TRACE_ARGS("  Vendor: {0}", GraphicsDeviceUtils::VendorToString(vendor));
-			LQ_TRACE_ARGS("  Device ID: {0}", desc.DeviceId);
-			LQ_TRACE_ARGS("  SubSys ID: {0}", desc.SubSysId);
-			LQ_TRACE_ARGS("  Revision: {0}", desc.Revision);
-			LQ_TRACE_ARGS("  Dedicated VRAM: {0}", desc.DedicatedVideoMemory);
-			LQ_TRACE_ARGS("  Dedicated RAM: {0}", desc.DedicatedVideoMemory);
-			LQ_TRACE_ARGS("  Shared RAM: {0}", desc.SharedSystemMemory);
-			LQ_TRACE_ARGS("  Adapter LUID: [{0}, {1}]", desc.AdapterLuid.LowPart, desc.AdapterLuid.HighPart);
-#endif
 		}
 
 		DXRef<IDXGIAdapter> selectedAdapter;
@@ -117,23 +104,60 @@ namespace Liquid {
 		{
 			selectedAdapter = adapters[discreteAdapters.front()];
 		}
-		else if (intelAdapterIndex != std::numeric_limits<uint32>::max())
+		else if (intelAdapterIndex != std::numeric_limits<size_t>::max())
 		{
 			selectedAdapter = adapters[intelAdapterIndex];
 		}
-		else if (microsoftAdapterIndex != std::numeric_limits<uint32>::max())
+		else if (microsoftAdapterIndex != std::numeric_limits<size_t>::max())
 		{
 			LQ_WARNING_ARGS("Microsoft Basic Render Driver was chosen as graphics device");
 			selectedAdapter = adapters[microsoftAdapterIndex];
 		}
-		else
+
+		if (!selectedAdapter)
 		{
-			LQ_ERROR_ARGS("Failed to find a GPU");
+			std::wstring message;
+			message += L"Adapters:\n";
+
+			for (size_t i = 0; i < adapters.size(); i++)
+			{
+				DXRef<IDXGIAdapter> adapter = adapters[i];
+
+				message += L"\n";
+
+				if (!adapter)
+				{
+					message += StringUtils::ToWideString(fmt::format("Adapter {0}: nullptr\n", i));
+				}
+				else
+				{
+					DXGI_ADAPTER_DESC desc;
+					adapter->GetDesc(&desc);
+
+					GraphicsDeviceVendor vendor = static_cast<GraphicsDeviceVendor>(desc.VendorId);
+
+					message += StringUtils::ToWideString(fmt::format("Adapter {0}:\n", i));
+					message += StringUtils::ToWideString(fmt::format("  Description: {0}\n", StringUtils::FromWideString(desc.Description)));
+					message += StringUtils::ToWideString(fmt::format("  Vendor: {0}\n", GraphicsDeviceUtils::VendorToString(vendor)));
+					message += StringUtils::ToWideString(fmt::format("  Device ID: {0}\n", desc.DeviceId));
+					message += StringUtils::ToWideString(fmt::format("  SubSys ID: {0}\n", desc.SubSysId));
+					message += StringUtils::ToWideString(fmt::format("  Revision: {0}\n", desc.Revision));
+					message += StringUtils::ToWideString(fmt::format("  Dedicated video memory: {0}\n", desc.DedicatedVideoMemory));
+					message += StringUtils::ToWideString(fmt::format("  Dedicated system memory: {0}\n", desc.DedicatedSystemMemory));
+					message += StringUtils::ToWideString(fmt::format("  Shared system memory: {0}\n", desc.SharedSystemMemory));
+					message += StringUtils::ToWideString(fmt::format("  Adapter LUID: [{0}, {1}]\n", desc.AdapterLuid.LowPart, desc.AdapterLuid.HighPart));
+				}
+			}
+
+			if (MessageBox(0, message.c_str(), L"Failed to choose a DX11 Adapter.", MB_SYSTEMMODAL | MB_ICONERROR) == IDYES)
+				DebugBreak();
+
+			return nullptr;
 		}
 
 		DXGI_ADAPTER_DESC desc;
 		selectedAdapter->GetDesc(&desc);
-		LQ_TRACE_ARGS("Selected GPU: {0}", StringUtils::FromWideString(desc.Description));
+		LQ_TRACE_ARGS("Chosen DX11 Adapter: {0}", StringUtils::FromWideString(desc.Description));
 
 		return Ref<DX11Device>::Create(createInfo, selectedAdapter);
 	}

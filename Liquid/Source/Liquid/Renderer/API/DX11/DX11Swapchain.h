@@ -10,9 +10,9 @@ namespace Liquid {
 	{
 	public:
 		DX11Swapchain(const SwapchainCreateInfo& createInfo);
-		virtual ~DX11Swapchain() {}
+		virtual ~DX11Swapchain();
 
-		virtual void Resize(uint32 width, uint32 height) override;
+		virtual void Resize(uint32 width, uint32 height, bool fullscreen) override;
 
 		virtual void Present() const override;
 		virtual void Clear(uint32 buffer) override;
@@ -28,9 +28,7 @@ namespace Liquid {
 		DXRef<ID3D11Texture2D> m_DepthStencilBuffer;
 		DXRef<ID3D11DepthStencilView> m_DepthStencilView;
 
-		bool m_AllowTearing = true;
 		bool m_VSync = false;
-		bool m_IsFullscreen = false;
 	};
 
 }

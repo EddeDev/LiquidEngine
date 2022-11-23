@@ -52,11 +52,10 @@ namespace Liquid {
 		swapchainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		swapchainDesc.BufferCount = createInfo.BufferCount;
 		swapchainDesc.OutputWindow = static_cast<HWND>(createInfo.WindowHandle);
-		swapchainDesc.Windowed = true;
+		swapchainDesc.Windowed = !createInfo.InitialFullscreenState;
 		swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-		
 		swapchainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-		if (m_AllowTearing)
+		if (createInfo.AllowTearing)
 			swapchainDesc.Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
 		DXRef<IDXGIDevice> dxgiDevice;
@@ -67,29 +66,59 @@ namespace Liquid {
 		DX_CHECK(dxgiAdapter->GetParent(DX_RIID(IDXGIFactory), &dxgiFactory));
 
 		DX_CHECK(dxgiFactory->CreateSwapChain(device.Get(), &swapchainDesc, &m_SwapChain));
+		DX_CHECK(dxgiFactory->MakeWindowAssociation(swapchainDesc.OutputWindow, DXGI_MWA_NO_WINDOW_CHANGES));
 
-		Resize(createInfo.InitialWidth, createInfo.InitialHeight);
+		Resize(createInfo.InitialWidth, createInfo.InitialHeight, createInfo.InitialFullscreenState);
 	}
 
-	void DX11Swapchain::Resize(uint32 width, uint32 height)
+	DX11Swapchain::~DX11Swapchain()
+	{
+		m_SwapChain->SetFullscreenState(false, nullptr);
+	}
+
+	void DX11Swapchain::Resize(uint32 width, uint32 height, bool fullscreen)
 	{
 		if (width == 0 || height == 0)
+		{
+			LQ_VERIFY(false, "Attempted to resize swapchain to [{0}, {1}]", width, height);
 			return;
+		}
 
-		LQ_INFO_ARGS("Resizing swapchain to [{0}, {1}]", width, height);
+		LQ_TRACE_ARGS("DX11Swapchain::Resize({0}, {1}, {2})", width, height, fullscreen);
 
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+
+		deviceContext->ClearState();
 
 		m_BackBuffer.Reset();
 		m_DepthStencilView.Reset();
 		m_DepthStencilBuffer.Reset();
 
 		uint32 flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-		if (m_AllowTearing)
+		if (m_CreateInfo.AllowTearing)
 			flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
 		DX_CHECK(m_SwapChain->ResizeBuffers(0, width, height, Utils::DX11PixelFormat(m_CreateInfo.ColorFormat), flags));
+
+		if (fullscreen)
+		{
+			DXGI_RATIONAL refreshRate;
+			refreshRate.Numerator = 60;
+			refreshRate.Denominator = 1;
+
+			DXGI_MODE_DESC bufferDesc = {};
+			bufferDesc.Width = width;
+			bufferDesc.Height = height;
+			bufferDesc.RefreshRate = refreshRate;
+			bufferDesc.Format = Utils::DX11PixelFormat(m_CreateInfo.ColorFormat);
+
+			if (FAILED(m_SwapChain->ResizeTarget(&bufferDesc)))
+			{
+				DX_CHECK(m_SwapChain->SetFullscreenState(fullscreen, nullptr));
+				DX_CHECK(m_SwapChain->ResizeBuffers(0, width, height, Utils::DX11PixelFormat(m_CreateInfo.ColorFormat), flags));
+			}
+		}
 
 		DXRef<ID3D11Texture2D> backBuffer;
 		DX_CHECK(m_SwapChain->GetBuffer(0, DX_RIID(ID3D11Texture2D), &backBuffer));
@@ -129,8 +158,11 @@ namespace Liquid {
 	{
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
+		int32 fullscreen;
+		DX_CHECK(m_SwapChain->GetFullscreenState(&fullscreen, nullptr));
+
 		uint32 flags = 0;
-		if (m_AllowTearing && !m_VSync && !m_IsFullscreen)
+		if (m_CreateInfo.AllowTearing && !m_VSync && !fullscreen)
 			flags |= DXGI_PRESENT_ALLOW_TEARING;
 
 		HRESULT result = m_SwapChain->Present(m_VSync ? 1 : 0, flags);
