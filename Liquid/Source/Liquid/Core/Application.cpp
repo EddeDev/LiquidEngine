@@ -3,6 +3,8 @@
 
 #include "Window/Window.h"
 
+#include "Liquid/Renderer/ImGuiRenderer.h"
+
 #include <glfw/glfw3.h>
 
 #include <imgui.h>
@@ -13,7 +15,7 @@ namespace Liquid {
 	Ref<Window> Application::s_Window;
 	Ref<GraphicsContext> Application::s_Context;
 	Ref<Swapchain> Application::s_Swapchain;
-	Ref<ImGuiRenderer> Application::s_ImGuiRenderer;
+	Unique<ThemeCreator> Application::s_ThemeCreator;
 	bool Application::s_Running = true;
 	bool Application::s_Minimized = false;
 
@@ -27,6 +29,7 @@ namespace Liquid {
 		windowCreateInfo.Height = 720;
 		windowCreateInfo.Title = "Liquid Engine";
 		windowCreateInfo.Fullscreen = false;
+		windowCreateInfo.Maximize = true;
 		// windowCreateInfo.Decorated = false;
 
 		s_Window = Window::Create(windowCreateInfo);
@@ -54,13 +57,17 @@ namespace Liquid {
 		swapchainCreateInfo.SampleCount = 1;
 		s_Swapchain = Swapchain::Create(swapchainCreateInfo);
 
-		s_ImGuiRenderer = ImGuiRenderer::Create();
-
 		s_Window->SetVisible(true);
+
+		ImGuiRenderer::Init();
+
+		s_ThemeCreator = CreateUnique<ThemeCreator>();
 	}
 
 	void Application::Shutdown()
 	{
+		ImGuiRenderer::Shutdown();
+
 		s_Window = nullptr;
 	}
 
@@ -89,7 +96,9 @@ namespace Liquid {
 				s_Swapchain->BeginFrame();
 				s_Swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
 
-				s_ImGuiRenderer->BeginFrame();
+				ImGuiRenderer::BeginFrame();
+
+				s_ThemeCreator->Render();
 
 				ImGui::Begin("Liquid Engine");
 				ImGui::Text("%d fps", fps);
@@ -100,7 +109,9 @@ namespace Liquid {
 
 				ImGui::End();
 
-				s_ImGuiRenderer->EndFrame();
+				ImGui::ShowDemoWindow();
+
+				ImGuiRenderer::EndFrame();
 
 				s_Swapchain->Present();
 			}

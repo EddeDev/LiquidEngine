@@ -8,6 +8,7 @@ namespace Liquid {
 		uint32 Height = 720;
 		String Title = "Liquid Engine";
 		bool Fullscreen = false;
+		bool Maximize = false;
 		bool Decorated = true;
 	};
 

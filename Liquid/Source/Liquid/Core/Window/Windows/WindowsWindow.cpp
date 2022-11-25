@@ -37,15 +37,6 @@ namespace Liquid {
 			LQ_INFO_ARGS("GLFW version: {0}.{1}.{2}", major, minor, revision);
 		}
 
-		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		glfwWindowHint(GLFW_DEPTH_BITS, 0);
-		glfwWindowHint(GLFW_STENCIL_BITS, 0);
-		glfwWindowHint(GLFW_ALPHA_BITS, 0);
-		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-		glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
-		glfwWindowHint(GLFW_DECORATED, createInfo.Decorated);
-
 		LQ_TRACE_CATEGORY("Window", "Monitors:");
 		int32 monitorCount;
 		GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
@@ -68,24 +59,20 @@ namespace Liquid {
 		m_Data.Backups[1].XPos = 0;
 		m_Data.Backups[1].YPos = 0;
 
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+		glfwWindowHint(GLFW_DEPTH_BITS, 0);
+		glfwWindowHint(GLFW_STENCIL_BITS, 0);
+		glfwWindowHint(GLFW_ALPHA_BITS, 0);
+		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+		glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
+		glfwWindowHint(GLFW_FLOATING, m_Data.Fullscreen);
+		glfwWindowHint(GLFW_DECORATED, createInfo.Decorated && !m_Data.Fullscreen);
+		glfwWindowHint(GLFW_MAXIMIZED, createInfo.Maximize);
+
 		auto& currentBackup = m_Data.Backups[m_Data.CurrentBackupIndex];
 
-		if (m_Data.Fullscreen)
-		{
-			glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
-			glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-
-			m_Window = glfwCreateWindow(currentBackup.Width, currentBackup.Height, m_Data.Title.c_str(), m_Monitor, nullptr);
-		}
-		else
-		{
-			m_Window = glfwCreateWindow(currentBackup.Width, currentBackup.Height, m_Data.Title.c_str(), nullptr, nullptr);
-		
-			// Center window
-			currentBackup.XPos = (videomode->width - currentBackup.Width) / 2;
-			currentBackup.YPos = (videomode->height - currentBackup.Height) / 2;
-			glfwSetWindowPos(m_Window, currentBackup.XPos, currentBackup.YPos);
-		}
+		m_Window = glfwCreateWindow(currentBackup.Width, currentBackup.Height, m_Data.Title.c_str(), m_Data.Fullscreen ? m_Monitor : nullptr, nullptr);
 		LQ_VERIFY(m_Window, "Failed to create GLFW window");
 		s_GLFWWindowCount++;
 
@@ -94,6 +81,15 @@ namespace Liquid {
 		glfwGetWindowSize(m_Window, &width, &height);
 		currentBackup.Width = width;
 		currentBackup.Height = height;
+
+		int32 isMaximized = glfwGetWindowAttrib(m_Window, GLFW_MAXIMIZED);
+		if (!m_Data.Fullscreen && !isMaximized)
+		{
+			// Center window
+			currentBackup.XPos = (videomode->width - currentBackup.Width) / 2;
+			currentBackup.YPos = (videomode->height - currentBackup.Height) / 2;
+			glfwSetWindowPos(m_Window, currentBackup.XPos, currentBackup.YPos);
+		}
 
 		glfwSetWindowUserPointer(m_Window, &m_Data);
 

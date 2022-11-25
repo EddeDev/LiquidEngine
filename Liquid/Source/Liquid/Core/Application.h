@@ -5,9 +5,9 @@
 #include "Liquid/Renderer/API/GraphicsAPI.h"
 #include "Liquid/Renderer/API/GraphicsContext.h"
 #include "Liquid/Renderer/API/Swapchain.h"
-#include "Liquid/Renderer/API/ImGuiRenderer.h"
 
 #include "Window/Window.h"
+#include "ThemeCreator.h"
 
 namespace Liquid {
 
@@ -54,7 +54,7 @@ namespace Liquid {
 		static Ref<Window> s_Window;
 		static Ref<GraphicsContext> s_Context;
 		static Ref<Swapchain> s_Swapchain;
-		static Ref<ImGuiRenderer> s_ImGuiRenderer;
+		static Unique<ThemeCreator> s_ThemeCreator;
 		static bool s_Running;
 		static bool s_Minimized;
 	};
