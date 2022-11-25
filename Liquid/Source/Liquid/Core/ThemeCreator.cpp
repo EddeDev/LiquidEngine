@@ -6,7 +6,7 @@
 
 namespace Liquid {
 
-	static const char* s_StyleStrings[ImGuiCol_COUNT] = {
+	static const char* s_StyleStrings[ImGuiStyleVar_COUNT] = {
 			"ImGuiStyleVar_Alpha",
 			"ImGuiStyleVar_DisabledAlpha",
 			"ImGuiStyleVar_WindowPadding",
