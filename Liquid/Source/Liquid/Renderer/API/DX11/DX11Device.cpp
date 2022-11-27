@@ -69,6 +69,8 @@ namespace Liquid {
 		DXGI_ADAPTER_DESC desc;
 		adapter->GetDesc(&desc);
 		m_Info.Vendor = static_cast<GraphicsDeviceVendor>(desc.VendorId);
+		// TODO
+
 		m_Info.DedicatedVideoMemory = desc.DedicatedVideoMemory;
 		m_Info.DedicatedSystemMemory = desc.DedicatedSystemMemory;
 		m_Info.SharedSystemMemory = desc.SharedSystemMemory;

@@ -4,44 +4,56 @@
 #include "API/ImGuiImplementation.h"
 
 #include <imgui.h>
-#include <imgui_internal.h>
 
 namespace Liquid {
 
-	static Ref<ImGuiImplementation> s_Implementation;
-
-	void ImGuiRenderer::Init()
+	ImGuiRenderer::ImGuiRenderer(const ImGuiRendererCreateInfo& createInfo)
 	{
 		IMGUI_CHECKVERSION();
-		ImGui::CreateContext();
+
+		m_PreviousContext = ImGui::GetCurrentContext();
+		m_Context = IM_NEW(ImGuiContext)(nullptr);
+		ImGui::SetCurrentContext(m_Context);
+		ImGui::Initialize();
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-		io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/segoeui.ttf", 18.0f);
+		if (createInfo.ViewportsEnable)
+			io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+		if (createInfo.DockingEnable)
+			io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-		// ImGui::StyleColorsDark();
+		AddFont(FontWeight::Regular, "Resources/Fonts/Roboto/Roboto-Regular.ttf");
+		AddFont(FontWeight::Bold, "Resources/Fonts/Roboto/Roboto-Bold.ttf");
+		AddFont(FontWeight::Light, "Resources/Fonts/Roboto/Roboto-Light.ttf");
+
+		io.FontDefault = m_Fonts.at(FontWeight::Regular);
 
 		InitDefaultStyle();
 
-		s_Implementation = ImGuiImplementation::Create();
+		ImGuiImplementationCreateInfo implementationCreateInfo;
+		implementationCreateInfo.WindowHandle = createInfo.WindowHandle;
+
+		m_Implementation = ImGuiImplementation::Create(implementationCreateInfo);
+
+		if (m_PreviousContext)
+			ImGui::SetCurrentContext(m_PreviousContext);
 	}
 
-	void ImGuiRenderer::Shutdown()
+	ImGuiRenderer::~ImGuiRenderer()
 	{
-		if (s_Implementation->GetReferenceCount() != 1)
-			LQ_PLATFORM_BREAK();
+		m_Implementation = nullptr;
 
-		s_Implementation = nullptr;
-
-		ImGui::DestroyContext();
+		ImGui::DestroyContext(m_Context);
 	}
 
 	void ImGuiRenderer::BeginFrame()
 	{
-		s_Implementation->BeginFrame();
+		m_PreviousContext = ImGui::GetCurrentContext();
+		ImGui::SetCurrentContext(m_Context);
+
+		m_Implementation->BeginFrame();
 
 		ImGui::NewFrame();
 	}
@@ -50,7 +62,7 @@ namespace Liquid {
 	{
 		ImGui::Render();
 
-		s_Implementation->EndFrame();
+		m_Implementation->EndFrame();
 
 		ImGuiIO& io = ImGui::GetIO();
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -58,11 +70,25 @@ namespace Liquid {
 			ImGui::UpdatePlatformWindows();
 			ImGui::RenderPlatformWindowsDefault();
 		}
+
+		if (m_PreviousContext)
+			ImGui::SetCurrentContext(m_PreviousContext);
+	}
+
+	void ImGuiRenderer::AddFont(FontWeight weight, const String& filepath)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+
+		ImFontConfig fontConfig;
+
+		ImFont* font = io.Fonts->AddFontFromFileTTF(filepath.c_str(), 18.0f, &fontConfig, io.Fonts->GetGlyphRangesCyrillic());
+
+		LQ_ASSERT(m_Fonts.find(weight) == m_Fonts.end(), "Font already exists!");
+		m_Fonts[weight] = font;
 	}
 
 	void ImGuiRenderer::InitDefaultStyle()
-	{
-		// Style
+	{ 
 		auto& style = ImGui::GetStyle();
 		style.Alpha = 1.0f;
 		style.DisabledAlpha = 0.6f;
@@ -90,14 +116,13 @@ namespace Liquid {
 		style.ButtonTextAlign = { 0.5f, 0.5f };
 		style.SelectableTextAlign = { 0.0f, 0.0f };
 
-		// Colors
 		auto& colors = style.Colors;
-		colors[ImGuiCol_Text]                  = ImVec4(0.88f, 0.88f, 0.88f, 1.0f);
-		colors[ImGuiCol_TextDisabled]          = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
-		colors[ImGuiCol_WindowBg]              = ImVec4(0.0883f, 0.0902f, 0.0883f, 1.0f);
-		colors[ImGuiCol_ChildBg]               = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
-		colors[ImGuiCol_PopupBg]               = ImVec4(0.08f, 0.08f, 0.08f, 0.94f);
-		colors[ImGuiCol_Border]                = ImVec4(0.1882f, 0.1863f, 0.1882f, 1.0f);
+		colors[ImGuiCol_Text]                  = ImVec4(0.917647f, 0.909804f, 0.917647f, 1.0f);
+		colors[ImGuiCol_TextDisabled]          = ImVec4(0.513726f, 0.509804f, 0.513726f, 1.0f);
+		colors[ImGuiCol_WindowBg]              = ImVec4(0.0862745f, 0.0784314f, 0.0862745f, 1.0f);
+		colors[ImGuiCol_ChildBg]               = ImVec4(0.0627451f, 0.0627451f, 0.0627451f, 1.0f);
+		colors[ImGuiCol_PopupBg]               = ImVec4(0.101961f, 0.0980392f, 0.105882f, 1.0f);
+		colors[ImGuiCol_Border]                = ImVec4(0.203922f, 0.2f, 0.203922f, 1.0f);
 		colors[ImGuiCol_BorderShadow]          = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
 		colors[ImGuiCol_FrameBg]               = ImVec4(0.06f, 0.06f, 0.06f, 1.0f);
 		colors[ImGuiCol_FrameBgHovered]        = ImVec4(0.1589f, 0.1608f, 0.1589f, 1.0f);
@@ -119,10 +144,10 @@ namespace Liquid {
 		colors[ImGuiCol_Header]                = ImVec4(0.18f, 0.18f, 0.19f, 1.0f);
 		colors[ImGuiCol_HeaderHovered]         = ImVec4(0.23f, 0.23f, 0.24f, 1.0f);
 		colors[ImGuiCol_HeaderActive]          = ImVec4(0.31f, 0.3f, 0.31f, 1.0f);
-		colors[ImGuiCol_Separator]             = ImVec4(0.4294f, 0.4294f, 0.4314f, 0.502f);
+		colors[ImGuiCol_Separator]             = ImVec4(0.196078f, 0.182238f, 0.195916f, 1.0f);
 		colors[ImGuiCol_SeparatorHovered]      = ImVec4(0.1f, 0.4f, 0.75f, 0.78f);
 		colors[ImGuiCol_SeparatorActive]       = ImVec4(0.1f, 0.4f, 0.75f, 1.0f);
-		colors[ImGuiCol_ResizeGrip]            = ImVec4(0.26f, 0.59f, 0.98f, 0.2f);
+		colors[ImGuiCol_ResizeGrip]            = ImVec4(0.2f, 0.760784f, 0.964706f, 0.784314f);
 		colors[ImGuiCol_ResizeGripHovered]     = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
 		colors[ImGuiCol_ResizeGripActive]      = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
 		colors[ImGuiCol_Tab]                   = ImVec4(0.149f, 0.1471f, 0.149f, 1.0f);

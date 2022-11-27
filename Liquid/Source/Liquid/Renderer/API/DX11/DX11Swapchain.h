@@ -22,14 +22,13 @@ namespace Liquid {
 		virtual bool IsVSyncEnabled() const override { return m_VSync; }
 	private:
 		SwapchainCreateInfo m_CreateInfo;
+		bool m_VSync;
 
 		DXRef<IDXGISwapChain> m_SwapChain;
 
 		DXRef<ID3D11RenderTargetView> m_BackBuffer;
 		DXRef<ID3D11Texture2D> m_DepthStencilBuffer;
 		DXRef<ID3D11DepthStencilView> m_DepthStencilView;
-
-		bool m_VSync = false;
 	};
 
 }

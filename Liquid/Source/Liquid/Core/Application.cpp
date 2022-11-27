@@ -2,6 +2,7 @@
 #include "Application.h"
 
 #include "Window/Window.h"
+#include "SplashScreen.h"
 
 #include "Liquid/Renderer/ImGuiRenderer.h"
 
@@ -12,9 +13,11 @@
 
 namespace Liquid {
 
-	Ref<Window> Application::s_Window;
+	Ref<Window> Application::s_MainWindow;
+	Ref<GraphicsDevice> Application::s_Device;
 	Ref<GraphicsContext> Application::s_Context;
 	Ref<Swapchain> Application::s_Swapchain;
+	Ref<ImGuiRenderer> Application::s_ImGuiRenderer;
 	Unique<ThemeCreator> Application::s_ThemeCreator;
 	bool Application::s_Running = true;
 	bool Application::s_Minimized = false;
@@ -32,43 +35,67 @@ namespace Liquid {
 		windowCreateInfo.Maximize = true;
 		// windowCreateInfo.Decorated = false;
 
-		s_Window = Window::Create(windowCreateInfo);
-		s_Window->AddCloseCallback(LQ_BIND_CALLBACK(OnWindowCloseCallback));
-		s_Window->AddWindowSizeCallback(LQ_BIND_CALLBACK(OnWindowSizeCallback));
+		s_MainWindow = Window::Create(windowCreateInfo);
+		s_MainWindow->AddCloseCallback(LQ_BIND_CALLBACK(OnWindowCloseCallback));
+		s_MainWindow->AddWindowSizeCallback(LQ_BIND_CALLBACK(OnWindowSizeCallback));
 
-		GraphicsContextCreateInfo contextCreateInfo;
-		contextCreateInfo.WindowHandle = s_Window->GetPlatformHandle();
+		// Device
+		{
+			GraphicsDeviceCreateInfo deviceCreateInfo;
 #ifdef LQ_BUILD_DEBUG
-		contextCreateInfo.EnableDebugLayers = true;
+			deviceCreateInfo.EnableDebugLayers = true;
 #else
-		contextCreateInfo.EnableDebugLayers = false;
+			deviceCreateInfo.EnableDebugLayers = false;
 #endif
-		s_Context = GraphicsContext::Create(contextCreateInfo);
+			s_Device = GraphicsDevice::Select(deviceCreateInfo);
+		}
 
-		SwapchainCreateInfo swapchainCreateInfo;
-		swapchainCreateInfo.WindowHandle = s_Window->GetPlatformHandle();
-		swapchainCreateInfo.InitialWidth = s_Window->GetWidth();
-		swapchainCreateInfo.InitialHeight = s_Window->GetHeight();
-		swapchainCreateInfo.InitialFullscreenState = s_Window->IsFullscreen();
-		swapchainCreateInfo.AllowTearing = true;
-		swapchainCreateInfo.ColorFormat = PixelFormat::RGBA;
-		swapchainCreateInfo.DepthFormat = PixelFormat::DEPTH24_STENCIL8;
-		swapchainCreateInfo.BufferCount = 3;
-		swapchainCreateInfo.SampleCount = 1;
-		s_Swapchain = Swapchain::Create(swapchainCreateInfo);
+		SplashScreen::Init();
+		SplashScreen::Run();
+		SplashScreen::Shutdown();
 
-		s_Window->SetVisible(true);
+		// Context
+		{
+			GraphicsContextCreateInfo contextCreateInfo;
+			contextCreateInfo.WindowHandle = s_MainWindow->GetPlatformHandle();
+#ifdef LQ_BUILD_DEBUG
+			contextCreateInfo.EnableDebugLayers = true;
+#else
+			contextCreateInfo.EnableDebugLayers = false;
+#endif
+			s_Context = GraphicsContext::Create(contextCreateInfo);
+		}
 
-		ImGuiRenderer::Init();
+		// Swapchain
+		{
+			SwapchainCreateInfo swapchainCreateInfo;
+			swapchainCreateInfo.WindowHandle = s_MainWindow->GetPlatformHandle();
+			swapchainCreateInfo.InitialWidth = s_MainWindow->GetWidth();
+			swapchainCreateInfo.InitialHeight = s_MainWindow->GetHeight();
+			swapchainCreateInfo.InitialFullscreenState = s_MainWindow->IsFullscreen();
+			swapchainCreateInfo.AllowTearing = true;
+			swapchainCreateInfo.ColorFormat = PixelFormat::RGBA;
+			swapchainCreateInfo.DepthFormat = PixelFormat::DEPTH24_STENCIL8;
+			swapchainCreateInfo.BufferCount = 3;
+			swapchainCreateInfo.SampleCount = 1;
+			s_Swapchain = Swapchain::Create(swapchainCreateInfo);
+		}
+
+		// ImGui
+		{
+			ImGuiRendererCreateInfo createInfo;
+			createInfo.WindowHandle = s_MainWindow->GetHandle();
+
+			s_ImGuiRenderer = Ref<ImGuiRenderer>::Create(createInfo);
+		}
 
 		s_ThemeCreator = CreateUnique<ThemeCreator>();
+
+		s_MainWindow->SetVisible(true);
 	}
 
 	void Application::Shutdown()
 	{
-		ImGuiRenderer::Shutdown();
-
-		s_Window = nullptr;
 	}
 
 	void Application::Run()
@@ -89,19 +116,36 @@ namespace Liquid {
 				lastTime = time;
 			}
 
-			s_Window->PollEvents();
+			s_MainWindow->PollEvents();
 
 			if (!s_Minimized)
 			{
 				s_Swapchain->BeginFrame();
 				s_Swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
 
-				ImGuiRenderer::BeginFrame();
-
-				s_ThemeCreator->Render();
+				s_ImGuiRenderer->BeginFrame();
 
 				ImGui::Begin("Liquid Engine");
 				ImGui::Text("%d fps", fps);
+
+				BuildConfiguration buildConfig = GetBuildConfiguration();
+				String buildConfigName;
+				switch (buildConfig)
+				{
+				case BuildConfiguration::Debug:    buildConfigName = "Debug"; break;
+				case BuildConfiguration::Release:  buildConfigName = "Release"; break;
+				case BuildConfiguration::Shipping: buildConfigName = "Shipping"; break;
+				}
+				ImGui::Text("Build Configuration: %s", buildConfigName.c_str());
+
+				if (ImGui::CollapsingHeader("Graphics Device"))
+				{
+					auto& deviceInfo = s_Device->GetInfo();
+					ImGui::Text("Vendor: %s", GraphicsDeviceUtils::VendorToString(deviceInfo.Vendor));
+					ImGui::Text("Renderer: %s", deviceInfo.Renderer.c_str());
+					String currentGraphicsAPI = GraphicsAPIUtils::GetGraphicsAPIName(GetGraphicsAPI());
+					ImGui::Text("%s Version: %s", currentGraphicsAPI.c_str(), deviceInfo.PlatformVersion.c_str());
+				}
 
 				bool vsync = s_Swapchain->IsVSyncEnabled();
 				if (ImGui::Checkbox("V-Sync", &vsync))
@@ -109,9 +153,7 @@ namespace Liquid {
 
 				ImGui::End();
 
-				ImGui::ShowDemoWindow();
-
-				ImGuiRenderer::EndFrame();
+				s_ImGuiRenderer->EndFrame();
 
 				s_Swapchain->Present();
 			}
@@ -134,7 +176,7 @@ namespace Liquid {
 		if (s_Minimized)
 			s_Minimized = false;
 
-		s_Swapchain->Resize(width, height, s_Window->IsFullscreen());
+		s_Swapchain->Resize(width, height, s_MainWindow->IsFullscreen());
 	}
 
 	BuildConfiguration Application::GetBuildConfiguration()

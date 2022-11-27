@@ -12,6 +12,7 @@ namespace Liquid {
 		uint32 InitialHeight = 0;
 
 		bool InitialFullscreenState = false;
+		bool InitialVSyncState = true;
 		bool AllowTearing = true;
 
 		PixelFormat ColorFormat = PixelFormat::RGBA;

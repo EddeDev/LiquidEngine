@@ -39,6 +39,8 @@ namespace Liquid {
 		virtual ~GraphicsDevice() {}
 
 		virtual const GraphicsDeviceInfo& GetInfo() const = 0;
+
+		static Ref<GraphicsDevice> Select(const GraphicsDeviceCreateInfo& createInfo);
 	};
 
 	namespace GraphicsDeviceUtils {

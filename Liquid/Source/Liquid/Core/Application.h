@@ -3,8 +3,11 @@
 #include "Liquid/Launch/CommandLineArgs.h"
 
 #include "Liquid/Renderer/API/GraphicsAPI.h"
+#include "Liquid/Renderer/API/GraphicsDevice.h"
 #include "Liquid/Renderer/API/GraphicsContext.h"
 #include "Liquid/Renderer/API/Swapchain.h"
+
+#include "Liquid/Renderer/ImGuiRenderer.h"
 
 #include "Window/Window.h"
 #include "ThemeCreator.h"
@@ -44,16 +47,19 @@ namespace Liquid {
 		static BuildConfiguration GetBuildConfiguration();
 		static GraphicsAPI GetGraphicsAPI();
 
-		static Ref<Window> GetWindow() { return s_Window; }
+		static Ref<Window> GetMainWindow() { return s_MainWindow; }
+		static Ref<GraphicsDevice> GetDevice() { return s_Device; }
 		static Ref<GraphicsContext> GetContext() { return s_Context; }
 		static Ref<Swapchain> GetSwapchain() { return s_Swapchain; }
 	private:
 		static void OnWindowCloseCallback();
 		static void OnWindowSizeCallback(uint32 width, uint32 height);
 	private:
-		static Ref<Window> s_Window;
+		static Ref<Window> s_MainWindow;
+		static Ref<GraphicsDevice> s_Device;
 		static Ref<GraphicsContext> s_Context;
 		static Ref<Swapchain> s_Swapchain;
+		static Ref<ImGuiRenderer> s_ImGuiRenderer;
 		static Unique<ThemeCreator> s_ThemeCreator;
 		static bool s_Running;
 		static bool s_Minimized;

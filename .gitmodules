@@ -11,3 +11,6 @@
 	path = Liquid/Libraries/imgui
 	url = https://github.com/EddeDev/imgui.git
 	branch = docking
+[submodule "Liquid/Libraries/stb"]
+	path = Liquid/Libraries/stb
+	url = https://github.com/EddeDev/stb.git

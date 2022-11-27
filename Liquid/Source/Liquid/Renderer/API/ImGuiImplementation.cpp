@@ -7,11 +7,11 @@
 
 namespace Liquid {
 
-	Ref<ImGuiImplementation> ImGuiImplementation::Create()
+	Ref<ImGuiImplementation> ImGuiImplementation::Create(const ImGuiImplementationCreateInfo& createInfo)
 	{
 		switch (Application::GetGraphicsAPI())
 		{
-		case GraphicsAPI::DX11: return Ref<DX11ImGuiImplementation>::Create();
+		case GraphicsAPI::DX11: return Ref<DX11ImGuiImplementation>::Create(createInfo);
 		}
 		LQ_VERIFY(false, "Unknown Graphics API");
 		return nullptr;

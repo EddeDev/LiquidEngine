@@ -25,7 +25,7 @@ namespace Liquid {
 	}
 
 	DX11Swapchain::DX11Swapchain(const SwapchainCreateInfo& createInfo)
-		: m_CreateInfo(createInfo)
+		: m_CreateInfo(createInfo), m_VSync(createInfo.InitialVSyncState)
 	{
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 

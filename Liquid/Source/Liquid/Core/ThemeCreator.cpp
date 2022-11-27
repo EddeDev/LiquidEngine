@@ -252,7 +252,7 @@ namespace Liquid {
 
 				std::vector<uint32> colorStringLengths(ImGuiCol_COUNT);
 				for (uint32 i = 0; i < ImGuiCol_COUNT; i++)
-					colorStringLengths[i] = strlen(s_ColorStrings[i]);
+					colorStringLengths[i] = static_cast<uint32>(strlen(s_ColorStrings[i]));
 
 				uint32 highestColorStringLength = *std::max_element(colorStringLengths.begin(), colorStringLengths.end());
 

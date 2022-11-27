@@ -64,8 +64,8 @@ namespace Liquid {
 		glfwWindowHint(GLFW_STENCIL_BITS, 0);
 		glfwWindowHint(GLFW_ALPHA_BITS, 0);
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 		glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
+		glfwWindowHint(GLFW_RESIZABLE, createInfo.Resizable);
 		glfwWindowHint(GLFW_FLOATING, m_Data.Fullscreen);
 		glfwWindowHint(GLFW_DECORATED, createInfo.Decorated && !m_Data.Fullscreen);
 		glfwWindowHint(GLFW_MAXIMIZED, createInfo.Maximize);

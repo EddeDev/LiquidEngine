@@ -9,6 +9,7 @@ namespace Liquid {
 		String Title = "Liquid Engine";
 		bool Fullscreen = false;
 		bool Maximize = false;
+		bool Resizable = true;
 		bool Decorated = true;
 	};
 
