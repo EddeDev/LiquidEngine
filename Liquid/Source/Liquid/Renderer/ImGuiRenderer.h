@@ -8,10 +8,12 @@ namespace Liquid {
 
 	struct ImGuiRendererCreateInfo
 	{
-		void* WindowHandle = nullptr;
+		Ref<Window> Window;
 
 		bool ViewportsEnable = true;
 		bool DockingEnable = true;
+
+		const char* DebugName = "ImGuiRenderer";
 	};
 
 	enum class FontWeight : uint8
@@ -38,12 +40,17 @@ namespace Liquid {
 
 		static void InitDefaultStyle();
 	private:
+		ImGuiRendererCreateInfo m_CreateInfo;
+
 		ImGuiContext* m_Context = nullptr;
 		ImGuiContext* m_PreviousContext = nullptr;
 
 		Ref<ImGuiImplementation> m_Implementation;
 
 		std::unordered_map<FontWeight, ImFont*> m_Fonts;
+
+		static std::unordered_map<ImGuiContext*, ImGuiRenderer*> s_ContextMap;
+		static std::recursive_mutex s_Mutex;
 	};
 
 }

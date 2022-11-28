@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Liquid/Core/Window/Window.h"
+
 #include "Texture.h"
 
 #include <imgui.h>
@@ -8,7 +10,8 @@ namespace Liquid {
 
 	struct ImGuiImplementationCreateInfo
 	{
-		void* WindowHandle;
+		Ref<Window> Window;
+		ImGuiContext* Context;
 	};
 
 	class ImGuiImplementation : public RefCounted

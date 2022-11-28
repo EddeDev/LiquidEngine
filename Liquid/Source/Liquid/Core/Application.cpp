@@ -27,18 +27,6 @@ namespace Liquid {
 		String currentGraphicsAPI = GraphicsAPIUtils::GetGraphicsAPIName(GetGraphicsAPI());
 		LQ_INFO_ARGS("Graphics API: {0}", currentGraphicsAPI);
 
-		WindowCreateInfo windowCreateInfo;
-		windowCreateInfo.Width = 1280;
-		windowCreateInfo.Height = 720;
-		windowCreateInfo.Title = "Liquid Engine";
-		windowCreateInfo.Fullscreen = false;
-		windowCreateInfo.Maximize = true;
-		// windowCreateInfo.Decorated = false;
-
-		s_MainWindow = Window::Create(windowCreateInfo);
-		s_MainWindow->AddCloseCallback(LQ_BIND_CALLBACK(OnWindowCloseCallback));
-		s_MainWindow->AddWindowSizeCallback(LQ_BIND_CALLBACK(OnWindowSizeCallback));
-
 		// Device
 		{
 			GraphicsDeviceCreateInfo deviceCreateInfo;
@@ -50,9 +38,26 @@ namespace Liquid {
 			s_Device = GraphicsDevice::Select(deviceCreateInfo);
 		}
 
-		SplashScreen::Init();
-		SplashScreen::Run();
-		SplashScreen::Shutdown();
+		Ref<SplashScreen> splashScreen = Ref<SplashScreen>::Create();
+		splashScreen->AddProgressData({ "Initializing...", 0.0f });
+
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for(1000ms);
+
+		// Window
+		{
+			WindowCreateInfo windowCreateInfo;
+			windowCreateInfo.Width = 1280;
+			windowCreateInfo.Height = 720;
+			windowCreateInfo.Title = "Liquid Engine";
+			windowCreateInfo.Fullscreen = false;
+			windowCreateInfo.Maximize = true;
+
+			splashScreen->AddProgressData({ "Creating window...", 15.0f });
+			s_MainWindow = Window::Create(windowCreateInfo);
+			s_MainWindow->AddCloseCallback(LQ_BIND_CALLBACK(OnWindowCloseCallback));
+			s_MainWindow->AddWindowSizeCallback(LQ_BIND_CALLBACK(OnWindowSizeCallback));
+		}
 
 		// Context
 		{
@@ -63,6 +68,7 @@ namespace Liquid {
 #else
 			contextCreateInfo.EnableDebugLayers = false;
 #endif
+			splashScreen->AddProgressData({ "Creating rendering context...", 30.0f });
 			s_Context = GraphicsContext::Create(contextCreateInfo);
 		}
 
@@ -78,18 +84,28 @@ namespace Liquid {
 			swapchainCreateInfo.DepthFormat = PixelFormat::DEPTH24_STENCIL8;
 			swapchainCreateInfo.BufferCount = 3;
 			swapchainCreateInfo.SampleCount = 1;
+			splashScreen->AddProgressData({ "Creating swapchain...", 50.0f });
 			s_Swapchain = Swapchain::Create(swapchainCreateInfo);
 		}
 
 		// ImGui
 		{
 			ImGuiRendererCreateInfo createInfo;
-			createInfo.WindowHandle = s_MainWindow->GetHandle();
+			createInfo.Window = s_MainWindow;
+			createInfo.DebugName = "ImGuiRenderer-Main";
 
+			splashScreen->AddProgressData({ "Creating ImGui context...", 70.0f });
 			s_ImGuiRenderer = Ref<ImGuiRenderer>::Create(createInfo);
 		}
 
+		splashScreen->AddProgressData({ "Loading resources...", 80.0f });
 		s_ThemeCreator = CreateUnique<ThemeCreator>();
+
+		splashScreen->AddProgressData({ "Finish...", 100.0f });
+
+		if (splashScreen->GetReferenceCount() > 1)
+			LQ_PLATFORM_BREAK();
+		splashScreen = nullptr;
 
 		s_MainWindow->SetVisible(true);
 	}

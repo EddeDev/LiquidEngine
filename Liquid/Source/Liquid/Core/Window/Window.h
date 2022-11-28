@@ -19,10 +19,18 @@ namespace Liquid {
 		virtual ~Window() {}
 
 		virtual void PollEvents() const = 0;
+		virtual void WaitEvents() const = 0;
 
 		virtual void* GetHandle() const = 0;
 		virtual void* GetPlatformHandle() const = 0;
 
+		virtual void AddFocusCallback(const std::function<void(int32)>& callback) = 0;
+		virtual void AddCursorEnterCallback(const std::function<void(int32)>& callback) = 0;
+		virtual void AddCursorPosCallback(const std::function<void(double, double)>& callback) = 0;
+		virtual void AddMouseButtonCallback(const std::function<void(int32, int32, int32)>& callback) = 0;
+		virtual void AddScrollCallback(const std::function<void(double, double)>& callback) = 0;
+		virtual void AddKeyCallback(const std::function<void(int32, int32, int32, int32)>& callback) = 0;
+		virtual void AddCharCallback(const std::function<void(uint32)>& callback) = 0;
 		virtual void AddCloseCallback(const std::function<void()>& callback) = 0;
 		virtual void AddWindowSizeCallback(const std::function<void(uint32, uint32)>& callback) = 0;
 

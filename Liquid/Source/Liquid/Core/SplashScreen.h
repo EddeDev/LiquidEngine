@@ -2,16 +2,29 @@
 
 namespace Liquid {
 
-	class SplashScreen
+	class SplashScreen : public RefCounted
 	{
 	public:
-		static void Init();
-		static void Shutdown();
+		struct ProgressData
+		{
+			String InfoText;
+			float Progress;
+		};
+	public:
+		SplashScreen();
+		virtual ~SplashScreen();
 
-		static void Run();
+		void AddProgressData(const ProgressData& data);
 	private:
+		static void ThreadLoop(SplashScreen* instance);
+
 		static void BeginDockSpace();
 		static void EndDockSpace();
+	private:
+		std::thread m_Thread;
+		std::mutex m_ThreadMutex;
+
+		std::vector<ProgressData> m_ProgressList;
 	};
 
 }

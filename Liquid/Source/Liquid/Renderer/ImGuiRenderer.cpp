@@ -7,13 +7,24 @@
 
 namespace Liquid {
 
+	std::unordered_map<ImGuiContext*, ImGuiRenderer*> ImGuiRenderer::s_ContextMap;
+	std::recursive_mutex ImGuiRenderer::s_Mutex;
+
 	ImGuiRenderer::ImGuiRenderer(const ImGuiRendererCreateInfo& createInfo)
+		: m_CreateInfo(createInfo)
 	{
+		std::scoped_lock<std::recursive_mutex> lock(s_Mutex);
+
 		IMGUI_CHECKVERSION();
 
 		m_PreviousContext = ImGui::GetCurrentContext();
 		m_Context = IM_NEW(ImGuiContext)(nullptr);
+		s_ContextMap[m_Context] = this;
+
+		// LQ_INFO_CATEGORY("ImGui Renderer", "Temporarily setting context ({0})", createInfo.DebugName);
 		ImGui::SetCurrentContext(m_Context);
+
+		// LQ_INFO_CATEGORY("ImGui Renderer", "Initializing...", createInfo.DebugName);
 		ImGui::Initialize();
 
 		ImGuiIO& io = ImGui::GetIO();
@@ -33,23 +44,39 @@ namespace Liquid {
 		InitDefaultStyle();
 
 		ImGuiImplementationCreateInfo implementationCreateInfo;
-		implementationCreateInfo.WindowHandle = createInfo.WindowHandle;
+		implementationCreateInfo.Context = m_Context;
+		implementationCreateInfo.Window = createInfo.Window;
 
 		m_Implementation = ImGuiImplementation::Create(implementationCreateInfo);
 
 		if (m_PreviousContext)
+		{
+			ImGuiRenderer* previousRenderer = s_ContextMap.at(m_PreviousContext);
+			if (!previousRenderer)
+				LQ_PLATFORM_BREAK();
+
+			// LQ_INFO_CATEGORY("ImGui Renderer", "Switching back to previous context ({0})", previousRenderer->m_CreateInfo.DebugName);
 			ImGui::SetCurrentContext(m_PreviousContext);
+		}
+		else
+		{
+			// LQ_INFO_CATEGORY("ImGui Renderer", "Switching back to previous context (nullptr)");
+			ImGui::SetCurrentContext(nullptr);
+		}
 	}
 
 	ImGuiRenderer::~ImGuiRenderer()
 	{
+		std::scoped_lock<std::recursive_mutex> lock(s_Mutex);
 		m_Implementation = nullptr;
-
 		ImGui::DestroyContext(m_Context);
 	}
 
 	void ImGuiRenderer::BeginFrame()
 	{
+		// LQ_INFO_CATEGORY("ImGui Renderer", "Locking mutex from {0}", m_CreateInfo.DebugName);
+		s_Mutex.lock();
+
 		m_PreviousContext = ImGui::GetCurrentContext();
 		ImGui::SetCurrentContext(m_Context);
 
@@ -60,6 +87,9 @@ namespace Liquid {
 
 	void ImGuiRenderer::EndFrame()
 	{
+		if (ImGui::GetCurrentContext() != m_Context)
+			LQ_PLATFORM_BREAK();
+
 		ImGui::Render();
 
 		m_Implementation->EndFrame();
@@ -72,17 +102,28 @@ namespace Liquid {
 		}
 
 		if (m_PreviousContext)
+		{
+			ImGuiRenderer* previousRenderer = s_ContextMap.at(m_PreviousContext);
+			if (!previousRenderer)
+				LQ_PLATFORM_BREAK();
+
+			// LQ_INFO_CATEGORY("ImGui Renderer", "Switching back to previous context ({0})", previousRenderer->m_CreateInfo.DebugName);
 			ImGui::SetCurrentContext(m_PreviousContext);
+		}
+		else
+		{
+			// LQ_INFO_CATEGORY("ImGui Renderer", "Switching back to previous context (nullptr)");
+			ImGui::SetCurrentContext(nullptr);
+		}
+
+		// LQ_INFO_CATEGORY("ImGui Renderer", "Unlocking mutex from {0}", m_CreateInfo.DebugName);
+		s_Mutex.unlock();
 	}
 
 	void ImGuiRenderer::AddFont(FontWeight weight, const String& filepath)
 	{
 		ImGuiIO& io = ImGui::GetIO();
-
-		ImFontConfig fontConfig;
-
-		ImFont* font = io.Fonts->AddFontFromFileTTF(filepath.c_str(), 18.0f, &fontConfig, io.Fonts->GetGlyphRangesCyrillic());
-
+		ImFont* font = io.Fonts->AddFontFromFileTTF(filepath.c_str(), 18.0f, nullptr, io.Fonts->GetGlyphRangesCyrillic());
 		LQ_ASSERT(m_Fonts.find(weight) == m_Fonts.end(), "Font already exists!");
 		m_Fonts[weight] = font;
 	}

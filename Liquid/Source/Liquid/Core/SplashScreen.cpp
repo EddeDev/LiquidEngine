@@ -11,160 +11,140 @@
 
 #include <GLFW/glfw3.h>
 
-
-
-
-
-
-// Temp
-#include <random>
-
 namespace Liquid {
 
-	struct SplashScreenData
+	SplashScreen::SplashScreen()
 	{
-		Ref<Window> Window;
-		Ref<Swapchain> Swapchain;
-		Ref<ImGuiRenderer> ImGuiRenderer;
-
-		Ref<Texture> BackgroundTexture;
-
-		bool Running;
-	};
-
-	static SplashScreenData* s_Data = nullptr;
-
-	void SplashScreen::Init()
-	{
-		s_Data = new SplashScreenData();
-		memset(s_Data, 0, sizeof(SplashScreenData));
-
-		// Window
-		{
-			WindowCreateInfo windowCreateInfo;
-			windowCreateInfo.Width = 1440 / 2;
-			windowCreateInfo.Height = 740 / 2;
-			windowCreateInfo.Resizable = false;
-			windowCreateInfo.Decorated = false;
-
-			s_Data->Window = Window::Create(windowCreateInfo);
-		}
-
-		// Swapchain
-		{
-			SwapchainCreateInfo swapchainCreateInfo;
-			swapchainCreateInfo.WindowHandle = s_Data->Window->GetPlatformHandle();
-			swapchainCreateInfo.InitialWidth = s_Data->Window->GetWidth();
-			swapchainCreateInfo.InitialHeight = s_Data->Window->GetHeight();
-			swapchainCreateInfo.InitialFullscreenState = s_Data->Window->IsFullscreen();
-			swapchainCreateInfo.InitialVSyncState = true;
-			swapchainCreateInfo.AllowTearing = false;
-			swapchainCreateInfo.ColorFormat = PixelFormat::RGBA;
-			swapchainCreateInfo.DepthFormat = PixelFormat::DEPTH24_STENCIL8;
-			swapchainCreateInfo.BufferCount = 3;
-			swapchainCreateInfo.SampleCount = 1;
-			s_Data->Swapchain = Swapchain::Create(swapchainCreateInfo);
-		}
-
-		// ImGui
-		{
-			ImGuiRendererCreateInfo createInfo;
-			createInfo.WindowHandle = s_Data->Window->GetHandle();
-			createInfo.ViewportsEnable = false;
-
-			s_Data->ImGuiRenderer = Ref<ImGuiRenderer>::Create(createInfo);
-		}
-
-		s_Data->BackgroundTexture = Texture::Create("Resources/Textures/SplashScreenImage.png");
-
-		s_Data->Window->SetVisible(true);
-		s_Data->Running = true;
+		m_Thread = std::thread(ThreadLoop, this);
 	}
 
-	void SplashScreen::Shutdown()
+	SplashScreen::~SplashScreen()
 	{
-		delete s_Data;
-		s_Data = nullptr;
+		m_Thread.join();
 	}
 
-	void SplashScreen::Run()
+	void SplashScreen::AddProgressData(const ProgressData& data)
 	{
-		float lastTime = static_cast<float>(glfwGetTime());
-		float deltaTime = 0.0f;
+		std::scoped_lock<std::mutex> lock(m_ThreadMutex);
 
+		m_ProgressList.push_back(data);
+		glfwPostEmptyEvent();
+	}
+
+	void SplashScreen::ThreadLoop(SplashScreen* instance)
+	{
+		WindowCreateInfo windowCreateInfo;
+		windowCreateInfo.Width = 1440 / 2;
+		windowCreateInfo.Height = 740 / 2;
+		windowCreateInfo.Resizable = false;
+		windowCreateInfo.Decorated = false;
+		Ref<Window> window = Window::Create(windowCreateInfo);
+
+		SwapchainCreateInfo swapchainCreateInfo;
+		swapchainCreateInfo.WindowHandle = window->GetPlatformHandle();
+		swapchainCreateInfo.InitialWidth = window->GetWidth();
+		swapchainCreateInfo.InitialHeight = window->GetHeight();
+		swapchainCreateInfo.InitialFullscreenState = window->IsFullscreen();
+		swapchainCreateInfo.InitialVSyncState = true;
+		swapchainCreateInfo.AllowTearing = false;
+		swapchainCreateInfo.ColorFormat = PixelFormat::RGBA;
+		swapchainCreateInfo.DepthFormat = PixelFormat::DEPTH24_STENCIL8;
+		swapchainCreateInfo.BufferCount = 3;
+		swapchainCreateInfo.SampleCount = 1;
+		Ref<Swapchain> swapchain = Swapchain::Create(swapchainCreateInfo);
+
+		ImGuiRendererCreateInfo imguiRendererCreateInfo;
+		imguiRendererCreateInfo.Window = window;
+		imguiRendererCreateInfo.ViewportsEnable = false;
+		imguiRendererCreateInfo.DebugName = "ImGuiRenderer-SplashScreen";
+		Ref<ImGuiRenderer> imguiRenderer = Ref<ImGuiRenderer>::Create(imguiRendererCreateInfo);
+
+		Ref<Texture> backgroundTexture = Texture::Create("Resources/Textures/SplashScreenImage.png");
+		
 		float progress = 0.0f;
+		float lastProgress = -1.0f;
 
-		while (s_Data->Running)
+		window->SetVisible(true);
+
+		while (progress < 100.0f)
 		{
-			float time = static_cast<float>(glfwGetTime());
-			deltaTime = time - lastTime;
-			lastTime = time;
+			window->WaitEvents();
 
-			s_Data->Window->PollEvents();
+			ProgressData currentProgress;
+			{
+				std::scoped_lock<std::mutex> lock(instance->m_ThreadMutex);
+				currentProgress = instance->m_ProgressList.back();
+			}
 
-			s_Data->Swapchain->BeginFrame();
-			s_Data->Swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
+			progress = currentProgress.Progress;
+			if (progress != lastProgress)
+			{
+				swapchain->BeginFrame();
+				swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
 
-			s_Data->ImGuiRenderer->BeginFrame();
-			
-			BeginDockSpace();
+				imguiRenderer->BeginFrame();
 
-			auto viewport = ImGui::GetMainViewport();
-			ImGui::SetNextWindowPos(viewport->Pos);
-			ImGui::SetNextWindowSize(viewport->Size);
-			ImGui::SetNextWindowViewport(viewport->ID);
+				BeginDockSpace();
 
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+				auto viewport = ImGui::GetMainViewport();
+				ImGui::SetNextWindowPos(viewport->Pos);
+				ImGui::SetNextWindowSize(viewport->Size);
+				ImGui::SetNextWindowViewport(viewport->ID);
 
-			ImGui::PushStyleColor(ImGuiCol_WindowBg, { 0.01f, 0.01f, 0.02f, 1.0f });
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
 
-			ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDocking;
-			windowFlags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-			windowFlags |= ImGuiWindowFlags_NoNavFocus;
+				ImGui::PushStyleColor(ImGuiCol_WindowBg, { 0.01f, 0.01f, 0.02f, 1.0f });
 
-			ImGui::Begin("SplashScreenWindow", nullptr, windowFlags);
+				ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDocking;
+				windowFlags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+				windowFlags |= ImGuiWindowFlags_NoNavFocus;
 
-			Ref<ImGuiImplementation> imgui = s_Data->ImGuiRenderer->GetImplementation();
-			imgui->Image(s_Data->BackgroundTexture, ImGui::GetContentRegionAvail());
+				float cursorOffsetX = 8.0f;
 
-			ImGui::SetCursorPosY(300.0f);
+				ImGui::Begin("SplashScreenWindow", nullptr, windowFlags);
 
-			ImFont* boldFont = s_Data->ImGuiRenderer->GetFont(FontWeight::Bold);
-			ImGui::PushFont(boldFont);
-			ImGui::Text("Liquid Editor");
-			ImGui::PopFont();
+				Ref<ImGuiImplementation> imgui = imguiRenderer->GetImplementation();
+				imgui->Image(backgroundTexture, ImGui::GetContentRegionAvail());
 
-			ImFont* lightFont = s_Data->ImGuiRenderer->GetFont(FontWeight::Light);
-			ImGui::PushFont(lightFont);
-			ImGui::Text("Liquid Editor");
+				ImGui::SetCursorPosY(300.0f);
 
-			// TEST
-			float random = (float)std::rand() / (float)RAND_MAX;
-			random *= 30.0f;
-			progress += deltaTime * random;
-			if (progress > 100.0f)
-				s_Data->Running = false;
+				ImFont* boldFont = imguiRenderer->GetFont(FontWeight::Bold);
+				ImGui::PushFont(boldFont);
+				ImGui::SetCursorPosX(cursorOffsetX);
+				ImGui::TextUnformatted("Liquid Editor");
+				ImGui::PopFont();
 
-			String info = fmt::format("{0}% - Initializing...", (uint32)progress);
-			ImGui::TextUnformatted(info.c_str());
-			
-			ImGui::SameLine();
-			ImGui::SetCursorPosX(430.0f);
-			ImGui::TextUnformatted("Copyright (c) EddeDev. All rights reserved.");
+				ImFont* lightFont = imguiRenderer->GetFont(FontWeight::Light);
+				ImGui::PushFont(lightFont);
+				ImGui::SetCursorPosX(cursorOffsetX);
+				ImGui::TextUnformatted("Liquid Editor");
 
-			ImGui::PopFont();
+				String info = fmt::format("{0}% - {1}", (uint32)currentProgress.Progress, currentProgress.InfoText);
+				ImGui::SetCursorPosX(cursorOffsetX);
+				ImGui::TextUnformatted(info.c_str());
 
-			ImGui::End();
+				cursorOffsetX = 430;
+				ImGui::SameLine();
+				ImGui::SetCursorPosX(cursorOffsetX);
+				ImGui::TextUnformatted("Copyright (c) EddeDev. All rights reserved.");
 
-			ImGui::PopStyleColor();
-			ImGui::PopStyleVar(2);
+				ImGui::PopFont();
 
-			EndDockSpace();
+				ImGui::End();
 
-			s_Data->ImGuiRenderer->EndFrame();
+				ImGui::PopStyleColor();
+				ImGui::PopStyleVar(3);
 
-			s_Data->Swapchain->Present();
+				EndDockSpace();
+
+				imguiRenderer->EndFrame();
+
+				swapchain->Present();
+
+				lastProgress = progress;
+			}
 		}
 	}
 

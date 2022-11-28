@@ -10,6 +10,8 @@ namespace Liquid {
 
 	static uint32 s_GLFWWindowCount = 0;
 
+	std::mutex WindowsWindow::s_Mutex;
+
 	WindowsWindow::WindowsWindow(const WindowCreateInfo& createInfo)
 	{
 		Init(createInfo);
@@ -22,6 +24,8 @@ namespace Liquid {
 
 	void WindowsWindow::Init(const WindowCreateInfo& createInfo)
 	{
+		std::scoped_lock<std::mutex> lock(s_Mutex);
+
 		m_Data.CurrentBackupIndex = createInfo.Fullscreen ? 1 : 0;
 		m_Data.Title = createInfo.Title;
 		m_Data.Fullscreen = createInfo.Fullscreen;
@@ -93,6 +97,55 @@ namespace Liquid {
 
 		glfwSetWindowUserPointer(m_Window, &m_Data);
 
+		glfwSetWindowFocusCallback(m_Window, [](auto window, int32 focused)
+		{
+			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			for (auto& callback : data.FocusCallbacks)
+				callback(focused);
+		});
+
+		glfwSetCursorEnterCallback(m_Window, [](auto window, int32 entered)
+		{
+			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			for (auto& callback : data.FocusCallbacks)
+				callback(entered);
+		});
+
+		glfwSetCursorPosCallback(m_Window, [](auto window, double xpos, double ypos)
+		{
+			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			for (auto& callback : data.CursorPosCallbacks)
+				callback(xpos, ypos);
+		});
+
+		glfwSetMouseButtonCallback(m_Window, [](auto window, int32 button, int32 action, int32 mods)
+		{
+			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			for (auto& callback : data.MouseButtonCallbacks)
+				callback(button, action, mods);
+		});
+
+		glfwSetScrollCallback(m_Window, [](auto window, double xoffset, double yoffset)
+		{
+			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			for (auto& callback : data.ScrollCallbacks)
+				callback(xoffset, yoffset);
+		});
+
+		glfwSetKeyCallback(m_Window, [](auto window, int32 key, int32 scancode, int32 action, int32 mods)
+		{
+			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			for (auto& callback : data.KeyCallbacks)
+				callback(key, scancode, action, mods);
+		});
+
+		glfwSetCharCallback(m_Window, [](auto window, uint32 codepoint)
+		{
+			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+			for (auto& callback : data.CharCallbacks)
+				callback(codepoint);
+		});
+
 		glfwSetWindowCloseCallback(m_Window, [](auto window)
 		{
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
@@ -129,6 +182,11 @@ namespace Liquid {
 	void WindowsWindow::PollEvents() const
 	{
 		glfwPollEvents();
+	}
+
+	void WindowsWindow::WaitEvents() const
+	{
+		glfwWaitEvents();
 	}
 
 	void* WindowsWindow::GetPlatformHandle() const
