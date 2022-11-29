@@ -50,7 +50,7 @@ namespace Liquid {
 		std::unordered_map<FontWeight, ImFont*> m_Fonts;
 
 		static std::unordered_map<ImGuiContext*, ImGuiRenderer*> s_ContextMap;
-		static std::recursive_mutex s_Mutex;
+		static std::mutex s_Mutex;
 	};
 
 }

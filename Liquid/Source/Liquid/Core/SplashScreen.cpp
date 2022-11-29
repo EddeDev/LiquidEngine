@@ -1,88 +1,126 @@
 #include "LiquidPCH.h"
 #include "SplashScreen.h"
 
-#include "Window/Window.h"
-
-#include "Liquid/Renderer/API/Swapchain.h"
-#include "Liquid/Renderer/API/Texture.h"
-#include "Liquid/Renderer/ImGuiRenderer.h"
-
 #include <imgui.h>
-
 #include <GLFW/glfw3.h>
 
 namespace Liquid {
 
+	std::mutex SplashScreen::s_Mutex;
+
 	SplashScreen::SplashScreen()
 	{
-		m_Thread = std::thread(ThreadLoop, this);
+		ThreadCreateInfo createInfo;
+		createInfo.Name = "Splash Screen";
+		createInfo.Priority = ThreadPriority::BelowNormal;
+
+		m_Thread = CreateUnique<Thread>(createInfo);
+
+		m_ThreadData = new ThreadData();
+		memset(m_ThreadData, 0, sizeof(ThreadData));
+
+		m_ThreadData->ProgressList = &m_ProgressList;
+
+		m_Thread->PushJob([threadData = m_ThreadData]()
+		{
+			ThreadInit(threadData);
+		});
+
+		m_Thread->Wait();
+
+		m_Thread->PushJob([threadData = m_ThreadData]()
+		{
+			ThreadLoop(threadData);
+		});
+
+		// HACK
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for(1000ms);
 	}
 
 	SplashScreen::~SplashScreen()
 	{
-		m_Thread.join();
+		m_Thread->Join();
+
+		delete m_ThreadData;
+		m_ThreadData = nullptr;
 	}
 
 	void SplashScreen::AddProgressData(const ProgressData& data)
 	{
-		std::scoped_lock<std::mutex> lock(m_ThreadMutex);
-
+		std::scoped_lock<std::mutex> lock(s_Mutex);
 		m_ProgressList.push_back(data);
 		glfwPostEmptyEvent();
 	}
 
-	void SplashScreen::ThreadLoop(SplashScreen* instance)
+	void SplashScreen::ThreadInit(ThreadData* data)
 	{
-		WindowCreateInfo windowCreateInfo;
-		windowCreateInfo.Width = 1440 / 2;
-		windowCreateInfo.Height = 740 / 2;
-		windowCreateInfo.Resizable = false;
-		windowCreateInfo.Decorated = false;
-		Ref<Window> window = Window::Create(windowCreateInfo);
+		// Window
+		{
+			WindowCreateInfo windowCreateInfo;
+			windowCreateInfo.Width = 1440 / 2;
+			windowCreateInfo.Height = 740 / 2;
+			windowCreateInfo.Resizable = false;
+			windowCreateInfo.Decorated = false;
+			data->Window = Window::Create(windowCreateInfo);
+		}
+	
+		// Swapchain
+		{
+			SwapchainCreateInfo swapchainCreateInfo;
+			swapchainCreateInfo.WindowHandle = data->Window->GetPlatformHandle();
+			swapchainCreateInfo.InitialWidth = data->Window->GetWidth();
+			swapchainCreateInfo.InitialHeight = data->Window->GetHeight();
+			swapchainCreateInfo.InitialFullscreenState = data->Window->IsFullscreen();
+			swapchainCreateInfo.InitialVSyncState = true;
+			swapchainCreateInfo.AllowTearing = false;
+			swapchainCreateInfo.ColorFormat = PixelFormat::RGBA;
+			swapchainCreateInfo.DepthFormat = PixelFormat::DEPTH24_STENCIL8;
+			swapchainCreateInfo.BufferCount = 3;
+			swapchainCreateInfo.SampleCount = 1;
+			data->Swapchain = Swapchain::Create(swapchainCreateInfo);
+		}
+	
+		// ImGui
+		{
+			ImGuiRendererCreateInfo imguiRendererCreateInfo;
+			imguiRendererCreateInfo.Window = data->Window;
+			imguiRendererCreateInfo.ViewportsEnable = false;
+			imguiRendererCreateInfo.DebugName = "ImGuiRenderer-SplashScreen";
+			data->ImGuiRenderer = Ref<ImGuiRenderer>::Create(imguiRendererCreateInfo);
+		}
+	
+		// Textures
+		{
+			data->BackgroundTexture = Texture::Create("Resources/Textures/SplashScreenImage.png");
+		}
+	}
 
-		SwapchainCreateInfo swapchainCreateInfo;
-		swapchainCreateInfo.WindowHandle = window->GetPlatformHandle();
-		swapchainCreateInfo.InitialWidth = window->GetWidth();
-		swapchainCreateInfo.InitialHeight = window->GetHeight();
-		swapchainCreateInfo.InitialFullscreenState = window->IsFullscreen();
-		swapchainCreateInfo.InitialVSyncState = true;
-		swapchainCreateInfo.AllowTearing = false;
-		swapchainCreateInfo.ColorFormat = PixelFormat::RGBA;
-		swapchainCreateInfo.DepthFormat = PixelFormat::DEPTH24_STENCIL8;
-		swapchainCreateInfo.BufferCount = 3;
-		swapchainCreateInfo.SampleCount = 1;
-		Ref<Swapchain> swapchain = Swapchain::Create(swapchainCreateInfo);
-
-		ImGuiRendererCreateInfo imguiRendererCreateInfo;
-		imguiRendererCreateInfo.Window = window;
-		imguiRendererCreateInfo.ViewportsEnable = false;
-		imguiRendererCreateInfo.DebugName = "ImGuiRenderer-SplashScreen";
-		Ref<ImGuiRenderer> imguiRenderer = Ref<ImGuiRenderer>::Create(imguiRendererCreateInfo);
-
-		Ref<Texture> backgroundTexture = Texture::Create("Resources/Textures/SplashScreenImage.png");
-		
+	void SplashScreen::ThreadLoop(ThreadData* data)
+	{
 		float progress = 0.0f;
 		float lastProgress = -1.0f;
 
-		window->SetVisible(true);
+		data->Window->SetVisible(true);
 
 		while (progress < 100.0f)
 		{
-			window->WaitEvents();
+			data->Window->WaitEvents();
 
-			ProgressData currentProgress;
+			ProgressData currentProgress = {};
 			{
-				std::scoped_lock<std::mutex> lock(instance->m_ThreadMutex);
-				currentProgress = instance->m_ProgressList.back();
+				std::scoped_lock<std::mutex> lock(s_Mutex);
+				if (!data->ProgressList->empty())
+					currentProgress = data->ProgressList->back();
 			}
 
 			progress = currentProgress.Progress;
 			if (progress != lastProgress)
 			{
-				swapchain->BeginFrame();
-				swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
+				data->Swapchain->BeginFrame();
+				data->Swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
 
-				imguiRenderer->BeginFrame();
+				data->ImGuiRenderer->BeginFrame();
 
 				BeginDockSpace();
 
@@ -105,18 +143,18 @@ namespace Liquid {
 
 				ImGui::Begin("SplashScreenWindow", nullptr, windowFlags);
 
-				Ref<ImGuiImplementation> imgui = imguiRenderer->GetImplementation();
-				imgui->Image(backgroundTexture, ImGui::GetContentRegionAvail());
+				Ref<ImGuiImplementation> imgui = data->ImGuiRenderer->GetImplementation();
+				imgui->Image(data->BackgroundTexture, ImGui::GetContentRegionAvail());
 
 				ImGui::SetCursorPosY(300.0f);
 
-				ImFont* boldFont = imguiRenderer->GetFont(FontWeight::Bold);
+				ImFont* boldFont = data->ImGuiRenderer->GetFont(FontWeight::Bold);
 				ImGui::PushFont(boldFont);
 				ImGui::SetCursorPosX(cursorOffsetX);
 				ImGui::TextUnformatted("Liquid Editor");
 				ImGui::PopFont();
 
-				ImFont* lightFont = imguiRenderer->GetFont(FontWeight::Light);
+				ImFont* lightFont = data->ImGuiRenderer->GetFont(FontWeight::Light);
 				ImGui::PushFont(lightFont);
 				ImGui::SetCursorPosX(cursorOffsetX);
 				ImGui::TextUnformatted("Liquid Editor");
@@ -139,9 +177,9 @@ namespace Liquid {
 
 				EndDockSpace();
 
-				imguiRenderer->EndFrame();
+				data->ImGuiRenderer->EndFrame();
 
-				swapchain->Present();
+				data->Swapchain->Present();
 
 				lastProgress = progress;
 			}

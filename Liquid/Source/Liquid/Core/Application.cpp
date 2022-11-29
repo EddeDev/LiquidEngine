@@ -41,9 +41,6 @@ namespace Liquid {
 		Ref<SplashScreen> splashScreen = Ref<SplashScreen>::Create();
 		splashScreen->AddProgressData({ "Initializing...", 0.0f });
 
-		using namespace std::chrono_literals;
-		std::this_thread::sleep_for(1000ms);
-
 		// Window
 		{
 			WindowCreateInfo windowCreateInfo;

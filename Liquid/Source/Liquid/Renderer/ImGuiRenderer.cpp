@@ -8,12 +8,12 @@
 namespace Liquid {
 
 	std::unordered_map<ImGuiContext*, ImGuiRenderer*> ImGuiRenderer::s_ContextMap;
-	std::recursive_mutex ImGuiRenderer::s_Mutex;
+	std::mutex ImGuiRenderer::s_Mutex;
 
 	ImGuiRenderer::ImGuiRenderer(const ImGuiRendererCreateInfo& createInfo)
 		: m_CreateInfo(createInfo)
 	{
-		std::scoped_lock<std::recursive_mutex> lock(s_Mutex);
+		std::lock_guard<std::mutex> lock(s_Mutex);
 
 		IMGUI_CHECKVERSION();
 
@@ -67,7 +67,6 @@ namespace Liquid {
 
 	ImGuiRenderer::~ImGuiRenderer()
 	{
-		std::scoped_lock<std::recursive_mutex> lock(s_Mutex);
 		m_Implementation = nullptr;
 		ImGui::DestroyContext(m_Context);
 	}
