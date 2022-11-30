@@ -1,0 +1,16 @@
+[submodule "Liquid/Libraries/imgui"]
+	path = Liquid/Libraries/imgui
+	url = https://github.com/EddeDev/imgui
+	branch = docking
+[submodule "Liquid/Libraries/stb"]
+	path = Liquid/Libraries/stb
+	url = https://github.com/EddeDev/stb
+[submodule "Liquid/Libraries/glfw"]
+	path = Liquid/Libraries/glfw
+	url = https://github.com/EddeDev/glfw
+[submodule "Liquid/Libraries/spdlog"]
+	path = Liquid/Libraries/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "Liquid/Libraries/glm"]
+	path = Liquid/Libraries/glm
+	url = https://github.com/g-truc/glm

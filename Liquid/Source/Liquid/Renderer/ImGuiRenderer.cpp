@@ -8,23 +8,17 @@
 namespace Liquid {
 
 	std::unordered_map<ImGuiContext*, ImGuiRenderer*> ImGuiRenderer::s_ContextMap;
-	std::mutex ImGuiRenderer::s_Mutex;
 
 	ImGuiRenderer::ImGuiRenderer(const ImGuiRendererCreateInfo& createInfo)
 		: m_CreateInfo(createInfo)
 	{
-		std::lock_guard<std::mutex> lock(s_Mutex);
-
 		IMGUI_CHECKVERSION();
 
 		m_PreviousContext = ImGui::GetCurrentContext();
 		m_Context = IM_NEW(ImGuiContext)(nullptr);
 		s_ContextMap[m_Context] = this;
 
-		// LQ_INFO_CATEGORY("ImGui Renderer", "Temporarily setting context ({0})", createInfo.DebugName);
 		ImGui::SetCurrentContext(m_Context);
-
-		// LQ_INFO_CATEGORY("ImGui Renderer", "Initializing...", createInfo.DebugName);
 		ImGui::Initialize();
 
 		ImGuiIO& io = ImGui::GetIO();
@@ -55,12 +49,10 @@ namespace Liquid {
 			if (!previousRenderer)
 				LQ_PLATFORM_BREAK();
 
-			// LQ_INFO_CATEGORY("ImGui Renderer", "Switching back to previous context ({0})", previousRenderer->m_CreateInfo.DebugName);
 			ImGui::SetCurrentContext(m_PreviousContext);
 		}
 		else
 		{
-			// LQ_INFO_CATEGORY("ImGui Renderer", "Switching back to previous context (nullptr)");
 			ImGui::SetCurrentContext(nullptr);
 		}
 	}
@@ -73,9 +65,6 @@ namespace Liquid {
 
 	void ImGuiRenderer::BeginFrame()
 	{
-		// LQ_INFO_CATEGORY("ImGui Renderer", "Locking mutex from {0}", m_CreateInfo.DebugName);
-		s_Mutex.lock();
-
 		m_PreviousContext = ImGui::GetCurrentContext();
 		ImGui::SetCurrentContext(m_Context);
 
@@ -106,17 +95,12 @@ namespace Liquid {
 			if (!previousRenderer)
 				LQ_PLATFORM_BREAK();
 
-			// LQ_INFO_CATEGORY("ImGui Renderer", "Switching back to previous context ({0})", previousRenderer->m_CreateInfo.DebugName);
 			ImGui::SetCurrentContext(m_PreviousContext);
 		}
 		else
 		{
-			// LQ_INFO_CATEGORY("ImGui Renderer", "Switching back to previous context (nullptr)");
 			ImGui::SetCurrentContext(nullptr);
 		}
-
-		// LQ_INFO_CATEGORY("ImGui Renderer", "Unlocking mutex from {0}", m_CreateInfo.DebugName);
-		s_Mutex.unlock();
 	}
 
 	void ImGuiRenderer::AddFont(FontWeight weight, const String& filepath)

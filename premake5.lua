@@ -29,9 +29,10 @@ project "Liquid"
     {
         "%{prj.name}/Source",
         "%{prj.name}/Libraries/glfw/include",
+        "%{prj.name}/Libraries/spdlog/include",
         "%{prj.name}/Libraries/imgui",
+        "%{prj.name}/Libraries/stb",
         "%{prj.name}/Libraries/glm",
-        "%{prj.name}/Libraries/spdlog/include"
     }
 
     defines
@@ -43,7 +44,8 @@ project "Liquid"
     links
     {
         "glfw",
-        "imgui"
+        "imgui",
+        "stb"
     }
 
     filter "system:windows"
@@ -100,4 +102,5 @@ project "Liquid"
 group "Libraries"
     include "Liquid/Libraries/glfw"
     include "Liquid/Libraries/imgui"
+    include "Liquid/Libraries/stb"
 group ""
