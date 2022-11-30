@@ -2,10 +2,10 @@
 
 namespace Liquid {
 
-	class ThemeCreator
+	class ThemeBuilder
 	{
 	public:
-		ThemeCreator() = default;
+		ThemeBuilder() = default;
 
 		void Render();
 	private:

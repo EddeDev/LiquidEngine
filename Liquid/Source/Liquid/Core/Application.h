@@ -10,7 +10,7 @@
 #include "Liquid/Renderer/ImGuiRenderer.h"
 
 #include "Window/Window.h"
-#include "ThemeCreator.h"
+#include "ThemeBuilder.h"
 
 namespace Liquid {
 
@@ -60,7 +60,7 @@ namespace Liquid {
 		static Ref<GraphicsContext> s_Context;
 		static Ref<Swapchain> s_Swapchain;
 		static Ref<ImGuiRenderer> s_ImGuiRenderer;
-		static Unique<ThemeCreator> s_ThemeCreator;
+		static Unique<ThemeBuilder> s_ThemeBuilder;
 		static bool s_Running;
 		static bool s_Minimized;
 	};

@@ -17,7 +17,7 @@ namespace Liquid {
 	Ref<GraphicsContext> Application::s_Context;
 	Ref<Swapchain> Application::s_Swapchain;
 	Ref<ImGuiRenderer> Application::s_ImGuiRenderer;
-	Unique<ThemeCreator> Application::s_ThemeCreator;
+	Unique<ThemeBuilder> Application::s_ThemeBuilder;
 	bool Application::s_Running = true;
 	bool Application::s_Minimized = false;
 
@@ -88,7 +88,7 @@ namespace Liquid {
 			s_ImGuiRenderer = Ref<ImGuiRenderer>::Create(createInfo);
 		}
 
-		s_ThemeCreator = CreateUnique<ThemeCreator>();
+		s_ThemeBuilder = CreateUnique<ThemeBuilder>();
 
 		s_MainWindow->SetVisible(true);
 	}
@@ -124,6 +124,8 @@ namespace Liquid {
 
 				s_ImGuiRenderer->BeginFrame();
 
+				s_ThemeBuilder->Render();
+
 				ImGui::Begin("Liquid Engine");
 				ImGui::Text("%d fps", fps);
 
@@ -141,9 +143,9 @@ namespace Liquid {
 				{
 					auto& deviceInfo = s_Device->GetInfo();
 					ImGui::Text("Vendor: %s", GraphicsDeviceUtils::VendorToString(deviceInfo.Vendor));
-					ImGui::Text("Renderer: %s", deviceInfo.Renderer.c_str());
-					String currentGraphicsAPI = GraphicsAPIUtils::GetGraphicsAPIName(GetGraphicsAPI());
-					ImGui::Text("%s Version: %s", currentGraphicsAPI.c_str(), deviceInfo.PlatformVersion.c_str());
+					// ImGui::Text("Renderer: %s", deviceInfo.Renderer.c_str());
+					// String currentGraphicsAPI = GraphicsAPIUtils::GetGraphicsAPIName(GetGraphicsAPI());
+					// ImGui::Text("%s Version: %s", currentGraphicsAPI.c_str(), deviceInfo.PlatformVersion.c_str());
 				}
 
 				bool vsync = s_Swapchain->IsVSyncEnabled();

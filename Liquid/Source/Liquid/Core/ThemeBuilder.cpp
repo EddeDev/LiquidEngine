@@ -1,5 +1,5 @@
 #include "LiquidPCH.h"
-#include "ThemeCreator.h"
+#include "ThemeBuilder.h"
 
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -138,9 +138,9 @@ namespace Liquid {
 		return &GStyleVarInfo[idx];
 	}
 
-	void ThemeCreator::Render()
+	void ThemeBuilder::Render()
 	{
-		ImGui::Begin("Theme Creator");
+		ImGui::Begin("Theme Builder");
 
 		auto& style = ImGui::GetStyle();
 		auto& colors = style.Colors;
@@ -285,8 +285,8 @@ namespace Liquid {
 				m_NeedsUpdate = false;
 			}
 
-			ImGui::TextUnformatted("To use this theme, paste this code in ImGuiRenderer.cpp (line 28)");
-			ImGui::SameLine(ImGui::GetItemRectSize().x + 20.0f);
+			// ImGui::TextUnformatted("To use this theme, paste this code in ImGuiRenderer.cpp (line 28)");
+			// ImGui::SameLine(ImGui::GetItemRectSize().x + 20.0f);
 			ImGui::TextColored({ 0.6f, 0.1f, 0.1f, 1.0f }, "NOTE: This code will be properly formatted/indented when copied.");
 
 			String code = m_CodeBuffer.str();
