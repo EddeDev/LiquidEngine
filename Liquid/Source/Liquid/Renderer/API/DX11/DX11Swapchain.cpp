@@ -2,27 +2,9 @@
 #include "DX11Swapchain.h"
 
 #include "DX11Device.h"
+#include "DX11PixelFormat.h"
 
 namespace Liquid {
-
-	namespace Utils {
-
-		static DXGI_FORMAT DX11PixelFormat(PixelFormat format)
-		{
-			switch (format)
-			{
-			case PixelFormat::RGBA:                   return DXGI_FORMAT_R8G8B8A8_UNORM;
-			case PixelFormat::RGBA16F:                return DXGI_FORMAT_R16G16B16A16_FLOAT;
-			case PixelFormat::RGBA32F:                return DXGI_FORMAT_R32G32B32A32_FLOAT;
-			case PixelFormat::DEPTH24_STENCIL8:       return DXGI_FORMAT_D24_UNORM_S8_UINT;
-			case PixelFormat::DEPTH32F_STENCIL8_UINT: return DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
-			case PixelFormat::DEPTH32F:               return DXGI_FORMAT_D32_FLOAT;
-			}
-			LQ_VERIFY(false, "Unknown pixel format");
-			return DXGI_FORMAT_UNKNOWN;
-		}
-
-	}
 
 	DX11Swapchain::DX11Swapchain(const SwapchainCreateInfo& createInfo)
 		: m_CreateInfo(createInfo), m_VSync(createInfo.InitialVSyncState)
@@ -37,7 +19,7 @@ namespace Liquid {
 		bufferDesc.Width = createInfo.InitialWidth;
 		bufferDesc.Height = createInfo.InitialHeight;
 		bufferDesc.RefreshRate = refreshRate;
-		bufferDesc.Format = Utils::DX11PixelFormat(createInfo.ColorFormat);
+		bufferDesc.Format = DX11PixelFormat(createInfo.ColorFormat);
 
 		uint32 msaaQuality;
 		DX_CHECK(device->CheckMultisampleQualityLevels(bufferDesc.Format, createInfo.SampleCount, &msaaQuality));
@@ -99,7 +81,7 @@ namespace Liquid {
 		if (m_CreateInfo.AllowTearing)
 			flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
-		DX_CHECK(m_SwapChain->ResizeBuffers(0, width, height, Utils::DX11PixelFormat(m_CreateInfo.ColorFormat), flags));
+		DX_CHECK(m_SwapChain->ResizeBuffers(0, width, height, DX11PixelFormat(m_CreateInfo.ColorFormat), flags));
 
 		if (fullscreen)
 		{
@@ -111,12 +93,12 @@ namespace Liquid {
 			bufferDesc.Width = width;
 			bufferDesc.Height = height;
 			bufferDesc.RefreshRate = refreshRate;
-			bufferDesc.Format = Utils::DX11PixelFormat(m_CreateInfo.ColorFormat);
+			bufferDesc.Format = DX11PixelFormat(m_CreateInfo.ColorFormat);
 
 			if (FAILED(m_SwapChain->ResizeTarget(&bufferDesc)))
 			{
 				DX_CHECK(m_SwapChain->SetFullscreenState(fullscreen, nullptr));
-				DX_CHECK(m_SwapChain->ResizeBuffers(0, width, height, Utils::DX11PixelFormat(m_CreateInfo.ColorFormat), flags));
+				DX_CHECK(m_SwapChain->ResizeBuffers(0, width, height, DX11PixelFormat(m_CreateInfo.ColorFormat), flags));
 			}
 		}
 
@@ -125,14 +107,14 @@ namespace Liquid {
 		DX_CHECK(device->CreateRenderTargetView(backBuffer.Get(), nullptr, &m_BackBuffer));
 
 		uint32 msaaQuality;
-		DX_CHECK(device->CheckMultisampleQualityLevels(Utils::DX11PixelFormat(m_CreateInfo.ColorFormat), m_CreateInfo.SampleCount, &msaaQuality));
+		DX_CHECK(device->CheckMultisampleQualityLevels(DX11PixelFormat(m_CreateInfo.ColorFormat), m_CreateInfo.SampleCount, &msaaQuality));
 
 		D3D11_TEXTURE2D_DESC depthStencilDesc;
 		depthStencilDesc.Width = width;
 		depthStencilDesc.Height = height;
 		depthStencilDesc.MipLevels = 1;
 		depthStencilDesc.ArraySize = 1;
-		depthStencilDesc.Format = Utils::DX11PixelFormat(m_CreateInfo.DepthFormat);
+		depthStencilDesc.Format = DX11DSVFormat(m_CreateInfo.DepthFormat);
 		depthStencilDesc.SampleDesc.Count = m_CreateInfo.SampleCount;
 		depthStencilDesc.SampleDesc.Quality = msaaQuality - 1;
 		depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;

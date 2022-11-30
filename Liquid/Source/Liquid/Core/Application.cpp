@@ -18,6 +18,9 @@ namespace Liquid {
 	Ref<GraphicsContext> Application::s_Context;
 	Ref<Swapchain> Application::s_Swapchain;
 	Ref<ImGuiRenderer> Application::s_ImGuiRenderer;
+
+	Liquid::Ref<Liquid::Texture2D> Application::s_TestTexture;
+
 	Unique<ThemeBuilder> Application::s_ThemeBuilder;
 	std::queue<Application::DelayedCallback> Application::s_DelayedCallbacks;
 	std::mutex Application::s_DelayedCallbackMutex;
@@ -52,16 +55,6 @@ namespace Liquid {
 			s_MainWindow = Window::Create(windowCreateInfo);
 			s_MainWindow->AddCloseCallback(LQ_BIND_CALLBACK(OnWindowCloseCallback));
 			s_MainWindow->AddWindowSizeCallback(LQ_BIND_CALLBACK(OnWindowSizeCallback));
-		}
-
-		// ImGui
-		{
-			ImGuiRendererCreateInfo createInfo;
-			createInfo.Window = s_MainWindow;
-			createInfo.DebugName = "ImGuiRenderer-Main";
-			createInfo.ViewportsEnable = false;
-
-			s_ImGuiRenderer = Ref<ImGuiRenderer>::Create(createInfo);
 		}
 
 		s_ThemeBuilder = CreateUnique<ThemeBuilder>();
@@ -139,6 +132,18 @@ namespace Liquid {
 
 			s_Swapchain = Swapchain::Create(swapchainCreateInfo);
 		}
+
+		// ImGui
+		{
+			ImGuiRendererCreateInfo createInfo;
+			createInfo.Window = s_MainWindow;
+			createInfo.DebugName = "ImGuiRenderer-Main";
+			createInfo.ViewportsEnable = false;
+
+			s_ImGuiRenderer = Ref<ImGuiRenderer>::Create(createInfo);
+		}
+
+		s_TestTexture = Ref<Texture2D>::Create("Resources/Textures/Splash.png");
 		
 		float lastTime = static_cast<float>(glfwGetTime());
 		uint32 frames = 0;
@@ -191,6 +196,13 @@ namespace Liquid {
 				case BuildConfiguration::Shipping: buildConfigName = "Shipping"; break;
 				}
 				ImGui::Text("Build Configuration: %s", buildConfigName.c_str());
+
+				Ref<ImGuiImplementation> imgui = s_ImGuiRenderer->GetImplementation();
+
+				constexpr float aspectRatio = 1920.0f / 1080.0f;
+				float height = ImGui::GetContentRegionAvail().y * 0.5f;
+				float width = height * aspectRatio;
+				imgui->Image(s_TestTexture->GetImage(), { width, height });
 
 				if (ImGui::CollapsingHeader("Graphics Device"))
 				{

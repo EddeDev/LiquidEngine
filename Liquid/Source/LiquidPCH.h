@@ -13,6 +13,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <filesystem>
+
 #include "Liquid/Core/Core.h"
 
 #ifdef LQ_PLATFORM_WINDOWS

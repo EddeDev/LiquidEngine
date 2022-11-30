@@ -8,6 +8,7 @@
 #include "Liquid/Renderer/API/Swapchain.h"
 
 #include "Liquid/Renderer/ImGuiRenderer.h"
+#include "Liquid/Renderer/Texture.h"
 
 #include "Window/Window.h"
 #include "ThemeBuilder.h"
@@ -65,6 +66,7 @@ namespace Liquid {
 		static Ref<GraphicsContext> s_Context;
 		static Ref<Swapchain> s_Swapchain;
 		static Ref<ImGuiRenderer> s_ImGuiRenderer;
+		static Ref<Texture2D> s_TestTexture;
 		static Unique<ThemeBuilder> s_ThemeBuilder;
 
 		static std::queue<DelayedCallback> s_DelayedCallbacks;

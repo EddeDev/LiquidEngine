@@ -4,7 +4,7 @@
 #include "Liquid/Core/Application.h"
 
 #include "DX11Device.h"
-#include "DX11Texture.h"
+#include "DX11Image.h"
 
 #include <backends/imgui_impl_glfw.cpp>
 #include <backends/imgui_impl_dx11.cpp>
@@ -48,10 +48,10 @@ namespace Liquid {
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	}
 
-	void DX11ImGuiImplementation::Image(Ref<Texture> texture, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1) const
+	void DX11ImGuiImplementation::Image(Ref<Image2D> image, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1) const
 	{
-		Ref<DX11Texture> dxTexture = texture.As<DX11Texture>();
-		ID3D11ShaderResourceView* srv = dxTexture->GetShaderResourceView();
+		Ref<DX11Image2D> dxImage = image.As<DX11Image2D>();
+		ID3D11ShaderResourceView* srv = dxImage->GetShaderResourceView();
 		if (srv)
 		{
 			ImTextureID id = reinterpret_cast<ImTextureID>(srv);
