@@ -39,10 +39,13 @@ namespace Liquid {
 	class Application
 	{
 	public:
+		using DelayedCallback = std::function<void()>;
+	public:
 		static void Init(const ApplicationCreateInfo& createInfo);
 		static void Shutdown();
 
 		static void Run();
+		static void PushDelayedCallback(DelayedCallback callback);
 
 		static BuildConfiguration GetBuildConfiguration();
 		static GraphicsAPI GetGraphicsAPI();
@@ -52,6 +55,8 @@ namespace Liquid {
 		static Ref<GraphicsContext> GetContext() { return s_Context; }
 		static Ref<Swapchain> GetSwapchain() { return s_Swapchain; }
 	private:
+		static void UpdateThreadLoop(bool singlethreaded);
+
 		static void OnWindowCloseCallback();
 		static void OnWindowSizeCallback(uint32 width, uint32 height);
 	private:
@@ -61,8 +66,12 @@ namespace Liquid {
 		static Ref<Swapchain> s_Swapchain;
 		static Ref<ImGuiRenderer> s_ImGuiRenderer;
 		static Unique<ThemeBuilder> s_ThemeBuilder;
-		static bool s_Running;
-		static bool s_Minimized;
+
+		static std::queue<DelayedCallback> s_DelayedCallbacks;
+		static std::mutex s_DelayedCallbackMutex;
+
+		static std::atomic<bool> s_Running;
+		static std::atomic<bool> s_Minimized;
 	};
 
 }

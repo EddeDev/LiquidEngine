@@ -2,6 +2,7 @@
 #include "Application.h"
 
 #include "Window/Window.h"
+#include "Threading/Thread.h"
 
 #include "Liquid/Renderer/ImGuiRenderer.h"
 
@@ -18,8 +19,10 @@ namespace Liquid {
 	Ref<Swapchain> Application::s_Swapchain;
 	Ref<ImGuiRenderer> Application::s_ImGuiRenderer;
 	Unique<ThemeBuilder> Application::s_ThemeBuilder;
-	bool Application::s_Running = true;
-	bool Application::s_Minimized = false;
+	std::queue<Application::DelayedCallback> Application::s_DelayedCallbacks;
+	std::mutex Application::s_DelayedCallbackMutex;
+	std::atomic<bool> Application::s_Running = true;
+	std::atomic<bool> Application::s_Minimized = false;
 
 	void Application::Init(const ApplicationCreateInfo& createInfo)
 	{
@@ -51,6 +54,64 @@ namespace Liquid {
 			s_MainWindow->AddWindowSizeCallback(LQ_BIND_CALLBACK(OnWindowSizeCallback));
 		}
 
+		// ImGui
+		{
+			ImGuiRendererCreateInfo createInfo;
+			createInfo.Window = s_MainWindow;
+			createInfo.DebugName = "ImGuiRenderer-Main";
+			createInfo.ViewportsEnable = false;
+
+			s_ImGuiRenderer = Ref<ImGuiRenderer>::Create(createInfo);
+		}
+
+		s_ThemeBuilder = CreateUnique<ThemeBuilder>();
+	}
+
+	void Application::Shutdown()
+	{
+	}
+
+	void Application::Run()
+	{
+		const bool singlethreaded = false;
+		if (singlethreaded)
+		{
+			s_MainWindow->SetVisible(true);
+			UpdateThreadLoop(true);
+		}
+		else
+		{
+			ThreadCreateInfo updateThreadCreateInfo;
+			updateThreadCreateInfo.Name = "Update Thread";
+			updateThreadCreateInfo.Priority = ThreadPriority::Highest;
+
+			Thread updateThread(updateThreadCreateInfo);
+			// updateThread.PushJob(LQ_BIND_CALLBACK(UpdateThreadLoop));
+			updateThread.PushJob([]()
+			{
+				UpdateThreadLoop(false);
+			});
+
+			void* currentThread = ThreadUtils::CurrentThreadHandle();
+			ThreadUtils::SetName(currentThread, "Event Thread");
+			ThreadUtils::SetPriority(currentThread, ThreadPriority::BelowNormal);
+
+			s_MainWindow->SetVisible(true);
+			while (s_Running)
+			{
+				s_MainWindow->WaitEvents();
+			}
+		}
+	}
+
+	void Application::PushDelayedCallback(DelayedCallback callback)
+	{
+		std::lock_guard<std::mutex> lock(s_DelayedCallbackMutex);
+		s_DelayedCallbacks.push(std::move(callback));
+	}
+
+	void Application::UpdateThreadLoop(bool singlethreaded)
+	{
 		// Context
 		{
 			GraphicsContextCreateInfo contextCreateInfo;
@@ -78,27 +139,7 @@ namespace Liquid {
 
 			s_Swapchain = Swapchain::Create(swapchainCreateInfo);
 		}
-
-		// ImGui
-		{
-			ImGuiRendererCreateInfo createInfo;
-			createInfo.Window = s_MainWindow;
-			createInfo.DebugName = "ImGuiRenderer-Main";
-
-			s_ImGuiRenderer = Ref<ImGuiRenderer>::Create(createInfo);
-		}
-
-		s_ThemeBuilder = CreateUnique<ThemeBuilder>();
-
-		s_MainWindow->SetVisible(true);
-	}
-
-	void Application::Shutdown()
-	{
-	}
-
-	void Application::Run()
-	{
+		
 		float lastTime = static_cast<float>(glfwGetTime());
 		uint32 frames = 0;
 		uint32 fps = 0;
@@ -115,7 +156,19 @@ namespace Liquid {
 				lastTime = time;
 			}
 
-			s_MainWindow->PollEvents();
+			if (singlethreaded)
+				glfwPollEvents();
+
+			// Delayed callbacks
+			{
+				std::unique_lock<std::mutex> lock(s_DelayedCallbackMutex);
+				while (!s_DelayedCallbacks.empty())
+				{
+					auto& callback = s_DelayedCallbacks.front();
+					callback();
+					s_DelayedCallbacks.pop();
+				}
+			}
 
 			if (!s_Minimized)
 			{
@@ -177,7 +230,10 @@ namespace Liquid {
 		if (s_Minimized)
 			s_Minimized = false;
 
-		s_Swapchain->Resize(width, height, s_MainWindow->IsFullscreen());
+		PushDelayedCallback([width, height]()
+		{
+			s_Swapchain->Resize(width, height, s_MainWindow->IsFullscreen());
+		});
 	}
 
 	BuildConfiguration Application::GetBuildConfiguration()

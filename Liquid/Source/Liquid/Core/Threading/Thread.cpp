@@ -8,8 +8,8 @@ namespace Liquid {
 	{
 		m_Thread = std::thread(&Thread::ExecuteJobs, this);
 
-		SetName(createInfo.Name);
-		SetPriority(m_CreateInfo.Priority);
+		ThreadUtils::SetName(m_Thread.native_handle(), createInfo.Name);
+		ThreadUtils::SetPriority(m_Thread.native_handle(), m_CreateInfo.Priority);
 	}
 
 	Thread::~Thread()
@@ -85,23 +85,6 @@ namespace Liquid {
 		std::lock_guard<std::mutex> lock(m_Mutex);
 		m_Destroying = true;
 		m_Condition.notify_one();
-	}
-
-	void Thread::SetName(const String& name)
-	{
-#ifdef LQ_PLATFORM_WINDOWS
-		auto threadHandle = m_Thread.native_handle();
-		auto threadName = StringUtils::ToWideString(name);
-		SetThreadDescription(threadHandle, threadName.c_str());
-#endif
-	}
-
-	void Thread::SetPriority(ThreadPriority priority)
-	{
-#ifdef LQ_PLATFORM_WINDOWS
-		auto threadHandle = m_Thread.native_handle();
-		SetThreadPriority(threadHandle, static_cast<int32>(priority));
-#endif
 	}
 
 }

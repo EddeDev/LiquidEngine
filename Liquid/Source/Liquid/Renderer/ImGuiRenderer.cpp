@@ -140,6 +140,13 @@ namespace Liquid {
 		style.ButtonTextAlign = { 0.5f, 0.5f };
 		style.SelectableTextAlign = { 0.0f, 0.0f };
 
+		auto& io = ImGui::GetIO();
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+			style.WindowRounding = 0.0f;
+			style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+		}
+
 		auto& colors = style.Colors;
 		colors[ImGuiCol_Text]                  = ImVec4(0.917647f, 0.909804f, 0.917647f, 1.0f);
 		colors[ImGuiCol_TextDisabled]          = ImVec4(0.513726f, 0.509804f, 0.513726f, 1.0f);

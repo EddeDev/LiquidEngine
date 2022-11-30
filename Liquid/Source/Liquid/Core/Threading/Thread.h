@@ -32,14 +32,11 @@ namespace Liquid {
 
 		void PushJob(Job job);
 	private:
+		void Destroy();
+
 		void ExecuteJobs();
 		Job* GetNextJob();
 		void PopJob();
-
-		void Destroy();
-
-		void SetName(const String& name);
-		void SetPriority(ThreadPriority priority);
 	private:
 		ThreadCreateInfo m_CreateInfo;
 		std::thread m_Thread;
@@ -49,5 +46,34 @@ namespace Liquid {
 		std::condition_variable m_Condition;
 		bool m_Destroying = false;
 	};
+
+	namespace ThreadUtils {
+
+		static void* CurrentThreadHandle()
+		{
+#ifdef LQ_PLATFORM_WINDOWS
+			return GetCurrentThread();
+#else
+			static_assert(false, "Unknown platform");
+			return nullptr;
+#endif
+		}
+
+		static void SetName(void* threadHandle, const String& name)
+		{
+#ifdef LQ_PLATFORM_WINDOWS
+			auto threadName = StringUtils::ToWideString(name);
+			SetThreadDescription(threadHandle, threadName.c_str());
+#endif
+		}
+
+		static void SetPriority(void* threadHandle, ThreadPriority priority)
+		{
+#ifdef LQ_PLATFORM_WINDOWS
+			SetThreadPriority(threadHandle, static_cast<int32>(priority));
+#endif
+		}
+
+	}
 
 }

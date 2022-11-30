@@ -1,6 +1,8 @@
 #include "LiquidPCH.h"
 #include "DX11ImGuiImplementation.h"
 
+#include "Liquid/Core/Application.h"
+
 #include "DX11Device.h"
 #include "DX11Texture.h"
 
@@ -17,8 +19,15 @@ namespace Liquid {
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
 		GLFWwindow* window = static_cast<GLFWwindow*>(createInfo.Window->GetHandle());
+#define CUSTOM_CALLBACKS 1
+#if CUSTOM_CALLBACKS
 		ImGui_ImplGlfw_InitForOther(window, false);
 		InstallCallbacks();
+#else
+		ImGui_ImplGlfw_InitForOther(window, true);
+#endif
+
+		auto& platformIO = ImGui::GetPlatformIO();
 
 		ImGui_ImplDX11_Init(device.Get(), deviceContext.Get());
 	}
@@ -61,60 +70,48 @@ namespace Liquid {
 		m_CreateInfo.Window->AddCharCallback(LQ_BIND_CALLBACK(OnCharCallback, this));
 	}
 
+#define IMGUI_CALLBACK(name, ...) \
+Application::PushDelayedCallback([createInfo = m_CreateInfo, __VA_ARGS__]() \
+{ \
+	ImGui::SetCurrentContext(createInfo.Context); \
+	GLFWwindow* window = static_cast<GLFWwindow*>(createInfo.Window->GetHandle()); \
+	LQ_ASSERT(window, "Window is NULL!"); \
+	ImGui_ImplGlfw_##name(window, __VA_ARGS__); \
+})
+
 	void DX11ImGuiImplementation::OnWindowFocusCallback(int32 focused)
 	{
-		ImGui::SetCurrentContext(m_CreateInfo.Context);
-
-		GLFWwindow* window = static_cast<GLFWwindow*>(m_CreateInfo.Window->GetHandle());
-		ImGui_ImplGlfw_WindowFocusCallback(window, focused);
+		IMGUI_CALLBACK(WindowFocusCallback, focused);
 	}
 
 	void DX11ImGuiImplementation::OnCursorEnterCallback(int32 entered)
 	{
-		ImGui::SetCurrentContext(m_CreateInfo.Context);
-
-		GLFWwindow* window = static_cast<GLFWwindow*>(m_CreateInfo.Window->GetHandle());
-		ImGui_ImplGlfw_CursorEnterCallback(window, entered);
+		IMGUI_CALLBACK(CursorEnterCallback, entered);
 	}
 
 	void DX11ImGuiImplementation::OnCursorPosCallback(double x, double y)
 	{
-		ImGui::SetCurrentContext(m_CreateInfo.Context);
-
-		GLFWwindow* window = static_cast<GLFWwindow*>(m_CreateInfo.Window->GetHandle());
-		ImGui_ImplGlfw_CursorPosCallback(window, x, y);
+		IMGUI_CALLBACK(CursorPosCallback, x, y);
 	}
 
 	void DX11ImGuiImplementation::OnMouseButtonCallback(int32 button, int32 action, int32 mods)
 	{
-		ImGui::SetCurrentContext(m_CreateInfo.Context);
-
-		GLFWwindow* window = static_cast<GLFWwindow*>(m_CreateInfo.Window->GetHandle());
-		ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+		IMGUI_CALLBACK(MouseButtonCallback, button, action, mods);
 	}
 
 	void DX11ImGuiImplementation::OnScrollCallback(double xoffset, double yoffset)
 	{
-		ImGui::SetCurrentContext(m_CreateInfo.Context);
-
-		GLFWwindow* window = static_cast<GLFWwindow*>(m_CreateInfo.Window->GetHandle());
-		ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
+		IMGUI_CALLBACK(ScrollCallback, xoffset, yoffset);
 	}
 
 	void DX11ImGuiImplementation::OnKeyCallback(int32 key, int32 scancode, int32 action, int32 mods)
 	{
-		ImGui::SetCurrentContext(m_CreateInfo.Context);
-
-		GLFWwindow* window = static_cast<GLFWwindow*>(m_CreateInfo.Window->GetHandle());
-		ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
+		IMGUI_CALLBACK(KeyCallback, key, scancode, action, mods);
 	}
 
 	void DX11ImGuiImplementation::OnCharCallback(uint32 codepoint)
 	{
-		ImGui::SetCurrentContext(m_CreateInfo.Context);
-
-		GLFWwindow* window = static_cast<GLFWwindow*>(m_CreateInfo.Window->GetHandle());
-		ImGui_ImplGlfw_CharCallback(window, codepoint);
+		IMGUI_CALLBACK(CharCallback, codepoint);
 	}
 
 }
