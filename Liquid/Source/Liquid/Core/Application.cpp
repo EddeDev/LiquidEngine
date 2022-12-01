@@ -1,7 +1,6 @@
 #include "LiquidPCH.h"
 #include "Application.h"
 
-#include "Window/Window.h"
 #include "Threading/Thread.h"
 
 #include "Liquid/Renderer/ImGuiRenderer.h"
@@ -18,9 +17,8 @@ namespace Liquid {
 	Ref<GraphicsContext> Application::s_Context;
 	Ref<Swapchain> Application::s_Swapchain;
 	Ref<ImGuiRenderer> Application::s_ImGuiRenderer;
-
-	Liquid::Ref<Liquid::Texture2D> Application::s_TestTexture;
-
+	Ref<SplashScreen> Application::s_SplashScreen;
+	Ref<Texture2D> Application::s_TestTexture;
 	Unique<ThemeBuilder> Application::s_ThemeBuilder;
 	std::queue<Application::DelayedCallback> Application::s_DelayedCallbacks;
 	std::mutex Application::s_DelayedCallbackMutex;
@@ -41,6 +39,12 @@ namespace Liquid {
 			deviceCreateInfo.EnableDebugLayers = false;
 #endif
 			s_Device = GraphicsDevice::Select(deviceCreateInfo);
+		}
+
+		// Splash Screen
+		{
+			SplashScreenCreateInfo splashScreenCreateInfo;
+			s_SplashScreen = SplashScreen::Create(splashScreenCreateInfo);
 		}
 
 		// Window
@@ -69,6 +73,10 @@ namespace Liquid {
 		const bool singlethreaded = false;
 		if (singlethreaded)
 		{
+			void* currentThread = ThreadUtils::CurrentThreadHandle();
+			ThreadUtils::SetName(currentThread, "Main Thread");
+			ThreadUtils::SetPriority(currentThread, ThreadPriority::Normal);
+
 			s_MainWindow->SetVisible(true);
 			UpdateThreadLoop(true);
 		}
@@ -79,7 +87,6 @@ namespace Liquid {
 			updateThreadCreateInfo.Priority = ThreadPriority::Highest;
 
 			Thread updateThread(updateThreadCreateInfo);
-			// updateThread.PushJob(LQ_BIND_CALLBACK(UpdateThreadLoop));
 			updateThread.PushJob([]()
 			{
 				UpdateThreadLoop(false);
