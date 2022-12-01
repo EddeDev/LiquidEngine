@@ -21,18 +21,18 @@ project "Liquid"
         "%{prj.name}/Source/**.cpp",
         "%{prj.name}/Source/**.h",
 
-        "%{prj.name}/Libraries/glm/glm/**.hpp",
-        "%{prj.name}/Libraries/glm/glm/**.inl"
+        "%{prj.name}/Libraries/GLM/glm/**.hpp",
+        "%{prj.name}/Libraries/GLM/glm/**.inl"
     }
 
     includedirs
     {
         "%{prj.name}/Source",
-        "%{prj.name}/Libraries/glfw/include",
-        "%{prj.name}/Libraries/spdlog/include",
-        "%{prj.name}/Libraries/imgui",
-        "%{prj.name}/Libraries/stb",
-        "%{prj.name}/Libraries/glm",
+        "%{prj.name}/Libraries/GLFW/include",
+        "%{prj.name}/Libraries/Spdlog/include",
+        "%{prj.name}/Libraries/ImGui",
+        "%{prj.name}/Libraries/STB",
+        "%{prj.name}/Libraries/GLM",
     }
 
     defines
@@ -43,9 +43,9 @@ project "Liquid"
 
     links
     {
-        "glfw",
-        "imgui",
-        "stb"
+        "GLFW",
+        "ImGui",
+        "STB"
     }
 
     filter "system:windows"
@@ -100,7 +100,7 @@ project "Liquid"
         symbols "Off"
 
 group "Libraries"
-    include "Liquid/Libraries/glfw"
-    include "Liquid/Libraries/imgui"
-    include "Liquid/Libraries/stb"
+    include "Liquid/Libraries/GLFW"
+    include "Liquid/Libraries/ImGui"
+    include "Liquid/Libraries/STB"
 group ""
