@@ -167,7 +167,7 @@ namespace Liquid {
 			s_ImGuiRenderer = Ref<ImGuiRenderer>::Create(createInfo);
 		}
 
-		s_TestTexture = Ref<Texture2D>::Create("Resources/Textures/Splash.png");
+		// s_TestTexture = Ref<Texture2D>::Create("Resources/Textures/Splash.png");
 		
 		using namespace std::chrono_literals;
 		std::this_thread::sleep_for(100000ms);

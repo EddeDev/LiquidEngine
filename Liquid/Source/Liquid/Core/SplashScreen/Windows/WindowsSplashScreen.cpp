@@ -4,32 +4,12 @@
 
 #include "Liquid/Core/SplashScreen/SplashScreen.h"
 
+#include <stb_image.h>
+
 namespace Liquid {
-
-	namespace Utils {
-
-		// From https://stackoverflow.com/a/17387176
-		String GetLastErrorAsString()
-		{
-			DWORD errorMessageID = ::GetLastError();
-			if (errorMessageID == 0)
-				return String();
-
-			LPSTR messageBuffer = NULL;
-			size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-				NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
-
-			String message(messageBuffer, size);
-			LocalFree(messageBuffer);
-			return message;
-		}
-
-	}
 
 	struct WindowsSplashScreenData
 	{
-		uint32 Width = 1440 / 2;
-		uint32 Height = 720 / 2;
 		bool ShowInTaskbar = false;
 		bool AllowFading = true;
 
@@ -37,6 +17,8 @@ namespace Liquid {
 		DWORD ThreadID = NULL;
 		ATOM WindowClass = NULL;
 		HWND WindowHandle = NULL;
+		
+		HBITMAP Bitmap = NULL;
 	};
 
 	static WindowsSplashScreenData s_Data;
@@ -51,12 +33,23 @@ namespace Liquid {
 		case WM_PAINT:
 		{
 			hdc = BeginPaint(hWnd, &ps);
+			DrawState(hdc, DSS_NORMAL, NULL, (LPARAM)s_Data.Bitmap, NULL, 0, 0, 0, 0, DST_BITMAP);
 
-			RECT r;
-			SetRect(&r, 0, 0, s_Data.Width, s_Data.Height);
-			FillRect(hdc, &r, (HBRUSH)GetStockObject(BLACK_BRUSH));
+			SetBkColor(hdc, 0x00000000);
+			SetBkMode(hdc, TRANSPARENT);
+			SetTextAlign(hdc, TA_LEFT | TA_TOP | TA_NOUPDATECP);
+			
 
-			DrawTextW(hdc, L"Hello World!", -1, &r, DT_SINGLELINE | DT_NOCLIP);
+			RECT clientRect;
+			GetClientRect(hWnd, &clientRect);
+
+			// WString label = L"Liquid Editor";
+			// SetTextColor(hdc, RGB(255, 255, 255));
+			// TextOut(hdc, 8, clientRect.bottom - 100, label.c_str(), label.size());
+
+			WString copyright = L"Copyright ©  EddeDev.  All rights reserved.";
+			SetTextColor(hdc, RGB(160, 160, 160));
+			TextOut(hdc, clientRect.right - (copyright.size() * 6.6f), clientRect.bottom - 20, copyright.c_str(), copyright.size());
 
 			EndPaint(hWnd, &ps);
 			break;
@@ -72,7 +65,52 @@ namespace Liquid {
 
 		return 0;
 	}
-	
+
+	static void RGBtoBGR(const uint8* src, uint8* dst, uint32 width, uint32 height, uint32 channels)
+	{
+		for (uint32 x = 0; x < width; x++)
+		{
+			for (uint32 y = 0; y < height; y++)
+			{
+				*dst++ = src[2];
+				*dst++ = src[1];
+				*dst++ = src[0];
+				if (channels == 4)
+					*dst++ = src[3];
+				src += channels;
+			}
+		}
+	}
+
+	static HBITMAP LoadBitmapImage(const String& path)
+	{
+		int32 width, height, channels;
+		uint8* rgbData = stbi_load(path.c_str(), &width, &height, &channels, STBI_default);
+		if (!rgbData)
+			return NULL;
+
+		size_t dataSize = width * height * channels;
+		uint8* bgrData = new uint8[dataSize];
+		RGBtoBGR(rgbData, bgrData, width, height, channels);
+
+		BITMAPINFO info = {};
+		info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		info.bmiHeader.biWidth = (LONG)width;
+		info.bmiHeader.biHeight = -(LONG)height;
+		info.bmiHeader.biPlanes = 1;
+		info.bmiHeader.biBitCount = 8 * channels;
+		info.bmiHeader.biCompression = BI_RGB;
+
+		HDC hdc = GetDC(NULL);
+		HBITMAP bitmap = CreateCompatibleBitmap(hdc, width, height);
+		SetDIBits(hdc, bitmap, 0, height, bgrData, &info, DIB_RGB_COLORS);
+
+		delete[] bgrData;
+		stbi_image_free(rgbData);
+
+		return bitmap;
+	}
+
 	static DWORD WINAPI StartThread(LPVOID param)
 	{
 		HINSTANCE hInstance = GetModuleHandleW(NULL);
@@ -87,98 +125,95 @@ namespace Liquid {
 		wc.lpszClassName = L"LiquidSplash";
 
 		s_Data.WindowClass = RegisterClassExW(&wc);
-		LQ_VERIFY(s_Data.WindowClass, "Failed to register window class\n{0}", Utils::GetLastErrorAsString());
 
-		DWORD style = WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-		style |= WS_SYSMENU | WS_MINIMIZEBOX;
-		style |= WS_POPUP;
-
-		DWORD exStyle = 0;
-		if (s_Data.ShowInTaskbar)
-			exStyle |= WS_EX_APPWINDOW;
-		else
-			exStyle |= WS_EX_TOOLWINDOW;
-		if (s_Data.AllowFading)
-			exStyle |= WS_EX_LAYERED;
-
-		RECT rect = { 0, 0, static_cast<LONG>(s_Data.Width), static_cast<LONG>(s_Data.Height) };
-		AdjustWindowRectEx(&rect, style, FALSE, exStyle);
-
-		uint32 x = (GetSystemMetrics(SM_CXSCREEN) / 2) - (s_Data.Width / 2);
-		uint32 y = (GetSystemMetrics(SM_CYSCREEN) / 2) - (s_Data.Height / 2);
-
-		s_Data.WindowHandle = CreateWindowExW(
-			exStyle,
-			MAKEINTATOM(s_Data.WindowClass),
-			L"SplashScreen",
-			style,
-			x,
-			y,
-			s_Data.Width,
-			s_Data.Height,
-			NULL,
-			NULL,
-			hInstance,
-			NULL
-		);
-
-		LQ_VERIFY(s_Data.WindowHandle, "Failed to create window\n{0}", Utils::GetLastErrorAsString());
-
-		if (s_Data.AllowFading)
+		s_Data.Bitmap = LoadBitmapImage("Resources/Splash/Splash.bmp");
+		if (s_Data.Bitmap)
 		{
-			SetLayeredWindowAttributes(s_Data.WindowHandle, 0, 0, LWA_ALPHA);
-		}
+			BITMAP bitmap = {};
+			GetObjectW(s_Data.Bitmap, sizeof(BITMAP), &bitmap);
+			const uint32 windowWidth = bitmap.bmWidth;
+			const uint32 windowHeight = bitmap.bmHeight;
+			uint32 windowXPos = (GetSystemMetrics(SM_CXSCREEN) / 2) - (windowWidth / 2);
+			uint32 windowYPos = (GetSystemMetrics(SM_CYSCREEN) / 2) - (windowHeight / 2);
 
-		ShowWindow(s_Data.WindowHandle, SW_SHOW);
-		UpdateWindow(s_Data.WindowHandle);
+			DWORD style = 0;
+			if (s_Data.ShowInTaskbar)
+				style |= WS_EX_APPWINDOW;
+			else
+				style |= WS_EX_TOOLWINDOW;
+			if (s_Data.AllowFading)
+				style |= WS_EX_LAYERED;
 
-		uint64 timerFrequency;
-		QueryPerformanceFrequency((LARGE_INTEGER*)&timerFrequency);
+			s_Data.WindowHandle = CreateWindowExW(
+				style,
+				MAKEINTATOM(s_Data.WindowClass),
+				L"SplashScreen",
+				WS_POPUP,
+				windowXPos,
+				windowYPos,
+				windowWidth,
+				windowHeight,
+				NULL,
+				NULL,
+				hInstance,
+				NULL
+			);
 
-		uint64 timerValue;
-		QueryPerformanceCounter((LARGE_INTEGER*)&timerValue);
-		uint64 timerOffset = timerValue;
+			if (s_Data.AllowFading)
+				SetLayeredWindowAttributes(s_Data.WindowHandle, 0, 0, LWA_ALPHA);
 
-		BYTE currentAlphaByte = 0;
+			ShowWindow(s_Data.WindowHandle, SW_SHOW);
+			UpdateWindow(s_Data.WindowHandle);
 
-		MSG message;
-		bool isCloseRequested = false;
-		while (!isCloseRequested)
-		{
-			if (PeekMessageW(&message, NULL, 0, 0, PM_REMOVE))
+			uint64 timerFrequency;
+			QueryPerformanceFrequency((LARGE_INTEGER*)&timerFrequency);
+
+			uint64 timerValue;
+			QueryPerformanceCounter((LARGE_INTEGER*)&timerValue);
+			uint64 timerOffset = timerValue;
+
+			BYTE currentAlphaByte = 0;
+
+			MSG message;
+			bool isCloseRequested = false;
+			while (!isCloseRequested)
 			{
-				TranslateMessage(&message);
-				DispatchMessageW(&message);
-
-				if (message.message == WM_QUIT)
-					isCloseRequested = true;
-			}
-
-			if (s_Data.AllowFading && currentAlphaByte < 255)
-			{
-				QueryPerformanceCounter((LARGE_INTEGER*)&timerValue);
-				float time = (float)(timerValue - timerOffset) / timerFrequency;
-
-				BYTE newAlphaByte = BYTE(time * 500.0f);
-				if (newAlphaByte < 0)
-					newAlphaByte = 0;
-				if (newAlphaByte > 255)
-					newAlphaByte = 255;
-
-				if (newAlphaByte != currentAlphaByte)
+				if (PeekMessageW(&message, NULL, 0, 0, PM_REMOVE))
 				{
-					currentAlphaByte = newAlphaByte;
-					SetLayeredWindowAttributes(s_Data.WindowHandle, 0, currentAlphaByte, LWA_ALPHA);
+					TranslateMessage(&message);
+					DispatchMessageW(&message);
+
+					if (message.message == WM_QUIT)
+						isCloseRequested = true;
 				}
 
-				Sleep(0);
-			}
-			else
-			{
-				Sleep(1000 / 60);
+				if (s_Data.AllowFading && currentAlphaByte < 255)
+				{
+					QueryPerformanceCounter((LARGE_INTEGER*)&timerValue);
+					float time = (float)(timerValue - timerOffset) / timerFrequency;
+
+					BYTE newAlphaByte = BYTE(time * 500.0f);
+					if (newAlphaByte < 0)
+						newAlphaByte = 0;
+					if (newAlphaByte > 255)
+						newAlphaByte = 255;
+
+					if (newAlphaByte != currentAlphaByte)
+					{
+						currentAlphaByte = newAlphaByte;
+						SetLayeredWindowAttributes(s_Data.WindowHandle, 0, currentAlphaByte, LWA_ALPHA);
+					}
+
+					Sleep(0);
+				}
+				else
+				{
+					Sleep(1000 / 60);
+				}
 			}
 		}
 
+		DeleteObject(s_Data.Bitmap);
 		UnregisterClassW(MAKEINTATOM(s_Data.WindowClass), hInstance);
 		DestroyWindow(s_Data.WindowHandle);
 		s_Data.WindowClass = NULL;
@@ -190,6 +225,14 @@ namespace Liquid {
 	{
 		const SIZE_T stackSize = 1024 * 128; // 128 KB
 		s_Data.ThreadHandle = CreateThread(NULL, stackSize, StartThread, NULL, STACK_SIZE_PARAM_IS_A_RESERVATION, &s_Data.ThreadID);
+		if (!s_Data.ThreadHandle)
+		{
+			LQ_ERROR_ARGS("Unable to create thread");
+			return;
+		}
+		
+		SetThreadDescription(s_Data.ThreadHandle, L"SplashScreen Thread");
+		SetThreadPriority(s_Data.ThreadHandle, THREAD_PRIORITY_BELOW_NORMAL);
 	}
 
 	void SplashScreen::Hide()

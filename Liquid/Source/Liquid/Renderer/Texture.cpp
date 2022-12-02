@@ -32,6 +32,8 @@ namespace Liquid {
 		imageCreateInfo.Height = height;
 
 		m_Image = Image2D::Create(imageCreateInfo);
+
+		stbi_image_free(data);
 	}
 
 	void Texture2D::Bind(uint32 slot) const
