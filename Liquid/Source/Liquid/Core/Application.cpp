@@ -17,7 +17,6 @@ namespace Liquid {
 	Ref<GraphicsContext> Application::s_Context;
 	Ref<Swapchain> Application::s_Swapchain;
 	Ref<ImGuiRenderer> Application::s_ImGuiRenderer;
-	Ref<Texture2D> Application::s_TestTexture;
 	Unique<ThemeBuilder> Application::s_ThemeBuilder;
 
 	std::queue<std::function<void()>> Application::s_MainThreadQueue;
@@ -55,11 +54,13 @@ namespace Liquid {
 			windowCreateInfo.Fullscreen = false;
 			windowCreateInfo.Maximize = true;
 
+			SplashScreen::SetProgress(10, "Creating window...");
 			s_MainWindow = Window::Create(windowCreateInfo);
 			s_MainWindow->AddCloseCallback(LQ_BIND_CALLBACK(OnWindowCloseCallback));
 			s_MainWindow->AddWindowSizeCallback(LQ_BIND_CALLBACK(OnWindowSizeCallback));
 		}
 
+		SplashScreen::SetProgress(30, "Creating theme builder...");
 		s_ThemeBuilder = CreateUnique<ThemeBuilder>();
 	}
 
@@ -138,6 +139,8 @@ namespace Liquid {
 #else
 			contextCreateInfo.EnableDebugLayers = false;
 #endif
+
+			SplashScreen::SetProgress(40, "Creating context...");
 			s_Context = GraphicsContext::Create(contextCreateInfo);
 		}
 
@@ -154,6 +157,7 @@ namespace Liquid {
 			swapchainCreateInfo.BufferCount = 3;
 			swapchainCreateInfo.SampleCount = 1;
 
+			SplashScreen::SetProgress(50, "Creating swapchain...");
 			s_Swapchain = Swapchain::Create(swapchainCreateInfo);
 		}
 
@@ -164,13 +168,16 @@ namespace Liquid {
 			createInfo.DebugName = "ImGuiRenderer-Main";
 			createInfo.ViewportsEnable = false;
 
+			SplashScreen::SetProgress(70, "Creating ImGui context...");
 			s_ImGuiRenderer = Ref<ImGuiRenderer>::Create(createInfo);
 		}
+
+		SplashScreen::SetProgress(90, "Loading resources...");
 
 		// s_TestTexture = Ref<Texture2D>::Create("Resources/Textures/Splash.png");
 		
 		using namespace std::chrono_literals;
-		std::this_thread::sleep_for(100000ms);
+		std::this_thread::sleep_for(3000ms);
 
 		SplashScreen::Hide();
 		SubmitToMainThread([]()
@@ -229,13 +236,6 @@ namespace Liquid {
 				case BuildConfiguration::Shipping: buildConfigName = "Shipping"; break;
 				}
 				ImGui::Text("Build Configuration: %s", buildConfigName.c_str());
-
-				Ref<ImGuiImplementation> imgui = s_ImGuiRenderer->GetImplementation();
-
-				constexpr float aspectRatio = 1920.0f / 1080.0f;
-				float height = ImGui::GetContentRegionAvail().y * 0.5f;
-				float width = height * aspectRatio;
-				imgui->Image(s_TestTexture->GetImage(), { width, height });
 
 				if (ImGui::CollapsingHeader("Graphics Device"))
 				{

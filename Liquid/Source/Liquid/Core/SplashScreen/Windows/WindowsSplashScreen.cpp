@@ -19,9 +19,41 @@ namespace Liquid {
 		HWND WindowHandle = NULL;
 		
 		HBITMAP Bitmap = NULL;
+
+		std::mutex Mutex;
+		uint8 Progress = 0;
+		String ProgressText = "Loading...";
 	};
 
 	static WindowsSplashScreenData s_Data;
+
+	void SplashScreen::SetProgress(uint8 progress)
+	{
+		if (s_Data.ThreadHandle)
+		{
+			std::lock_guard<std::mutex> lock(s_Data.Mutex);
+
+			if (s_Data.Progress != progress)
+			{
+				s_Data.Progress = progress;
+				InvalidateRect(s_Data.WindowHandle, NULL, FALSE);
+			}
+		}
+	}
+
+	void SplashScreen::SetText(const String& text)
+	{
+		if (s_Data.ThreadHandle)
+		{
+			std::lock_guard<std::mutex> lock(s_Data.Mutex);
+
+			if (s_Data.ProgressText != text)
+			{
+				s_Data.ProgressText = text;
+				InvalidateRect(s_Data.WindowHandle, NULL, FALSE);
+			}
+		}
+	}
 
 	static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
@@ -35,21 +67,41 @@ namespace Liquid {
 			hdc = BeginPaint(hWnd, &ps);
 			DrawState(hdc, DSS_NORMAL, NULL, (LPARAM)s_Data.Bitmap, NULL, 0, 0, 0, 0, DST_BITMAP);
 
-			SetBkColor(hdc, 0x00000000);
-			SetBkMode(hdc, TRANSPARENT);
-			SetTextAlign(hdc, TA_LEFT | TA_TOP | TA_NOUPDATECP);
-			
+			{
+				std::lock_guard<std::mutex> lock(s_Data.Mutex);
 
-			RECT clientRect;
-			GetClientRect(hWnd, &clientRect);
+				SetBkColor(hdc, 0x00000000);
+				SetBkMode(hdc, TRANSPARENT);
+				SetTextAlign(hdc, TA_LEFT | TA_TOP | TA_NOUPDATECP);
 
-			// WString label = L"Liquid Editor";
-			// SetTextColor(hdc, RGB(255, 255, 255));
-			// TextOut(hdc, 8, clientRect.bottom - 100, label.c_str(), label.size());
+				RECT clientRect;
+				GetClientRect(hWnd, &clientRect);
 
-			WString copyright = L"Copyright ©  EddeDev.  All rights reserved.";
-			SetTextColor(hdc, RGB(160, 160, 160));
-			TextOut(hdc, clientRect.right - (copyright.size() * 6.6f), clientRect.bottom - 20, copyright.c_str(), copyright.size());
+				uint32 padding = 8;
+
+				// Label
+				WString label = L"Liquid Editor";
+				SetTextColor(hdc, RGB(255, 255, 255));
+				TextOut(hdc, padding, clientRect.bottom - 60, label.c_str(), static_cast<int32>(label.size()));
+
+				// Version
+				WString version = L"Liquid Editor v1.0";
+				SetTextColor(hdc, RGB(160, 160, 160));
+				TextOut(hdc, padding, clientRect.bottom - 40, version.c_str(), static_cast<int32>(version.size()));
+
+				// Progress
+				WString progressText;
+				progressText += std::to_wstring(s_Data.Progress);
+				progressText += L"% - ";
+				progressText += StringUtils::ToWideString(s_Data.ProgressText);
+				SetTextColor(hdc, RGB(160, 160, 160));
+				TextOut(hdc, padding, clientRect.bottom - 20, progressText.c_str(), static_cast<int32>(progressText.size()));
+
+				// Copyright
+				WString copyright = L"Copyright ©  EddeDev.  All rights reserved.";
+				SetTextColor(hdc, RGB(160, 160, 160));
+				TextOut(hdc, clientRect.right - static_cast<int32>(copyright.size() * 6.6f), clientRect.bottom - 20, copyright.c_str(), static_cast<int32>(copyright.size()));
+			}
 
 			EndPaint(hWnd, &ps);
 			break;

@@ -66,7 +66,6 @@ namespace Liquid {
 		static Ref<GraphicsContext> s_Context;
 		static Ref<Swapchain> s_Swapchain;
 		static Ref<ImGuiRenderer> s_ImGuiRenderer;
-		static Ref<Texture2D> s_TestTexture;
 		static Unique<ThemeBuilder> s_ThemeBuilder;
 
 		static std::queue<std::function<void()>> s_MainThreadQueue;

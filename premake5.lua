@@ -71,7 +71,7 @@ project "Liquid"
             "dxguid.lib",
             "d3dcompiler.lib"
         }
-
+        
     filter "system:macosx"
         systemversion "latest"
         defines "LQ_PLATFORM_MAC"
