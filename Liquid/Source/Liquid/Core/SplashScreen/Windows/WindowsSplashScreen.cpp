@@ -30,6 +30,8 @@ namespace Liquid {
 	{
 		uint32 Width = 1440 / 2;
 		uint32 Height = 720 / 2;
+		bool ShowInTaskbar = false;
+		bool AllowFading = true;
 
 		HANDLE ThreadHandle = NULL;
 		DWORD ThreadID = NULL;
@@ -91,8 +93,13 @@ namespace Liquid {
 		style |= WS_SYSMENU | WS_MINIMIZEBOX;
 		style |= WS_POPUP;
 
-		const bool showInTaskbar = false;
-		DWORD exStyle = showInTaskbar ? WS_EX_APPWINDOW : WS_EX_TOOLWINDOW;
+		DWORD exStyle = 0;
+		if (s_Data.ShowInTaskbar)
+			exStyle |= WS_EX_APPWINDOW;
+		else
+			exStyle |= WS_EX_TOOLWINDOW;
+		if (s_Data.AllowFading)
+			exStyle |= WS_EX_LAYERED;
 
 		RECT rect = { 0, 0, static_cast<LONG>(s_Data.Width), static_cast<LONG>(s_Data.Height) };
 		AdjustWindowRectEx(&rect, style, FALSE, exStyle);
@@ -117,8 +124,22 @@ namespace Liquid {
 
 		LQ_VERIFY(s_Data.WindowHandle, "Failed to create window\n{0}", Utils::GetLastErrorAsString());
 
-		ShowWindow(s_Data.WindowHandle, SW_SHOWNA);
-		// SetFocus(s_Data.WindowHandle);
+		if (s_Data.AllowFading)
+		{
+			SetLayeredWindowAttributes(s_Data.WindowHandle, 0, 0, LWA_ALPHA);
+		}
+
+		ShowWindow(s_Data.WindowHandle, SW_SHOW);
+		UpdateWindow(s_Data.WindowHandle);
+
+		uint64 timerFrequency;
+		QueryPerformanceFrequency((LARGE_INTEGER*)&timerFrequency);
+
+		uint64 timerValue;
+		QueryPerformanceCounter((LARGE_INTEGER*)&timerValue);
+		uint64 timerOffset = timerValue;
+
+		BYTE currentAlphaByte = 0;
 
 		MSG message;
 		bool isCloseRequested = false;
@@ -131,6 +152,30 @@ namespace Liquid {
 
 				if (message.message == WM_QUIT)
 					isCloseRequested = true;
+			}
+
+			if (s_Data.AllowFading && currentAlphaByte < 255)
+			{
+				QueryPerformanceCounter((LARGE_INTEGER*)&timerValue);
+				float time = (float)(timerValue - timerOffset) / timerFrequency;
+
+				BYTE newAlphaByte = BYTE(time * 500.0f);
+				if (newAlphaByte < 0)
+					newAlphaByte = 0;
+				if (newAlphaByte > 255)
+					newAlphaByte = 255;
+
+				if (newAlphaByte != currentAlphaByte)
+				{
+					currentAlphaByte = newAlphaByte;
+					SetLayeredWindowAttributes(s_Data.WindowHandle, 0, currentAlphaByte, LWA_ALPHA);
+				}
+
+				Sleep(0);
+			}
+			else
+			{
+				Sleep(1000 / 60);
 			}
 		}
 

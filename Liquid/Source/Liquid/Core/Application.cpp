@@ -170,7 +170,7 @@ namespace Liquid {
 		s_TestTexture = Ref<Texture2D>::Create("Resources/Textures/Splash.png");
 		
 		using namespace std::chrono_literals;
-		std::this_thread::sleep_for(10000ms);
+		std::this_thread::sleep_for(100000ms);
 
 		SplashScreen::Hide();
 		SubmitToMainThread([]()
