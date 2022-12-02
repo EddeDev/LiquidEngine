@@ -20,6 +20,7 @@ namespace Liquid {
 
 		virtual void PollEvents() const = 0;
 		virtual void WaitEvents() const = 0;
+		virtual void PostEmptyEvent() const = 0;
 
 		virtual void* GetHandle() const = 0;
 		virtual void* GetPlatformHandle() const = 0;

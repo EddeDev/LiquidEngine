@@ -16,7 +16,7 @@ namespace Liquid {
 	class Texture2D : public Texture
 	{
 	public:
-		Texture2D(const std::filesystem::path& path);
+		Texture2D(const String& path);
 
 		virtual void Bind(uint32 slot = 0) const override;
 		virtual void Unbind(uint32 slot = 0) const override;

@@ -17,11 +17,14 @@ namespace Liquid {
 	Ref<GraphicsContext> Application::s_Context;
 	Ref<Swapchain> Application::s_Swapchain;
 	Ref<ImGuiRenderer> Application::s_ImGuiRenderer;
-	Ref<SplashScreen> Application::s_SplashScreen;
 	Ref<Texture2D> Application::s_TestTexture;
 	Unique<ThemeBuilder> Application::s_ThemeBuilder;
-	std::queue<Application::DelayedCallback> Application::s_DelayedCallbacks;
-	std::mutex Application::s_DelayedCallbackMutex;
+
+	std::queue<std::function<void()>> Application::s_MainThreadQueue;
+	std::queue<std::function<void()>> Application::s_UpdateThreadQueue;
+	std::mutex Application::s_MainThreadMutex;
+	std::mutex Application::s_UpdateThreadMutex;
+
 	std::atomic<bool> Application::s_Running = true;
 	std::atomic<bool> Application::s_Minimized = false;
 
@@ -41,11 +44,7 @@ namespace Liquid {
 			s_Device = GraphicsDevice::Select(deviceCreateInfo);
 		}
 
-		// Splash Screen
-		{
-			SplashScreenCreateInfo splashScreenCreateInfo;
-			s_SplashScreen = SplashScreen::Create(splashScreenCreateInfo);
-		}
+		SplashScreen::Show();
 
 		// Window
 		{
@@ -96,18 +95,36 @@ namespace Liquid {
 			ThreadUtils::SetName(currentThread, "Event Thread");
 			ThreadUtils::SetPriority(currentThread, ThreadPriority::BelowNormal);
 
-			s_MainWindow->SetVisible(true);
+			// s_MainWindow->SetVisible(true);
 			while (s_Running)
 			{
 				s_MainWindow->WaitEvents();
+
+				// Execute queue
+				{
+					std::unique_lock<std::mutex> lock(s_MainThreadMutex);
+					while (!s_MainThreadQueue.empty())
+					{
+						auto& callback = s_MainThreadQueue.front();
+						callback();
+						s_MainThreadQueue.pop();
+					}
+				}
 			}
 		}
 	}
 
-	void Application::PushDelayedCallback(DelayedCallback callback)
+	void Application::SubmitToMainThread(std::function<void()> function)
 	{
-		std::lock_guard<std::mutex> lock(s_DelayedCallbackMutex);
-		s_DelayedCallbacks.push(std::move(callback));
+		std::lock_guard<std::mutex> lock(s_MainThreadMutex);
+		s_MainThreadQueue.push(std::move(function));
+		s_MainWindow->PostEmptyEvent();
+	}
+
+	void Application::SubmitToUpdateThread(std::function<void()> function)
+	{
+		std::lock_guard<std::mutex> lock(s_UpdateThreadMutex);
+		s_UpdateThreadQueue.push(std::move(function));
 	}
 
 	void Application::UpdateThreadLoop(bool singlethreaded)
@@ -152,6 +169,15 @@ namespace Liquid {
 
 		s_TestTexture = Ref<Texture2D>::Create("Resources/Textures/Splash.png");
 		
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for(10000ms);
+
+		SplashScreen::Hide();
+		SubmitToMainThread([]()
+		{
+			s_MainWindow->SetVisible(true);
+		});
+
 		float lastTime = static_cast<float>(glfwGetTime());
 		uint32 frames = 0;
 		uint32 fps = 0;
@@ -169,16 +195,16 @@ namespace Liquid {
 			}
 
 			if (singlethreaded)
-				glfwPollEvents();
+				s_MainWindow->PollEvents();
 
-			// Delayed callbacks
+			// Execute queue
 			{
-				std::unique_lock<std::mutex> lock(s_DelayedCallbackMutex);
-				while (!s_DelayedCallbacks.empty())
+				std::unique_lock<std::mutex> lock(s_UpdateThreadMutex);
+				while (!s_UpdateThreadQueue.empty())
 				{
-					auto& callback = s_DelayedCallbacks.front();
+					auto& callback = s_UpdateThreadQueue.front();
 					callback();
-					s_DelayedCallbacks.pop();
+					s_UpdateThreadQueue.pop();
 				}
 			}
 
@@ -249,7 +275,7 @@ namespace Liquid {
 		if (s_Minimized)
 			s_Minimized = false;
 
-		PushDelayedCallback([width, height]()
+		SubmitToUpdateThread([width, height]()
 		{
 			s_Swapchain->Resize(width, height, s_MainWindow->IsFullscreen());
 		});

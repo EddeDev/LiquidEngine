@@ -71,7 +71,7 @@ namespace Liquid {
 	}
 
 #define IMGUI_CALLBACK(name, ...) \
-Application::PushDelayedCallback([createInfo = m_CreateInfo, __VA_ARGS__]() \
+Application::SubmitToUpdateThread([createInfo = m_CreateInfo, __VA_ARGS__]() \
 { \
 	ImGui::SetCurrentContext(createInfo.Context); \
 	GLFWwindow* window = static_cast<GLFWwindow*>(createInfo.Window->GetHandle()); \

@@ -10,8 +10,6 @@ namespace Liquid {
 
 	static uint32 s_GLFWWindowCount = 0;
 
-	std::mutex WindowsWindow::s_Mutex;
-
 	WindowsWindow::WindowsWindow(const WindowCreateInfo& createInfo)
 	{
 		Init(createInfo);
@@ -24,7 +22,7 @@ namespace Liquid {
 
 	void WindowsWindow::Init(const WindowCreateInfo& createInfo)
 	{
-		std::scoped_lock<std::mutex> lock(s_Mutex);
+		m_ThreadID = std::this_thread::get_id();
 
 		m_Data.CurrentBackupIndex = createInfo.Fullscreen ? 1 : 0;
 		m_Data.Title = createInfo.Title;
@@ -172,6 +170,8 @@ namespace Liquid {
 
 	void WindowsWindow::Shutdown()
 	{
+		LQ_ASSERT(std::this_thread::get_id() == m_ThreadID, "Window::Shutdown must only be called from the main thread");
+
 		glfwDestroyWindow(m_Window);
 		s_GLFWWindowCount--;
 
@@ -181,12 +181,21 @@ namespace Liquid {
 
 	void WindowsWindow::PollEvents() const
 	{
+		LQ_ASSERT(std::this_thread::get_id() == m_ThreadID, "Window::PollEvents must only be called from the main thread");
+
 		glfwPollEvents();
 	}
 
 	void WindowsWindow::WaitEvents() const
 	{
+		LQ_ASSERT(std::this_thread::get_id() == m_ThreadID, "Window::WaitEvents must only be called from the main thread");
+
 		glfwWaitEvents();
+	}
+
+	void WindowsWindow::PostEmptyEvent() const
+	{
+		glfwPostEmptyEvent();
 	}
 
 	void* WindowsWindow::GetPlatformHandle() const
@@ -196,6 +205,8 @@ namespace Liquid {
 
 	void WindowsWindow::SetVisible(bool visible)
 	{
+		LQ_ASSERT(std::this_thread::get_id() == m_ThreadID, "Window::SetVisible must only be called from the main thread");
+
 		if (visible)
 			glfwShowWindow(m_Window);
 		else
@@ -204,11 +215,15 @@ namespace Liquid {
 
 	bool WindowsWindow::IsVisible() const
 	{
+		LQ_ASSERT(std::this_thread::get_id() == m_ThreadID, "Window::IsVisible must only be called from the main thread");
+
 		return glfwGetWindowAttrib(m_Window, GLFW_VISIBLE);
 	}
 
 	void WindowsWindow::SetTitle(const String& title)
 	{
+		LQ_ASSERT(std::this_thread::get_id() == m_ThreadID, "Window::SetTitle must only be called from the main thread");
+
 		if (m_Data.Title != title)
 		{
 			glfwSetWindowTitle(m_Window, title.c_str());
@@ -218,6 +233,8 @@ namespace Liquid {
 
 	void WindowsWindow::SetFullscreen(bool enabled)
 	{
+		LQ_ASSERT(std::this_thread::get_id() == m_ThreadID, "Window::SetFullscreen must only be called from the main thread");
+
 		if (m_Data.Fullscreen != enabled)
 		{
 			m_Data.Fullscreen = enabled;

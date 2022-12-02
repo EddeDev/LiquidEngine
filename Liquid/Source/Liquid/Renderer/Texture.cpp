@@ -6,18 +6,18 @@
 
 namespace Liquid {
 
-	Texture2D::Texture2D(const std::filesystem::path& path)
+	Texture2D::Texture2D(const String& path)
 	{
 		if (!std::filesystem::exists(path))
 		{
-			LQ_ERROR_CATEGORY("Texture2D", "Could not find texture '{0}'", path.string());
+			LQ_ERROR_CATEGORY("Texture2D", "Could not find texture '{0}'", path);
 			return;
 		}
 
 		stbi_set_flip_vertically_on_load(true);
 
 		int32 width, height;
-		uint8* data = stbi_load(path.string().c_str(), &width, &height, nullptr, STBI_rgb_alpha);
+		uint8* data = stbi_load(path.c_str(), &width, &height, nullptr, STBI_rgb_alpha);
 		if (!data)
 		{
 			String errorMessage = stbi_failure_reason();

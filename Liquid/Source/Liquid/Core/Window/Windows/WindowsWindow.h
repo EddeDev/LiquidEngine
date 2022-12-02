@@ -15,6 +15,7 @@ namespace Liquid {
 
 		virtual void PollEvents() const override;
 		virtual void WaitEvents() const override;
+		virtual void PostEmptyEvent() const override;
 
 		virtual void* GetHandle() const override { return m_Window; }
 		virtual void* GetPlatformHandle() const override;
@@ -71,7 +72,7 @@ namespace Liquid {
 		GLFWwindow* m_Window = nullptr;
 		GLFWmonitor* m_Monitor = nullptr;
 
-		static std::mutex s_Mutex;
+		std::thread::id m_ThreadID;
 	};
 
 }
