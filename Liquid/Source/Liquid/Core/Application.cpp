@@ -19,16 +19,24 @@ namespace Liquid {
 	Ref<ImGuiRenderer> Application::s_ImGuiRenderer;
 	Unique<ThemeBuilder> Application::s_ThemeBuilder;
 
-	std::queue<std::function<void()>> Application::s_EventThreadQueue;
+	std::queue<std::function<void()>> Application::s_MainThreadQueue;
 	std::queue<std::function<void()>> Application::s_UpdateThreadQueue;
-	std::mutex Application::s_EventThreadMutex;
+	std::mutex Application::s_MainThreadMutex;
 	std::mutex Application::s_UpdateThreadMutex;
+	std::thread::id Application::m_MainThreadID;
+	std::thread::id Application::m_UpdateThreadID;
 
 	std::atomic<bool> Application::s_Running = true;
 	std::atomic<bool> Application::s_Minimized = false;
 
 	void Application::Init(const ApplicationCreateInfo& createInfo)
 	{
+		m_MainThreadID = std::this_thread::get_id();
+
+		void* mainThreadHandle = ThreadUtils::CurrentThreadHandle();
+		ThreadUtils::SetName(mainThreadHandle, "Main Thread");
+		ThreadUtils::SetPriority(mainThreadHandle, ThreadPriority::BelowNormal);
+
 		SplashScreen::Show();
 
 		String currentGraphicsAPI = GraphicsAPIUtils::GetGraphicsAPIName(GetGraphicsAPI());
@@ -62,6 +70,17 @@ namespace Liquid {
 			s_MainWindow->AddWindowSizeCallback(LQ_BIND_CALLBACK(OnWindowSizeCallback));
 		}
 
+		// ImGui
+		{
+			ImGuiRendererCreateInfo createInfo;
+			createInfo.Window = s_MainWindow;
+			createInfo.DebugName = "ImGuiRenderer-Main";
+			createInfo.ViewportsEnable = false;
+
+			SplashScreen::SetProgress(30, "Creating ImGui context...");
+			s_ImGuiRenderer = Ref<ImGuiRenderer>::Create(createInfo);
+		}
+
 		SplashScreen::SetProgress(30, "Creating theme builder...");
 		s_ThemeBuilder = CreateUnique<ThemeBuilder>();
 	}
@@ -72,63 +91,57 @@ namespace Liquid {
 
 	void Application::Run()
 	{
-		const bool singlethreaded = false;
-		if (singlethreaded)
+		ThreadCreateInfo updateThreadCreateInfo;
+		updateThreadCreateInfo.Name = "Update Thread";
+		updateThreadCreateInfo.Priority = ThreadPriority::Highest;
+
+		Thread updateThread(updateThreadCreateInfo);
+		m_UpdateThreadID = updateThread.GetThreadID();
+		updateThread.PushJob(UpdateThreadLoop);
+
+		while (s_Running)
 		{
-			void* currentThread = ThreadUtils::CurrentThreadHandle();
-			ThreadUtils::SetName(currentThread, "Main Thread");
-			ThreadUtils::SetPriority(currentThread, ThreadPriority::Normal);
+			s_MainWindow->WaitEvents();
 
-			UpdateThreadLoop(true);
-		}
-		else
-		{
-			ThreadCreateInfo updateThreadCreateInfo;
-			updateThreadCreateInfo.Name = "Update Thread";
-			updateThreadCreateInfo.Priority = ThreadPriority::Highest;
-
-			Thread updateThread(updateThreadCreateInfo);
-			updateThread.PushJob([]()
+			// Execute queue
 			{
-				UpdateThreadLoop(false);
-			});
-
-			void* currentThread = ThreadUtils::CurrentThreadHandle();
-			ThreadUtils::SetName(currentThread, "Event Thread");
-			ThreadUtils::SetPriority(currentThread, ThreadPriority::BelowNormal);
-
-			while (s_Running)
-			{
-				s_MainWindow->WaitEvents();
-
-				// Execute queue
+				std::unique_lock<std::mutex> lock(s_MainThreadMutex);
+				while (!s_MainThreadQueue.empty())
 				{
-					std::unique_lock<std::mutex> lock(s_EventThreadMutex);
-					while (!s_EventThreadQueue.empty())
-					{
-						auto& callback = s_EventThreadQueue.front();
-						callback();
-						s_EventThreadQueue.pop();
-					}
+					auto& callback = s_MainThreadQueue.front();
+					callback();
+					s_MainThreadQueue.pop();
 				}
 			}
 		}
 	}
 
-	void Application::SubmitToEventThread(std::function<void()> function)
+#define THREAD_CHECKS 1
+
+	void Application::SubmitToMainThread(std::function<void()> function)
 	{
-		std::lock_guard<std::mutex> lock(s_EventThreadMutex);
-		s_EventThreadQueue.push(std::move(function));
+#if THREAD_CHECKS
+		if (std::this_thread::get_id() == m_MainThreadID)
+			LQ_WARNING_ARGS("Application::SubmitToMainThread was called from the main thread");
+#endif
+
+		std::lock_guard<std::mutex> lock(s_MainThreadMutex);
+		s_MainThreadQueue.push(std::move(function));
 		s_MainWindow->PostEmptyEvent();
 	}
 
 	void Application::SubmitToUpdateThread(std::function<void()> function)
 	{
+#if THREAD_CHECKS
+		if (std::this_thread::get_id() == m_UpdateThreadID)
+			LQ_WARNING_ARGS("Application::SubmitToUpdateThread was called from the update thread");
+#endif
+
 		std::lock_guard<std::mutex> lock(s_UpdateThreadMutex);
 		s_UpdateThreadQueue.push(std::move(function));
 	}
 
-	void Application::UpdateThreadLoop(bool singlethreaded)
+	void Application::UpdateThreadLoop()
 	{
 		// Context
 		{
@@ -161,21 +174,10 @@ namespace Liquid {
 			s_Swapchain = Swapchain::Create(swapchainCreateInfo);
 		}
 
-		// ImGui
-		{
-			ImGuiRendererCreateInfo createInfo;
-			createInfo.Window = s_MainWindow;
-			createInfo.DebugName = "ImGuiRenderer-Main";
-			createInfo.ViewportsEnable = false;
-
-			SplashScreen::SetProgress(70, "Creating ImGui context...");
-			s_ImGuiRenderer = Ref<ImGuiRenderer>::Create(createInfo);
-		}
-
-		SplashScreen::SetProgress(90, "Loading resources...");
+		SplashScreen::SetProgress(70, "Loading resources...");
 		// load resources here
 		SplashScreen::Hide();
-		SubmitToEventThread([]()
+		SubmitToMainThread([]()
 		{
 			s_MainWindow->SetVisible(true);
 		});
@@ -194,22 +196,6 @@ namespace Liquid {
 				fps = frames;
 				frames = 0;
 				lastTime = time;
-			}
-
-			if (singlethreaded)
-			{
-				s_MainWindow->PollEvents();
-
-				// Execute queue
-				{
-					std::unique_lock<std::mutex> lock(s_EventThreadMutex);
-					while (!s_EventThreadQueue.empty())
-					{
-						auto& callback = s_EventThreadQueue.front();
-						callback();
-						s_EventThreadQueue.pop();
-					}
-				}
 			}
 
 			// Execute queue

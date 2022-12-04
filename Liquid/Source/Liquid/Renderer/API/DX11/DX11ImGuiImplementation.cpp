@@ -24,8 +24,6 @@ namespace Liquid {
 		ImGui_ImplGlfw_InitForOther(window, false);
 		InstallCallbacks();
 
-		auto& platformIO = ImGui::GetPlatformIO();
-
 		ImGui_ImplDX11_Init(device.Get(), deviceContext.Get());
 	}
 
@@ -36,17 +34,27 @@ namespace Liquid {
 
 	void DX11ImGuiImplementation::BeginFrame()
 	{
+		if (std::this_thread::get_id() == m_ThreadID)
+			LQ_PLATFORM_BREAK();
+
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 	}
 
 	void DX11ImGuiImplementation::EndFrame()
 	{
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+		ImDrawData* drawData = ImGui::GetDrawData();
+		if (!drawData->Valid)
+			LQ_PLATFORM_BREAK();
+
+		ImGui_ImplDX11_RenderDrawData(drawData);
 	}
 
 	void DX11ImGuiImplementation::Image(Ref<Image2D> image, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1) const
 	{
+		if (std::this_thread::get_id() == m_ThreadID)
+			LQ_PLATFORM_BREAK();
+
 		Ref<DX11Image2D> dxImage = image.As<DX11Image2D>();
 		ID3D11ShaderResourceView* srv = dxImage->GetShaderResourceView();
 		if (srv)
@@ -58,6 +66,9 @@ namespace Liquid {
 
 	void DX11ImGuiImplementation::InstallCallbacks()
 	{
+		if (std::this_thread::get_id() != m_ThreadID)
+			LQ_PLATFORM_BREAK();
+
 		m_CreateInfo.Window->AddFocusCallback(LQ_BIND_CALLBACK(OnWindowFocusCallback, this));
 		m_CreateInfo.Window->AddCursorEnterCallback(LQ_BIND_CALLBACK(OnCursorEnterCallback, this));
 		m_CreateInfo.Window->AddCursorPosCallback(LQ_BIND_CALLBACK(OnCursorPosCallback, this));
@@ -69,12 +80,12 @@ namespace Liquid {
 
 #define IMGUI_CALLBACK(name, ...) \
 { \
-	LQ_ASSERT(std::this_thread::get_id() == m_ThreadID, "On" #name " must be only called from the main thread"); \
+	LQ_ASSERT(std::this_thread::get_id() == m_ThreadID, "On" #name " must only be called from the main thread"); \
 	Application::SubmitToUpdateThread([createInfo = m_CreateInfo, __VA_ARGS__]() \
 	{ \
 		ImGui::SetCurrentContext(createInfo.Context); \
 		GLFWwindow* window = static_cast<GLFWwindow*>(createInfo.Window->GetHandle()); \
-		LQ_ASSERT(window, "Window is NULL!"); \
+		LQ_ASSERT(window, "Window is null"); \
 		ImGui_ImplGlfw_##name(window, __VA_ARGS__); \
 	}); \
 }

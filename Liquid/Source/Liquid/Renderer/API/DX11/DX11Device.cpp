@@ -112,8 +112,8 @@ namespace Liquid {
 		}
 		else if (microsoftAdapterIndex != std::numeric_limits<size_t>::max())
 		{
-			LQ_WARNING_ARGS("Microsoft Basic Render Driver was chosen as graphics device");
 			selectedAdapter = adapters[microsoftAdapterIndex];
+			MessageBox(0, L"Microsoft Basic Render Driver was chosen as graphics device", L"Warning", MB_SYSTEMMODAL | MB_ICONWARNING);
 		}
 
 		if (!selectedAdapter)
@@ -150,10 +150,25 @@ namespace Liquid {
 					message += StringUtils::ToWideString(fmt::format("  Adapter LUID: [{0}, {1}]\n", desc.AdapterLuid.LowPart, desc.AdapterLuid.HighPart));
 				}
 			}
+			
+			if (IsDebuggerPresent())
+			{
+				message += L"\n";
+				message += L"Do you want to debug the crash?";
+			}
 
-			if (MessageBox(0, message.c_str(), L"Failed to choose a DX11 Adapter.", MB_SYSTEMMODAL | MB_ICONERROR) == IDYES)
-				DebugBreak();
+			uint32 messageType = MB_SYSTEMMODAL | MB_ICONERROR;
+			if (IsDebuggerPresent())
+				messageType |= MB_YESNO;
 
+			int32 result = MessageBox(0, message.c_str(), L"Failed to choose a DX11 Adapter.", messageType);
+			if (IsDebuggerPresent())
+			{
+				if (result == IDYES)
+					DebugBreak();
+			}
+
+			exit(EXIT_FAILURE);
 			return nullptr;
 		}
 

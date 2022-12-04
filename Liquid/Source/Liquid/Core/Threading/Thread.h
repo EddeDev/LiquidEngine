@@ -31,6 +31,8 @@ namespace Liquid {
 		void Wait();
 
 		void PushJob(Job job);
+
+		std::thread::id GetThreadID() const { return m_Thread.get_id(); }
 	private:
 		void Destroy();
 

@@ -45,7 +45,7 @@ namespace Liquid {
 		static void Shutdown();
 
 		static void Run();
-		static void SubmitToEventThread(std::function<void()> function);
+		static void SubmitToMainThread(std::function<void()> function);
 		static void SubmitToUpdateThread(std::function<void()> function);
 
 		static BuildConfiguration GetBuildConfiguration();
@@ -56,7 +56,7 @@ namespace Liquid {
 		static Ref<GraphicsContext> GetContext() { return s_Context; }
 		static Ref<Swapchain> GetSwapchain() { return s_Swapchain; }
 	private:
-		static void UpdateThreadLoop(bool singlethreaded);
+		static void UpdateThreadLoop();
 
 		static void OnWindowCloseCallback();
 		static void OnWindowSizeCallback(uint32 width, uint32 height);
@@ -68,10 +68,12 @@ namespace Liquid {
 		static Ref<ImGuiRenderer> s_ImGuiRenderer;
 		static Unique<ThemeBuilder> s_ThemeBuilder;
 
-		static std::queue<std::function<void()>> s_EventThreadQueue;
+		static std::queue<std::function<void()>> s_MainThreadQueue;
 		static std::queue<std::function<void()>> s_UpdateThreadQueue;
-		static std::mutex s_EventThreadMutex;
+		static std::mutex s_MainThreadMutex;
 		static std::mutex s_UpdateThreadMutex;
+		static std::thread::id m_MainThreadID;
+		static std::thread::id m_UpdateThreadID;
 
 		static std::atomic<bool> s_Running;
 		static std::atomic<bool> s_Minimized;
