@@ -22,6 +22,8 @@ namespace Liquid {
 		ImGui::Initialize();
 
 		ImGuiIO& io = ImGui::GetIO();
+		io.IniFilename = "Config/ImGui.ini";
+		io.LogFilename = "Logs/ImGui.log";
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
 		if (createInfo.ViewportsEnable)

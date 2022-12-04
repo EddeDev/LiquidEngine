@@ -175,7 +175,11 @@ namespace Liquid {
 		}
 
 		SplashScreen::SetProgress(70, "Loading resources...");
+		// using namespace std::chrono_literals;
+		// std::this_thread::sleep_for(3000ms);
+
 		// load resources here
+		
 		SplashScreen::Hide();
 		SubmitToMainThread([]()
 		{
