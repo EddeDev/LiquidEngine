@@ -29,6 +29,8 @@ namespace Liquid {
 
 	void Application::Init(const ApplicationCreateInfo& createInfo)
 	{
+		SplashScreen::Show();
+
 		String currentGraphicsAPI = GraphicsAPIUtils::GetGraphicsAPIName(GetGraphicsAPI());
 		LQ_INFO_ARGS("Graphics API: {0}", currentGraphicsAPI);
 
@@ -40,10 +42,10 @@ namespace Liquid {
 #else
 			deviceCreateInfo.EnableDebugLayers = false;
 #endif
+
+			SplashScreen::SetProgress(10, "Creating device...");
 			s_Device = GraphicsDevice::Select(deviceCreateInfo);
 		}
-
-		SplashScreen::Show();
 
 		// Window
 		{
@@ -54,7 +56,7 @@ namespace Liquid {
 			windowCreateInfo.Fullscreen = false;
 			windowCreateInfo.Maximize = true;
 
-			SplashScreen::SetProgress(10, "Creating window...");
+			SplashScreen::SetProgress(20, "Creating window...");
 			s_MainWindow = Window::Create(windowCreateInfo);
 			s_MainWindow->AddCloseCallback(LQ_BIND_CALLBACK(OnWindowCloseCallback));
 			s_MainWindow->AddWindowSizeCallback(LQ_BIND_CALLBACK(OnWindowSizeCallback));
@@ -173,12 +175,7 @@ namespace Liquid {
 		}
 
 		SplashScreen::SetProgress(90, "Loading resources...");
-
-		// s_TestTexture = Ref<Texture2D>::Create("Resources/Textures/Splash.png");
-		
-		using namespace std::chrono_literals;
-		std::this_thread::sleep_for(3000ms);
-
+		// load resources here
 		SplashScreen::Hide();
 		SubmitToMainThread([]()
 		{

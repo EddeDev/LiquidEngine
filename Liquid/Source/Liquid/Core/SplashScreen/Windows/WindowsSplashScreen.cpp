@@ -8,6 +8,13 @@
 
 namespace Liquid {
 
+	enum class SplashScreenFontType : uint8
+	{
+		Normal = 0,
+		Small,
+		Title
+	};
+
 	struct WindowsSplashScreenData
 	{
 		bool ShowInTaskbar = false;
@@ -19,6 +26,7 @@ namespace Liquid {
 		HWND WindowHandle = NULL;
 		
 		HBITMAP Bitmap = NULL;
+		std::unordered_map<SplashScreenFontType, HFONT> Fonts;
 
 		std::mutex Mutex;
 		uint8 Progress = 0;
@@ -81,12 +89,14 @@ namespace Liquid {
 
 				// Label
 				WString label = L"Liquid Editor";
+				SelectObject(hdc, s_Data.Fonts[SplashScreenFontType::Title]);
 				SetTextColor(hdc, RGB(255, 255, 255));
 				TextOut(hdc, padding, clientRect.bottom - 60, label.c_str(), static_cast<int32>(label.size()));
 
 				// Version
 				WString version = L"Liquid Editor v1.0";
 				SetTextColor(hdc, RGB(160, 160, 160));
+				SelectObject(hdc, s_Data.Fonts[SplashScreenFontType::Normal]);
 				TextOut(hdc, padding, clientRect.bottom - 40, version.c_str(), static_cast<int32>(version.size()));
 
 				// Progress
@@ -94,13 +104,15 @@ namespace Liquid {
 				progressText += std::to_wstring(s_Data.Progress);
 				progressText += L"% - ";
 				progressText += StringUtils::ToWideString(s_Data.ProgressText);
+				SelectObject(hdc, s_Data.Fonts[SplashScreenFontType::Normal]);
 				SetTextColor(hdc, RGB(160, 160, 160));
 				TextOut(hdc, padding, clientRect.bottom - 20, progressText.c_str(), static_cast<int32>(progressText.size()));
 
 				// Copyright
 				WString copyright = L"Copyright ©  EddeDev.  All rights reserved.";
+				SelectObject(hdc, s_Data.Fonts[SplashScreenFontType::Small]);
 				SetTextColor(hdc, RGB(160, 160, 160));
-				TextOut(hdc, clientRect.right - static_cast<int32>(copyright.size() * 6.6f), clientRect.bottom - 20, copyright.c_str(), static_cast<int32>(copyright.size()));
+				TextOut(hdc, clientRect.right - 150, clientRect.bottom - 18, copyright.c_str(), static_cast<int32>(copyright.size()));
 			}
 
 			EndPaint(hWnd, &ps);
@@ -163,6 +175,32 @@ namespace Liquid {
 		return bitmap;
 	}
 
+	static HFONT AddFont(SplashScreenFontType type, uint32 size, bool bold = false)
+	{
+		if (s_Data.Fonts.find(type) != s_Data.Fonts.end())
+		{
+			LQ_WARNING_ARGS("Font already exists!");
+			return s_Data.Fonts.at(type);
+		}
+
+		HFONT defaultFont = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
+		LOGFONT font = {};
+		GetObjectW(defaultFont, sizeof(LOGFONT), &font);
+
+		font.lfHeight = size;
+		font.lfQuality = CLEARTYPE_QUALITY;
+		font.lfWeight = bold ? FW_BOLD : FW_DONTCARE;
+
+		s_Data.Fonts[type] = CreateFontIndirect(&font);
+		if (!s_Data.Fonts[type])
+		{
+			LQ_WARNING_ARGS("Using default font");
+			s_Data.Fonts[type] = defaultFont;
+		}
+
+		return s_Data.Fonts[type];
+	}
+
 	static DWORD WINAPI StartThread(LPVOID param)
 	{
 		HINSTANCE hInstance = GetModuleHandleW(NULL);
@@ -214,6 +252,11 @@ namespace Liquid {
 			if (s_Data.AllowFading)
 				SetLayeredWindowAttributes(s_Data.WindowHandle, 0, 0, LWA_ALPHA);
 
+			// Add fonts
+			AddFont(SplashScreenFontType::Normal, 12);
+			AddFont(SplashScreenFontType::Small, 11);
+			AddFont(SplashScreenFontType::Title, 18, true);
+
 			ShowWindow(s_Data.WindowHandle, SW_SHOW);
 			UpdateWindow(s_Data.WindowHandle);
 
@@ -263,9 +306,14 @@ namespace Liquid {
 					Sleep(1000 / 60);
 				}
 			}
+
+			DeleteObject(s_Data.Bitmap);
 		}
 
-		DeleteObject(s_Data.Bitmap);
+		// Delete fonts
+		for (auto& [type, font] : s_Data.Fonts)
+			DeleteObject(font);
+
 		UnregisterClassW(MAKEINTATOM(s_Data.WindowClass), hInstance);
 		DestroyWindow(s_Data.WindowHandle);
 		s_Data.WindowClass = NULL;
