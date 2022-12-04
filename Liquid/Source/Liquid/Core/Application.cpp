@@ -19,9 +19,9 @@ namespace Liquid {
 	Ref<ImGuiRenderer> Application::s_ImGuiRenderer;
 	Unique<ThemeBuilder> Application::s_ThemeBuilder;
 
-	std::queue<std::function<void()>> Application::s_MainThreadQueue;
+	std::queue<std::function<void()>> Application::s_EventThreadQueue;
 	std::queue<std::function<void()>> Application::s_UpdateThreadQueue;
-	std::mutex Application::s_MainThreadMutex;
+	std::mutex Application::s_EventThreadMutex;
 	std::mutex Application::s_UpdateThreadMutex;
 
 	std::atomic<bool> Application::s_Running = true;
@@ -79,7 +79,6 @@ namespace Liquid {
 			ThreadUtils::SetName(currentThread, "Main Thread");
 			ThreadUtils::SetPriority(currentThread, ThreadPriority::Normal);
 
-			s_MainWindow->SetVisible(true);
 			UpdateThreadLoop(true);
 		}
 		else
@@ -98,29 +97,28 @@ namespace Liquid {
 			ThreadUtils::SetName(currentThread, "Event Thread");
 			ThreadUtils::SetPriority(currentThread, ThreadPriority::BelowNormal);
 
-			// s_MainWindow->SetVisible(true);
 			while (s_Running)
 			{
 				s_MainWindow->WaitEvents();
 
 				// Execute queue
 				{
-					std::unique_lock<std::mutex> lock(s_MainThreadMutex);
-					while (!s_MainThreadQueue.empty())
+					std::unique_lock<std::mutex> lock(s_EventThreadMutex);
+					while (!s_EventThreadQueue.empty())
 					{
-						auto& callback = s_MainThreadQueue.front();
+						auto& callback = s_EventThreadQueue.front();
 						callback();
-						s_MainThreadQueue.pop();
+						s_EventThreadQueue.pop();
 					}
 				}
 			}
 		}
 	}
 
-	void Application::SubmitToMainThread(std::function<void()> function)
+	void Application::SubmitToEventThread(std::function<void()> function)
 	{
-		std::lock_guard<std::mutex> lock(s_MainThreadMutex);
-		s_MainThreadQueue.push(std::move(function));
+		std::lock_guard<std::mutex> lock(s_EventThreadMutex);
+		s_EventThreadQueue.push(std::move(function));
 		s_MainWindow->PostEmptyEvent();
 	}
 
@@ -177,7 +175,7 @@ namespace Liquid {
 		SplashScreen::SetProgress(90, "Loading resources...");
 		// load resources here
 		SplashScreen::Hide();
-		SubmitToMainThread([]()
+		SubmitToEventThread([]()
 		{
 			s_MainWindow->SetVisible(true);
 		});
@@ -199,7 +197,20 @@ namespace Liquid {
 			}
 
 			if (singlethreaded)
+			{
 				s_MainWindow->PollEvents();
+
+				// Execute queue
+				{
+					std::unique_lock<std::mutex> lock(s_EventThreadMutex);
+					while (!s_EventThreadQueue.empty())
+					{
+						auto& callback = s_EventThreadQueue.front();
+						callback();
+						s_EventThreadQueue.pop();
+					}
+				}
+			}
 
 			// Execute queue
 			{
@@ -272,6 +283,7 @@ namespace Liquid {
 		if (s_Minimized)
 			s_Minimized = false;
 
+		// TODO: replace with SubmitToRenderThread
 		SubmitToUpdateThread([width, height]()
 		{
 			s_Swapchain->Resize(width, height, s_MainWindow->IsFullscreen());

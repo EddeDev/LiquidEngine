@@ -15,17 +15,14 @@ namespace Liquid {
 	DX11ImGuiImplementation::DX11ImGuiImplementation(const ImGuiImplementationCreateInfo& createInfo)
 		: m_CreateInfo(createInfo)
 	{
+		m_ThreadID = std::this_thread::get_id();
+
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
 		GLFWwindow* window = static_cast<GLFWwindow*>(createInfo.Window->GetHandle());
-#define CUSTOM_CALLBACKS 1
-#if CUSTOM_CALLBACKS
 		ImGui_ImplGlfw_InitForOther(window, false);
 		InstallCallbacks();
-#else
-		ImGui_ImplGlfw_InitForOther(window, true);
-#endif
 
 		auto& platformIO = ImGui::GetPlatformIO();
 
@@ -71,13 +68,16 @@ namespace Liquid {
 	}
 
 #define IMGUI_CALLBACK(name, ...) \
-Application::SubmitToUpdateThread([createInfo = m_CreateInfo, __VA_ARGS__]() \
 { \
-	ImGui::SetCurrentContext(createInfo.Context); \
-	GLFWwindow* window = static_cast<GLFWwindow*>(createInfo.Window->GetHandle()); \
-	LQ_ASSERT(window, "Window is NULL!"); \
-	ImGui_ImplGlfw_##name(window, __VA_ARGS__); \
-})
+	LQ_ASSERT(std::this_thread::get_id() == m_ThreadID, "On" #name " must be only called from the main thread"); \
+	Application::SubmitToUpdateThread([createInfo = m_CreateInfo, __VA_ARGS__]() \
+	{ \
+		ImGui::SetCurrentContext(createInfo.Context); \
+		GLFWwindow* window = static_cast<GLFWwindow*>(createInfo.Window->GetHandle()); \
+		LQ_ASSERT(window, "Window is NULL!"); \
+		ImGui_ImplGlfw_##name(window, __VA_ARGS__); \
+	}); \
+}
 
 	void DX11ImGuiImplementation::OnWindowFocusCallback(int32 focused)
 	{

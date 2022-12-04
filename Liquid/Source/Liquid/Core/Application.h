@@ -45,7 +45,7 @@ namespace Liquid {
 		static void Shutdown();
 
 		static void Run();
-		static void SubmitToMainThread(std::function<void()> function);
+		static void SubmitToEventThread(std::function<void()> function);
 		static void SubmitToUpdateThread(std::function<void()> function);
 
 		static BuildConfiguration GetBuildConfiguration();
@@ -68,9 +68,9 @@ namespace Liquid {
 		static Ref<ImGuiRenderer> s_ImGuiRenderer;
 		static Unique<ThemeBuilder> s_ThemeBuilder;
 
-		static std::queue<std::function<void()>> s_MainThreadQueue;
+		static std::queue<std::function<void()>> s_EventThreadQueue;
 		static std::queue<std::function<void()>> s_UpdateThreadQueue;
-		static std::mutex s_MainThreadMutex;
+		static std::mutex s_EventThreadMutex;
 		static std::mutex s_UpdateThreadMutex;
 
 		static std::atomic<bool> s_Running;

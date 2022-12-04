@@ -26,6 +26,7 @@ namespace Liquid {
 		void OnCharCallback(uint32 codepoint);
 	private:
 		ImGuiImplementationCreateInfo m_CreateInfo;
+		std::thread::id m_ThreadID;
 	};
 
 }
