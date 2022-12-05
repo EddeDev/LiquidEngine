@@ -118,7 +118,7 @@ namespace Liquid {
 
 		if (!selectedAdapter)
 		{
-			std::wstring message;
+			WString message;
 			message += L"Adapters:\n";
 
 			for (size_t i = 0; i < adapters.size(); i++)

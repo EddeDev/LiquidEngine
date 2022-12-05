@@ -36,6 +36,8 @@ namespace Liquid {
 	struct ApplicationCreateInfo
 	{
 		CommandLineArgs Args;
+		bool EnableImGui = true;
+		bool ShowSplashScreen = true;
 	};
 
 	class Application

@@ -2,7 +2,7 @@
 #include "Application.h"
 
 #include "Threading/Thread.h"
-
+#include "Liquid/Renderer/RenderThread.h"
 #include "Liquid/Renderer/ImGuiRenderer.h"
 
 #include <glfw/glfw3.h>
@@ -21,6 +21,7 @@ namespace Liquid {
 
 	std::queue<std::function<void()>> Application::s_MainThreadQueue;
 	std::queue<std::function<void()>> Application::s_UpdateThreadQueue;
+
 	std::mutex Application::s_MainThreadMutex;
 	std::mutex Application::s_UpdateThreadMutex;
 	std::thread::id Application::m_MainThreadID;
@@ -37,7 +38,10 @@ namespace Liquid {
 		ThreadUtils::SetName(mainThreadHandle, "Main Thread");
 		ThreadUtils::SetPriority(mainThreadHandle, ThreadPriority::BelowNormal);
 
-		SplashScreen::Show();
+		if (createInfo.ShowSplashScreen)
+			SplashScreen::Show();
+
+		RenderThreadQueue::Init(1024 * 1024 * 10);
 
 		String currentGraphicsAPI = GraphicsAPIUtils::GetGraphicsAPIName(GetGraphicsAPI());
 		LQ_INFO_ARGS("Graphics API: {0}", currentGraphicsAPI);
@@ -71,6 +75,7 @@ namespace Liquid {
 		}
 
 		// ImGui
+		if (createInfo.EnableImGui)
 		{
 			ImGuiRendererCreateInfo createInfo;
 			createInfo.Window = s_MainWindow;
@@ -87,6 +92,7 @@ namespace Liquid {
 
 	void Application::Shutdown()
 	{
+		RenderThreadQueue::Shutdown();
 	}
 
 	void Application::Run()
@@ -179,6 +185,10 @@ namespace Liquid {
 		// std::this_thread::sleep_for(3000ms);
 
 		// load resources here
+
+
+		Ref<Texture2D> texture = Ref<Texture2D>::Create("Resources/Splash/Splash.bmp");
+
 		
 		SplashScreen::Hide();
 		SubmitToMainThread([]()
@@ -215,42 +225,50 @@ namespace Liquid {
 
 			if (!s_Minimized)
 			{
+				if (s_ImGuiRenderer)
+				{
+					RT_SUBMIT(Application)([fps]()
+					{
+						s_ImGuiRenderer->BeginFrame();
+
+						s_ThemeBuilder->Render();
+
+						ImGui::Begin("Liquid Engine");
+						ImGui::Text("%d fps", fps);
+
+						BuildConfiguration buildConfig = GetBuildConfiguration();
+						String buildConfigName;
+						switch (buildConfig)
+						{
+						case BuildConfiguration::Debug:    buildConfigName = "Debug"; break;
+						case BuildConfiguration::Release:  buildConfigName = "Release"; break;
+						case BuildConfiguration::Shipping: buildConfigName = "Shipping"; break;
+						}
+						ImGui::Text("Build Configuration: %s", buildConfigName.c_str());
+
+						if (ImGui::CollapsingHeader("Graphics Device"))
+						{
+							auto& deviceInfo = s_Device->GetInfo();
+							ImGui::Text("Vendor: %s", GraphicsDeviceUtils::VendorToString(deviceInfo.Vendor));
+							// ImGui::Text("Renderer: %s", deviceInfo.Renderer.c_str());
+							// String currentGraphicsAPI = GraphicsAPIUtils::GetGraphicsAPIName(GetGraphicsAPI());
+							// ImGui::Text("%s Version: %s", currentGraphicsAPI.c_str(), deviceInfo.PlatformVersion.c_str());
+						}
+
+						bool vsync = s_Swapchain->IsVSyncEnabled();
+						if (ImGui::Checkbox("V-Sync", &vsync))
+							s_Swapchain->SetVSync(vsync);
+
+						ImGui::End();
+
+						s_ImGuiRenderer->EndFrame();
+					});
+				}
+
 				s_Swapchain->BeginFrame();
 				s_Swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
 
-				s_ImGuiRenderer->BeginFrame();
-
-				s_ThemeBuilder->Render();
-
-				ImGui::Begin("Liquid Engine");
-				ImGui::Text("%d fps", fps);
-
-				BuildConfiguration buildConfig = GetBuildConfiguration();
-				String buildConfigName;
-				switch (buildConfig)
-				{
-				case BuildConfiguration::Debug:    buildConfigName = "Debug"; break;
-				case BuildConfiguration::Release:  buildConfigName = "Release"; break;
-				case BuildConfiguration::Shipping: buildConfigName = "Shipping"; break;
-				}
-				ImGui::Text("Build Configuration: %s", buildConfigName.c_str());
-
-				if (ImGui::CollapsingHeader("Graphics Device"))
-				{
-					auto& deviceInfo = s_Device->GetInfo();
-					ImGui::Text("Vendor: %s", GraphicsDeviceUtils::VendorToString(deviceInfo.Vendor));
-					// ImGui::Text("Renderer: %s", deviceInfo.Renderer.c_str());
-					// String currentGraphicsAPI = GraphicsAPIUtils::GetGraphicsAPIName(GetGraphicsAPI());
-					// ImGui::Text("%s Version: %s", currentGraphicsAPI.c_str(), deviceInfo.PlatformVersion.c_str());
-				}
-
-				bool vsync = s_Swapchain->IsVSyncEnabled();
-				if (ImGui::Checkbox("V-Sync", &vsync))
-					s_Swapchain->SetVSync(vsync);
-
-				ImGui::End();
-
-				s_ImGuiRenderer->EndFrame();
+				RenderThreadQueue::Flush();
 
 				s_Swapchain->Present();
 			}
@@ -273,8 +291,7 @@ namespace Liquid {
 		if (s_Minimized)
 			s_Minimized = false;
 
-		// TODO: replace with SubmitToRenderThread
-		SubmitToUpdateThread([width, height]()
+		RT_SUBMIT(Application)([width, height]()
 		{
 			s_Swapchain->Resize(width, height, s_MainWindow->IsFullscreen());
 		});
