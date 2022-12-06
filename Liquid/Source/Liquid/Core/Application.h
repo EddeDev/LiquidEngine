@@ -10,6 +10,7 @@
 #include "Liquid/Renderer/ImGuiRenderer.h"
 #include "Liquid/Renderer/Texture.h"
 
+#include "Threading/Thread.h"
 #include "Window/Window.h"
 #include "SplashScreen/SplashScreen.h"
 #include "ThemeBuilder.h"
@@ -57,8 +58,12 @@ namespace Liquid {
 		static Ref<GraphicsDevice> GetDevice() { return s_Device; }
 		static Ref<GraphicsContext> GetContext() { return s_Context; }
 		static Ref<Swapchain> GetSwapchain() { return s_Swapchain; }
+
+		static const Unique<Thread>& GetUpdateThread() { return s_UpdateThread; }
+		static const Unique<Thread>& GetRenderThread() { return s_UpdateThread; }
 	private:
 		static void UpdateThreadLoop();
+		static void RenderImGui();
 
 		static void OnWindowCloseCallback();
 		static void OnWindowSizeCallback(uint32 width, uint32 height);
@@ -74,11 +79,15 @@ namespace Liquid {
 		static std::queue<std::function<void()>> s_UpdateThreadQueue;
 		static std::mutex s_MainThreadMutex;
 		static std::mutex s_UpdateThreadMutex;
-		static std::thread::id m_MainThreadID;
-		static std::thread::id m_UpdateThreadID;
+		static std::thread::id s_MainThreadID;
+
+		static Unique<Thread> s_UpdateThread;
+		static Unique<Thread> s_RenderThread;
 
 		static std::atomic<bool> s_Running;
 		static std::atomic<bool> s_Minimized;
+
+		static uint32 s_FPS;
 	};
 
 }

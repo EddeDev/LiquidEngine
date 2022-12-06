@@ -30,7 +30,9 @@ namespace Liquid {
 		void Join();
 		void Wait();
 
-		void PushJob(Job job);
+		void PushJob(StringView description, Job job);
+
+		uint32 GetRemainingJobs();
 
 		std::thread::id GetThreadID() const { return m_Thread.get_id(); }
 	private:

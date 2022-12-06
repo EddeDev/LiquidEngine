@@ -57,11 +57,17 @@ namespace Liquid {
 		return &m_Jobs.front();
 	}
 
-	void Thread::PushJob(Job job)
+	void Thread::PushJob(StringView description, Job job)
 	{
 		std::lock_guard<std::mutex> lock(m_Mutex);
 		m_Jobs.push(std::move(job));
 		m_Condition.notify_one();
+	}
+
+	uint32 Thread::GetRemainingJobs()
+	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
+		return m_Jobs.size();
 	}
 
 	void Thread::PopJob()

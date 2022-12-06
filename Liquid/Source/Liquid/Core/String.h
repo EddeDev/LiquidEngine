@@ -6,6 +6,8 @@ namespace Liquid {
 
 	typedef std::string String;
 	typedef std::wstring WString;
+	typedef std::string_view StringView;
+	typedef std::wstring_view WStringView;
 	typedef std::u16string U16String;
 	typedef std::u32string U32String;
 

@@ -1,7 +1,6 @@
 #include "LiquidPCH.h"
 #include "Application.h"
 
-#include "Threading/Thread.h"
 #include "Liquid/Renderer/RenderThread.h"
 #include "Liquid/Renderer/ImGuiRenderer.h"
 
@@ -9,6 +8,8 @@
 
 #include <imgui.h>
 #include <imgui_internal.h>
+
+#include "Debugging/ScopedTimer.h"
 
 namespace Liquid {
 
@@ -24,15 +25,19 @@ namespace Liquid {
 
 	std::mutex Application::s_MainThreadMutex;
 	std::mutex Application::s_UpdateThreadMutex;
-	std::thread::id Application::m_MainThreadID;
-	std::thread::id Application::m_UpdateThreadID;
+
+	std::thread::id Application::s_MainThreadID;
+	Unique<Thread> Application::s_UpdateThread;
+	Unique<Thread> Application::s_RenderThread;
 
 	std::atomic<bool> Application::s_Running = true;
 	std::atomic<bool> Application::s_Minimized = false;
 
+	uint32 Application::s_FPS = 0;
+
 	void Application::Init(const ApplicationCreateInfo& createInfo)
 	{
-		m_MainThreadID = std::this_thread::get_id();
+		s_MainThreadID = std::this_thread::get_id();
 
 		void* mainThreadHandle = ThreadUtils::CurrentThreadHandle();
 		ThreadUtils::SetName(mainThreadHandle, "Main Thread");
@@ -99,11 +104,14 @@ namespace Liquid {
 	{
 		ThreadCreateInfo updateThreadCreateInfo;
 		updateThreadCreateInfo.Name = "Update Thread";
-		updateThreadCreateInfo.Priority = ThreadPriority::Highest;
+		updateThreadCreateInfo.Priority = ThreadPriority::AboveNormal;
+		s_UpdateThread = CreateUnique<Thread>(updateThreadCreateInfo);
+		s_UpdateThread->PushJob("Update Thread - Main Loop", UpdateThreadLoop);
 
-		Thread updateThread(updateThreadCreateInfo);
-		m_UpdateThreadID = updateThread.GetThreadID();
-		updateThread.PushJob(UpdateThreadLoop);
+		ThreadCreateInfo renderThreadCreateInfo;
+		renderThreadCreateInfo.Name = "Render Thread";
+		renderThreadCreateInfo.Priority = ThreadPriority::Highest;
+		s_RenderThread = CreateUnique<Thread>(renderThreadCreateInfo);
 
 		while (s_Running)
 		{
@@ -120,15 +128,26 @@ namespace Liquid {
 				}
 			}
 		}
+
+		s_UpdateThread->Wait();
+
+		s_UpdateThread.reset();
+		s_RenderThread.reset();
 	}
 
+#ifdef LQ_BUILD_DEBUG
 #define THREAD_CHECKS 1
+#else
+#define THREAD_CHECKS 0
+#endif
 
 	void Application::SubmitToMainThread(std::function<void()> function)
 	{
 #if THREAD_CHECKS
-		if (std::this_thread::get_id() == m_MainThreadID)
+		if (std::this_thread::get_id() == s_MainThreadID)
 			LQ_WARNING_ARGS("Application::SubmitToMainThread was called from the main thread");
+		if (std::this_thread::get_id() == s_RenderThread->GetThreadID())
+			LQ_WARNING_ARGS("Application::SubmitToMainThread was called from the render thread");
 #endif
 
 		std::lock_guard<std::mutex> lock(s_MainThreadMutex);
@@ -139,8 +158,10 @@ namespace Liquid {
 	void Application::SubmitToUpdateThread(std::function<void()> function)
 	{
 #if THREAD_CHECKS
-		if (std::this_thread::get_id() == m_UpdateThreadID)
+		if (std::this_thread::get_id() == s_UpdateThread->GetThreadID())
 			LQ_WARNING_ARGS("Application::SubmitToUpdateThread was called from the update thread");
+		if (std::this_thread::get_id() == s_RenderThread->GetThreadID())
+			LQ_WARNING_ARGS("Application::SubmitToUpdateThread was called from the render thread");
 #endif
 
 		std::lock_guard<std::mutex> lock(s_UpdateThreadMutex);
@@ -180,16 +201,16 @@ namespace Liquid {
 			s_Swapchain = Swapchain::Create(swapchainCreateInfo);
 		}
 
-		SplashScreen::SetProgress(70, "Loading resources...");
-		// using namespace std::chrono_literals;
-		// std::this_thread::sleep_for(3000ms);
+		// Load resources
+		{
+			SplashScreen::SetProgress(70, "Loading resources...");
 
-		// load resources here
+			using namespace std::chrono_literals;
+			std::this_thread::sleep_for(3000ms);
 
+			// load resources here
+		}
 
-		Ref<Texture2D> texture = Ref<Texture2D>::Create("Resources/Splash/Splash.bmp");
-
-		
 		SplashScreen::Hide();
 		SubmitToMainThread([]()
 		{
@@ -198,7 +219,6 @@ namespace Liquid {
 
 		float lastTime = static_cast<float>(glfwGetTime());
 		uint32 frames = 0;
-		uint32 fps = 0;
 
 		while (s_Running)
 		{
@@ -207,7 +227,7 @@ namespace Liquid {
 			if (time >= lastTime + 1.0f)
 			{
 				// LQ_INFO_ARGS("{0} fps", frames);
-				fps = frames;
+				s_FPS = frames;
 				frames = 0;
 				lastTime = time;
 			}
@@ -227,52 +247,74 @@ namespace Liquid {
 			{
 				if (s_ImGuiRenderer)
 				{
-					RT_SUBMIT(Application)([fps]()
+					RT_SUBMIT(Application)([]()
 					{
-						s_ImGuiRenderer->BeginFrame();
-
-						s_ThemeBuilder->Render();
-
-						ImGui::Begin("Liquid Engine");
-						ImGui::Text("%d fps", fps);
-
-						BuildConfiguration buildConfig = GetBuildConfiguration();
-						String buildConfigName;
-						switch (buildConfig)
-						{
-						case BuildConfiguration::Debug:    buildConfigName = "Debug"; break;
-						case BuildConfiguration::Release:  buildConfigName = "Release"; break;
-						case BuildConfiguration::Shipping: buildConfigName = "Shipping"; break;
-						}
-						ImGui::Text("Build Configuration: %s", buildConfigName.c_str());
-
-						if (ImGui::CollapsingHeader("Graphics Device"))
-						{
-							auto& deviceInfo = s_Device->GetInfo();
-							ImGui::Text("Vendor: %s", GraphicsDeviceUtils::VendorToString(deviceInfo.Vendor));
-							// ImGui::Text("Renderer: %s", deviceInfo.Renderer.c_str());
-							// String currentGraphicsAPI = GraphicsAPIUtils::GetGraphicsAPIName(GetGraphicsAPI());
-							// ImGui::Text("%s Version: %s", currentGraphicsAPI.c_str(), deviceInfo.PlatformVersion.c_str());
-						}
-
-						bool vsync = s_Swapchain->IsVSyncEnabled();
-						if (ImGui::Checkbox("V-Sync", &vsync))
-							s_Swapchain->SetVSync(vsync);
-
-						ImGui::End();
-
-						s_ImGuiRenderer->EndFrame();
+						RenderImGui();
 					});
 				}
 
-				s_Swapchain->BeginFrame();
-				s_Swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
+				s_RenderThread->PushJob("Render Thread - Begin Frame", []()
+				{
+					s_Swapchain->BeginFrame();
+					s_Swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
+				});
 
-				RenderThreadQueue::Flush();
+				s_RenderThread->PushJob("Render Thread - Flush", []()
+				{
+					RenderThreadQueue::Flush();
+				});
 
-				s_Swapchain->Present();
+				s_RenderThread->PushJob("Render Thread - Swapchain Present", []()
+				{
+					s_Swapchain->Present();
+				});
 			}
+
+			// Wait
+			s_RenderThread->Wait();
 		}
+
+		SubmitToMainThread([]()
+		{
+			s_MainWindow->SetVisible(false);
+		});
+	}
+
+	void Application::RenderImGui()
+	{
+		s_ImGuiRenderer->BeginFrame();
+
+		s_ThemeBuilder->Render();
+
+		ImGui::Begin("Liquid Engine");
+		ImGui::Text("%d fps", s_FPS);
+
+		BuildConfiguration buildConfig = GetBuildConfiguration();
+		String buildConfigName;
+		switch (buildConfig)
+		{
+		case BuildConfiguration::Debug:    buildConfigName = "Debug"; break;
+		case BuildConfiguration::Release:  buildConfigName = "Release"; break;
+		case BuildConfiguration::Shipping: buildConfigName = "Shipping"; break;
+		}
+		ImGui::Text("Build Configuration: %s", buildConfigName.c_str());
+
+		if (ImGui::CollapsingHeader("Graphics Device"))
+		{
+			auto& deviceInfo = s_Device->GetInfo();
+			ImGui::Text("Vendor: %s", GraphicsDeviceUtils::VendorToString(deviceInfo.Vendor));
+			// ImGui::Text("Renderer: %s", deviceInfo.Renderer.c_str());
+			// String currentGraphicsAPI = GraphicsAPIUtils::GetGraphicsAPIName(GetGraphicsAPI());
+			// ImGui::Text("%s Version: %s", currentGraphicsAPI.c_str(), deviceInfo.PlatformVersion.c_str());
+		}
+
+		bool vsync = s_Swapchain->IsVSyncEnabled();
+		if (ImGui::Checkbox("V-Sync", &vsync))
+			s_Swapchain->SetVSync(vsync);
+
+		ImGui::End();
+
+		s_ImGuiRenderer->EndFrame();
 	}
 
 	void Application::OnWindowCloseCallback()
@@ -289,11 +331,14 @@ namespace Liquid {
 		}
 
 		if (s_Minimized)
-			s_Minimized = false;
-
-		RT_SUBMIT(Application)([width, height]()
 		{
-			s_Swapchain->Resize(width, height, s_MainWindow->IsFullscreen());
+			s_Minimized = false;
+			return;
+		}
+
+		s_RenderThread->PushJob("Swapchain Resize", [width, height, fullscreen = s_MainWindow->IsFullscreen()]()
+		{
+			s_Swapchain->Resize(width, height, fullscreen);
 		});
 	}
 

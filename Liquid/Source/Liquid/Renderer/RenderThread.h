@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Liquid/Core/Application.h"
+
 namespace Liquid {
 
 	class RenderThreadQueue
@@ -14,20 +16,32 @@ namespace Liquid {
 		typedef void(*CommandFn)(void*);
 		static uint8* Allocate(CommandFn function, size_t size);
 
+		static bool IsInRenderingThread()
+		{
+			auto currentThreadID = std::this_thread::get_id();
+			auto renderThreadID = Application::GetRenderThread()->GetThreadID();
+
+			return currentThreadID == renderThreadID;
+		}
+
 		template<typename TName, typename TLambda>
 		static void Submit(TLambda&& lambda)
 		{
 #ifdef LQ_BUILD_DEBUG
-			if (!s_IsInitialized)
+			if (!s_IsInitialized.load())
+				LQ_PLATFORM_BREAK();
+
+			if (s_Executing.load())
 				LQ_PLATFORM_BREAK();
 #endif
 
-			if (s_IsInRenderingThread)
+#if 0
+			if (IsInRenderingThread())
 			{
-				LQ_WARNING_ARGS("({0}) RenderThreadQueue::Submit was called on the render thread", TName::GetName());
 				lambda();
 			}
 			else
+#endif
 			{
 				CommandFn commandFn = [](void* bufferPtr)
 				{
@@ -43,8 +57,8 @@ namespace Liquid {
 			}
 		}
 	private:
-		static bool s_IsInitialized;
-		static bool s_IsInRenderingThread;
+		static std::atomic<bool> s_IsInitialized;
+		static std::atomic<bool> s_Executing;
 	};
 
 
