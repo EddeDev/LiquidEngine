@@ -183,20 +183,20 @@ namespace Liquid {
 		deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
 	}
 
-	void DX11Swapchain::Clear(uint32 buffer)
+	void DX11Swapchain::Clear(SwapchainBufferType buffer)
 	{
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
-
-		if (buffer & BUFFER_COLOR)
+		
+		if (Enum::HasAnyFlags(buffer, SwapchainBufferType::Color))
 		{
 			const float color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 			deviceContext->ClearRenderTargetView(m_BackBuffer.Get(), color);
 		}
 
 		uint32 clearFlags = 0;
-		if (buffer & BUFFER_DEPTH)
+		if (Enum::HasAnyFlags(buffer, SwapchainBufferType::Depth))
 			clearFlags |= D3D11_CLEAR_DEPTH;
-		if (buffer & BUFFER_STENCIL)
+		if (Enum::HasAnyFlags(buffer, SwapchainBufferType::Stencil))
 			clearFlags |= D3D11_CLEAR_STENCIL;
 
 		if (clearFlags)

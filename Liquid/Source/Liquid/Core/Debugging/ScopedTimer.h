@@ -1,19 +1,13 @@
 #pragma once
 
+#include "TimeUnit.h"
+
 #include "Liquid/Core/Logging/LogMacros.h"
-#include "Liquid/Core/PrimitiveTypes.h"
 #include "Liquid/Core/String.h"
 
 #include <chrono>
 
 namespace Liquid {
-
-	enum class TimeUnit : uint8
-	{
-		Seconds = 0,
-		Milliseconds,
-		Nanoseconds
-	};
 
 	struct ScopedTimer
 	{

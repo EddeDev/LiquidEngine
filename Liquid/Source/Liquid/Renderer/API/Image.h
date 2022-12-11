@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Liquid/Renderer/RenderResource.h"
 #include "Liquid/Renderer/PixelFormat.h"
 
 namespace Liquid {
@@ -13,11 +14,9 @@ namespace Liquid {
 		uint32 Height = 1;
 	};
 
-	class Image : public RefCounted
+	class Image : public RenderResource
 	{
 	public:
-		virtual ~Image() {}
-
 		virtual void Bind(uint32 slot = 0) const = 0;
 		virtual void Unbind(uint32 slot = 0) const = 0;
 	};

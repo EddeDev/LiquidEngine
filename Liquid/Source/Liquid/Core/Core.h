@@ -5,6 +5,7 @@
 #include "PrimitiveTypes.h"
 #include "RefCounting.h"
 #include "String.h"
+#include "Enum.h"
 
 #define LQ_BIND_CALLBACK(func, ...) \
 [__VA_ARGS__](auto&&... args) -> decltype(auto) \

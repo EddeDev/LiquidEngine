@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Liquid/Renderer/RenderResource.h"
+
 namespace Liquid {
 
 	enum class GraphicsDeviceVendor : uint32
@@ -33,11 +35,9 @@ namespace Liquid {
 		bool EnableDebugLayers = false;
 	};
 
-	class GraphicsDevice : public RefCounted
+	class GraphicsDevice : public RenderResource
 	{
 	public:
-		virtual ~GraphicsDevice() {}
-
 		virtual const GraphicsDeviceInfo& GetInfo() const = 0;
 
 		static Ref<GraphicsDevice> Select(const GraphicsDeviceCreateInfo& createInfo);

@@ -7,6 +7,8 @@ workspace "Liquid"
     targetdir ("Build/Bin/%{cfg.buildcfg}/%{prj.name}")
     objdir ("Build/Obj/%{cfg.buildcfg}/%{prj.name}")
 
+VulkanSDKPath = os.getenv("VULKAN_SDK")
+
 project "Liquid"
     language "C++"
     cppdialect "C++latest"
@@ -33,6 +35,9 @@ project "Liquid"
         "%{prj.name}/Libraries/ImGui",
         "%{prj.name}/Libraries/STB",
         "%{prj.name}/Libraries/GLM",
+
+        -- Vulkan
+        "%{VulkanSDKPath}/Include"
     }
 
     defines
@@ -45,7 +50,11 @@ project "Liquid"
     {
         "GLFW",
         "ImGui",
-        "STB"
+        "STB",
+
+        -- Vulkan
+        "%{VulkanSDKPath}/Lib/vulkan-1.lib",
+        "%{VulkanSDKPath}/Lib/VkLayer_utils.lib"
     }
 
     filter "system:windows"
@@ -86,11 +95,34 @@ project "Liquid"
         runtime "Debug"
         symbols "On"
 
+        links
+        {
+            -- ShaderC
+            "%{VulkanSDKPath}/Lib/shaderc_sharedd.lib",
+
+            -- SPIR-V
+            "%{VulkanSDKPath}/Lib/spirv-cross-cored.lib",
+            "%{VulkanSDKPath}/Lib/spirv-cross-hlsld.lib",
+            "%{VulkanSDKPath}/Lib/spirv-cross-glsld.lib",
+            "%{VulkanSDKPath}/Lib/SPIRV-Toolsd.lib"
+        }
+
     filter "configurations:Release"
         kind "ConsoleApp"
         defines { "LQ_BUILD_RELEASE", "NDEBUG" }
         runtime "Release"
         optimize "On"
+
+        links
+        {
+            -- ShaderC
+            "%{VulkanSDKPath}/Lib/shaderc_shared.lib",
+
+            -- SPIR-V
+            "%{VulkanSDKPath}/Lib/spirv-cross-core.lib",
+            "%{VulkanSDKPath}/Lib/spirv-cross-hlsl.lib",
+            "%{VulkanSDKPath}/Lib/spirv-cross-glsl.lib"
+        }
     
     filter "configurations:Shipping"
         kind "WindowedApp"
@@ -98,6 +130,17 @@ project "Liquid"
         runtime "Release"
         optimize "On"
         symbols "Off"
+
+        links
+        {
+            -- ShaderC
+            "%{VulkanSDKPath}/Lib/shaderc_shared.lib",
+
+            -- SPIR-V
+            "%{VulkanSDKPath}/Lib/spirv-cross-core.lib",
+            "%{VulkanSDKPath}/Lib/spirv-cross-hlsl.lib",
+            "%{VulkanSDKPath}/Lib/spirv-cross-glsl.lib"
+        }
 
 group "Libraries"
     include "Liquid/Libraries/GLFW"

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Liquid/Renderer/RenderResource.h"
+
 #include "Liquid/Renderer/PixelFormat.h"
 
 namespace Liquid {
@@ -22,24 +24,24 @@ namespace Liquid {
 		uint32 SampleCount = 1;
 	};
 
-	enum SwapchainBufferType
+	enum class SwapchainBufferType : uint32
 	{
-		BUFFER_NONE = 0,
-		BUFFER_COLOR = BIT(0),
-		BUFFER_DEPTH = BIT(1),
-		BUFFER_STENCIL = BIT(2)
+		None = 0,
+		Color = BIT(0),
+		Depth = BIT(1),
+		Stencil = BIT(2)
 	};
 
-	class Swapchain : public RefCounted
+	DEFINE_ENUM_OPERATORS(SwapchainBufferType);
+
+	class Swapchain : public RenderResource
 	{
 	public:
-		virtual ~Swapchain() {}
-
 		virtual void Resize(uint32 width, uint32 height, bool fullscreen) = 0;
 
 		virtual void BeginFrame() const = 0;
 		virtual void Present() const = 0;
-		virtual void Clear(uint32 buffer) = 0;
+		virtual void Clear(SwapchainBufferType buffer) = 0;
 
 		virtual void SetVSync(bool enabled) = 0;
 		virtual bool IsVSyncEnabled() const = 0;

@@ -32,8 +32,6 @@ namespace Liquid {
 
 		void PushJob(StringView description, Job job);
 
-		uint32 GetRemainingJobs();
-
 		std::thread::id GetThreadID() const { return m_Thread.get_id(); }
 	private:
 		void Destroy();
@@ -75,6 +73,13 @@ namespace Liquid {
 		{
 #ifdef LQ_PLATFORM_WINDOWS
 			SetThreadPriority(threadHandle, static_cast<int32>(priority));
+#endif
+		}
+
+		static void SetAffinityMask(void* threadHandle, uint64 affinityMask)
+		{
+#ifdef LQ_PLATFORM_WINDOWS
+			SetThreadAffinityMask(threadHandle, affinityMask);
 #endif
 		}
 

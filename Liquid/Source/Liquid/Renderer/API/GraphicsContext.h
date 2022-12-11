@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Liquid/Renderer/RenderResource.h"
+
 namespace Liquid {
 
 	struct GraphicsContextCreateInfo
@@ -9,7 +11,7 @@ namespace Liquid {
 		bool EnableDebugLayers = false;
 	};
 
-	class GraphicsContext : public RefCounted
+	class GraphicsContext : public RenderResource
 	{
 	public:
 		virtual ~GraphicsContext() {}

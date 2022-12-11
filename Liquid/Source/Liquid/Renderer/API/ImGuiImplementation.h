@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Liquid/Core/Window/Window.h"
+#include "Liquid/Renderer/RenderResource.h"
 
+#include "Liquid/Core/Window/Window.h"
 #include "Image.h"
 
 #include <imgui.h>
@@ -14,11 +15,9 @@ namespace Liquid {
 		ImGuiContext* Context;
 	};
 
-	class ImGuiImplementation : public RefCounted
+	class ImGuiImplementation : public RenderResource
 	{
 	public:
-		virtual ~ImGuiImplementation() {}
-
 		virtual void BeginFrame() = 0;
 		virtual void EndFrame() = 0;
 

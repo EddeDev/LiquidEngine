@@ -24,7 +24,7 @@ namespace Liquid {
 
 		D3D11_SUBRESOURCE_DATA subresource = {};
 		subresource.pSysMem = createInfo.Data;
-		subresource.SysMemPitch = textureDesc.Width * PixelFormatUtils::GetBPP(createInfo.Format);
+		subresource.SysMemPitch = textureDesc.Width * PixelFormatUtils::ComputeBytesPerPixel(createInfo.Format);
 		subresource.SysMemSlicePitch = 0;
 		DX_CHECK(device->CreateTexture2D(&textureDesc, &subresource, &m_Texture));
 

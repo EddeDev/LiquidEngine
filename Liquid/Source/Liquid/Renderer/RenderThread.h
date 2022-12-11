@@ -7,7 +7,7 @@ namespace Liquid {
 	class RenderThreadQueue
 	{
 	public:
-		static void Init(size_t initialBufferSize);
+		static void Init(size_t initialBufferSize = 1024 * 1024 * 10);
 		static void Shutdown();
 
 		static void Reset();
@@ -16,22 +16,14 @@ namespace Liquid {
 		typedef void(*CommandFn)(void*);
 		static uint8* Allocate(CommandFn function, size_t size);
 
-		static bool IsInRenderingThread()
-		{
-			auto currentThreadID = std::this_thread::get_id();
-			auto renderThreadID = Application::GetRenderThread()->GetThreadID();
-
-			return currentThreadID == renderThreadID;
-		}
-
-		template<typename TName, typename TLambda>
+		template<typename TSubmitInfo, typename TLambda>
 		static void Submit(TLambda&& lambda)
 		{
 #ifdef LQ_BUILD_DEBUG
 			if (!s_IsInitialized.load())
 				LQ_PLATFORM_BREAK();
 
-			if (s_Executing.load())
+			if (s_Flushing.load())
 				LQ_PLATFORM_BREAK();
 #endif
 
@@ -56,9 +48,15 @@ namespace Liquid {
 				new (bufferPtr) TLambda(std::forward<TLambda>(lambda));
 			}
 		}
+
+		template<typename TSubmitInfo, typename TLambda>
+		static void Submit(TLambda& lambda)
+		{
+			static_assert(sizeof(TLambda) == 0);
+		}
 	private:
 		static std::atomic<bool> s_IsInitialized;
-		static std::atomic<bool> s_Executing;
+		static std::atomic<bool> s_Flushing;
 	};
 
 

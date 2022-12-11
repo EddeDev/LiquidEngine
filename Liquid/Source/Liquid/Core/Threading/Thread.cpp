@@ -10,6 +10,7 @@ namespace Liquid {
 
 		ThreadUtils::SetName(m_Thread.native_handle(), createInfo.Name);
 		ThreadUtils::SetPriority(m_Thread.native_handle(), m_CreateInfo.Priority);
+		// ThreadUtils::SetAffinityMask(m_Thread.native_handle(), 8);
 	}
 
 	Thread::~Thread()
@@ -62,12 +63,6 @@ namespace Liquid {
 		std::lock_guard<std::mutex> lock(m_Mutex);
 		m_Jobs.push(std::move(job));
 		m_Condition.notify_one();
-	}
-
-	uint32 Thread::GetRemainingJobs()
-	{
-		std::lock_guard<std::mutex> lock(m_Mutex);
-		return m_Jobs.size();
 	}
 
 	void Thread::PopJob()

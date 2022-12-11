@@ -62,7 +62,9 @@ namespace Liquid {
 		static const Unique<Thread>& GetUpdateThread() { return s_UpdateThread; }
 		static const Unique<Thread>& GetRenderThread() { return s_UpdateThread; }
 	private:
-		static void UpdateThreadLoop();
+		static void RT_CreateContext();
+		static void UT_MainLoop();
+
 		static void RenderImGui();
 
 		static void OnWindowCloseCallback();
@@ -88,6 +90,10 @@ namespace Liquid {
 		static std::atomic<bool> s_Minimized;
 
 		static uint32 s_FPS;
+
+		static float s_UpdateThreadTime;
+		static float s_UpdateThreadWaitTime;
+		static float s_RenderThreadTime;
 	};
 
 }

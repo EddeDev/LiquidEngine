@@ -4,13 +4,14 @@
 namespace Liquid {
 
 	std::atomic<bool> RenderThreadQueue::s_IsInitialized;
-	std::atomic<bool> RenderThreadQueue::s_Executing;
+	std::atomic<bool> RenderThreadQueue::s_Flushing;
 
 	struct RenderThreadQueueData
 	{
 		uint8* Buffer;
 		uint8* BufferPtr;
 
+		uint64 BufferSize;
 		uint64 CommandCount;
 	};
 
@@ -23,6 +24,8 @@ namespace Liquid {
 
 		s_Data->Buffer = new uint8[initialBufferSize];
 		s_Data->BufferPtr = s_Data->Buffer;
+
+		s_Data->BufferSize = initialBufferSize;
 
 		s_IsInitialized = true;
 	}
@@ -42,7 +45,9 @@ namespace Liquid {
 
 	void RenderThreadQueue::Flush()
 	{
-		s_Executing = true;
+#ifdef LQ_BUILD_DEBUG
+		s_Flushing = true;
+#endif
 
 		uint8* currentBufferPtr = s_Data->Buffer;
 		for (size_t i = 0; i < s_Data->CommandCount; i++)
@@ -59,7 +64,9 @@ namespace Liquid {
 
 		Reset();
 
-		s_Executing = false;
+#ifdef LQ_BUILD_DEBUG
+		s_Flushing = false;
+#endif
 	}
 
 	uint8* RenderThreadQueue::Allocate(CommandFn function, size_t size)

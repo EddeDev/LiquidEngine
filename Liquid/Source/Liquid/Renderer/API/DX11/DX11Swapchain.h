@@ -16,7 +16,7 @@ namespace Liquid {
 
 		virtual void BeginFrame() const override;
 		virtual void Present() const override;
-		virtual void Clear(uint32 buffer) override;
+		virtual void Clear(SwapchainBufferType buffer) override;
 
 		virtual void SetVSync(bool enabled) override { m_VSync = enabled; }
 		virtual bool IsVSyncEnabled() const override { return m_VSync; }

@@ -9,6 +9,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
+#include "Debugging/Timer.h"
 #include "Debugging/ScopedTimer.h"
 
 namespace Liquid {
@@ -35,6 +36,10 @@ namespace Liquid {
 
 	uint32 Application::s_FPS = 0;
 
+	float Application::s_UpdateThreadTime = 0.0f;
+	float Application::s_UpdateThreadWaitTime = 0.0f;
+	float Application::s_RenderThreadTime = 0.0f;
+
 	void Application::Init(const ApplicationCreateInfo& createInfo)
 	{
 		s_MainThreadID = std::this_thread::get_id();
@@ -46,7 +51,7 @@ namespace Liquid {
 		if (createInfo.ShowSplashScreen)
 			SplashScreen::Show();
 
-		RenderThreadQueue::Init(1024 * 1024 * 10);
+		RenderThreadQueue::Init();
 
 		String currentGraphicsAPI = GraphicsAPIUtils::GetGraphicsAPIName(GetGraphicsAPI());
 		LQ_INFO_ARGS("Graphics API: {0}", currentGraphicsAPI);
@@ -102,16 +107,19 @@ namespace Liquid {
 
 	void Application::Run()
 	{
-		ThreadCreateInfo updateThreadCreateInfo;
-		updateThreadCreateInfo.Name = "Update Thread";
-		updateThreadCreateInfo.Priority = ThreadPriority::AboveNormal;
-		s_UpdateThread = CreateUnique<Thread>(updateThreadCreateInfo);
-		s_UpdateThread->PushJob("Update Thread - Main Loop", UpdateThreadLoop);
-
+		// Render Thread
 		ThreadCreateInfo renderThreadCreateInfo;
 		renderThreadCreateInfo.Name = "Render Thread";
 		renderThreadCreateInfo.Priority = ThreadPriority::Highest;
 		s_RenderThread = CreateUnique<Thread>(renderThreadCreateInfo);
+		s_RenderThread->PushJob("Render Thread - Create Context", RT_CreateContext);
+
+		// Update Thread
+		ThreadCreateInfo updateThreadCreateInfo;
+		updateThreadCreateInfo.Name = "Update Thread";
+		updateThreadCreateInfo.Priority = ThreadPriority::AboveNormal;
+		s_UpdateThread = CreateUnique<Thread>(updateThreadCreateInfo);
+		s_UpdateThread->PushJob("Update Thread - Main Loop", UT_MainLoop);
 
 		while (s_Running)
 		{
@@ -168,7 +176,7 @@ namespace Liquid {
 		s_UpdateThreadQueue.push(std::move(function));
 	}
 
-	void Application::UpdateThreadLoop()
+	void Application::RT_CreateContext()
 	{
 		// Context
 		{
@@ -180,7 +188,6 @@ namespace Liquid {
 			contextCreateInfo.EnableDebugLayers = false;
 #endif
 
-			SplashScreen::SetProgress(40, "Creating context...");
 			s_Context = GraphicsContext::Create(contextCreateInfo);
 		}
 
@@ -197,16 +204,20 @@ namespace Liquid {
 			swapchainCreateInfo.BufferCount = 3;
 			swapchainCreateInfo.SampleCount = 1;
 
-			SplashScreen::SetProgress(50, "Creating swapchain...");
 			s_Swapchain = Swapchain::Create(swapchainCreateInfo);
 		}
+	}
 
+	void Application::UT_MainLoop()
+	{
 		// Load resources
 		{
 			SplashScreen::SetProgress(70, "Loading resources...");
 
 			using namespace std::chrono_literals;
-			std::this_thread::sleep_for(3000ms);
+			std::this_thread::sleep_for(2000ms);
+
+			Ref<Texture2D> texture = Ref<Texture2D>::Create("Resources/Splash/Splash.bmp");
 
 			// load resources here
 		}
@@ -222,6 +233,8 @@ namespace Liquid {
 
 		while (s_Running)
 		{
+			Timer frameTimer(TimeUnit::Milliseconds);
+
 			float time = static_cast<float>(glfwGetTime());
 			frames++;
 			if (time >= lastTime + 1.0f)
@@ -245,33 +258,41 @@ namespace Liquid {
 
 			if (!s_Minimized)
 			{
+				RT_SUBMIT(BeginFrame)([]()
+				{
+					s_Swapchain->BeginFrame();
+					s_Swapchain->Clear(SwapchainBufferType::Color | SwapchainBufferType::Depth);
+				});
+
 				if (s_ImGuiRenderer)
 				{
-					RT_SUBMIT(Application)([]()
+					RT_SUBMIT(RenderImGui)([]()
 					{
 						RenderImGui();
 					});
 				}
 
-				s_RenderThread->PushJob("Render Thread - Begin Frame", []()
+				RT_SUBMIT(Present)([]()
 				{
-					s_Swapchain->BeginFrame();
-					s_Swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
+					s_Swapchain->Present();
 				});
 
 				s_RenderThread->PushJob("Render Thread - Flush", []()
 				{
+					Timer timer;
 					RenderThreadQueue::Flush();
-				});
-
-				s_RenderThread->PushJob("Render Thread - Swapchain Present", []()
-				{
-					s_Swapchain->Present();
+					s_RenderThreadTime = timer.Elapsed();
 				});
 			}
 
 			// Wait
-			s_RenderThread->Wait();
+			{
+				Timer waitTimer(TimeUnit::Milliseconds);
+				s_RenderThread->Wait();
+				s_UpdateThreadWaitTime = waitTimer.Elapsed();
+			}
+
+			s_UpdateThreadTime = frameTimer.Elapsed();
 		}
 
 		SubmitToMainThread([]()
@@ -306,6 +327,13 @@ namespace Liquid {
 			// ImGui::Text("Renderer: %s", deviceInfo.Renderer.c_str());
 			// String currentGraphicsAPI = GraphicsAPIUtils::GetGraphicsAPIName(GetGraphicsAPI());
 			// ImGui::Text("%s Version: %s", currentGraphicsAPI.c_str(), deviceInfo.PlatformVersion.c_str());
+		}
+
+		if (ImGui::CollapsingHeader("Timers"))
+		{
+			ImGui::Text("Update Thread: %.4fms", s_UpdateThreadTime);
+			ImGui::Text("Update Thread (Wait): %.4fms", s_UpdateThreadWaitTime);
+			ImGui::Text("Render Thread: %.4fms", s_RenderThreadTime);
 		}
 
 		bool vsync = s_Swapchain->IsVSyncEnabled();

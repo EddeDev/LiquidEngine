@@ -31,15 +31,25 @@ namespace Liquid {
 			return format == PixelFormat::DEPTH24_STENCIL8 || format == PixelFormat::DEPTH32F_STENCIL8_UINT;
 		}
 
-		static uint32 GetBPP(PixelFormat format)
+		static uint32 ComputeBytesPerPixel(PixelFormat format)
 		{
+			uint32 bytesPerPixel = 0;
+
 			switch (format)
 			{
-			case PixelFormat::RGBA:    return 4 * 1;
-			case PixelFormat::RGBA32F: return 4 * 4;
+			case PixelFormat::RGBA:
+				bytesPerPixel = 4;
+				break;
+			case PixelFormat::RGBA16F:
+				bytesPerPixel = 8;
+				break;
+			case PixelFormat::RGBA32F:
+				bytesPerPixel = 16;
+				break;
 			}
-			LQ_VERIFY(false, "Unknown image format");
-			return 0;
+
+			LQ_ASSERT(bytesPerPixel, "Unknown pixel format");
+			return bytesPerPixel;
 		}
 
 	}

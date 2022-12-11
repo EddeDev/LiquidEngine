@@ -15,6 +15,8 @@ namespace Liquid {
 
 		ApplicationCreateInfo createInfo;
 		createInfo.Args = args;
+		createInfo.EnableImGui = true;
+		createInfo.ShowSplashScreen = true;
 		Application::Init(createInfo);
 
 		Application::Run();
