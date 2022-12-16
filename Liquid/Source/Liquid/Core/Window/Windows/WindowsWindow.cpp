@@ -179,6 +179,53 @@ namespace Liquid {
 			glfwTerminate();
 	}
 
+	void WindowsWindow::CreateContext()
+	{
+		m_ContextThreadID = std::this_thread::get_id();
+		if (m_ThreadID == m_ContextThreadID)
+			LQ_WARNING_ARGS("Window and graphics context was created on the same thread.");
+
+		// Context
+		{
+			GraphicsContextCreateInfo contextCreateInfo;
+			contextCreateInfo.WindowHandle = glfwGetWin32Window(m_Window);
+#ifdef LQ_BUILD_DEBUG
+			contextCreateInfo.EnableDebugLayers = true;
+#else
+			contextCreateInfo.EnableDebugLayers = false;
+#endif
+
+			m_Context = GraphicsContext::Create(contextCreateInfo);
+		}
+
+		// Swapchain
+		{
+			SwapchainCreateInfo swapchainCreateInfo;
+			swapchainCreateInfo.WindowHandle = glfwGetWin32Window(m_Window);
+			swapchainCreateInfo.InitialWidth = m_Data.Backups[m_Data.CurrentBackupIndex].Width;
+			swapchainCreateInfo.InitialHeight = m_Data.Backups[m_Data.CurrentBackupIndex].Height;
+			swapchainCreateInfo.InitialFullscreenState = m_Data.Fullscreen;
+			swapchainCreateInfo.AllowTearing = true;
+			swapchainCreateInfo.ColorFormat = PixelFormat::RGBA;
+			swapchainCreateInfo.DepthFormat = PixelFormat::DEPTH24_STENCIL8;
+			swapchainCreateInfo.BufferCount = 3;
+			swapchainCreateInfo.SampleCount = 1;
+
+			m_Swapchain = Swapchain::Create(swapchainCreateInfo);
+		}
+	}
+
+	void WindowsWindow::BeginFrame()
+	{
+		m_Swapchain->BeginFrame();
+		m_Swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
+	}
+
+	void WindowsWindow::SwapBuffers()
+	{
+		m_Swapchain->Present();
+	}
+
 	void WindowsWindow::PollEvents() const
 	{
 		LQ_ASSERT(std::this_thread::get_id() == m_ThreadID, "Window::PollEvents must only be called from the main thread");

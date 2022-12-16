@@ -1,7 +1,7 @@
 #include "LiquidPCH.h"
 #include "GraphicsDevice.h"
 
-#include "Liquid/Core/Application.h"
+#include "Liquid/Core/Engine.h"
 
 #include "DX11/DX11Device.h"
 
@@ -9,7 +9,7 @@ namespace Liquid {
 
 	Ref<GraphicsDevice> GraphicsDevice::Select(const GraphicsDeviceCreateInfo& createInfo)
 	{
-		switch (Application::GetGraphicsAPI())
+		switch (LQ_CURRENT_GRAPHICS_API)
 		{
 		case GraphicsAPI::DX11: return DX11Device::Select(createInfo);
 		}

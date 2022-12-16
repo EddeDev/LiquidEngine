@@ -1,7 +1,7 @@
 #include "LiquidPCH.h"
 #include "DX11ImGuiImplementation.h"
 
-#include "Liquid/Core/Application.h"
+#include "Liquid/Core/Engine.h"
 
 #include "DX11Device.h"
 #include "DX11Image.h"
@@ -81,7 +81,7 @@ namespace Liquid {
 #define IMGUI_CALLBACK(name, ...) \
 { \
 	LQ_ASSERT(std::this_thread::get_id() == m_ThreadID, "On" #name " must only be called from the main thread"); \
-	Application::SubmitToUpdateThread([createInfo = m_CreateInfo, __VA_ARGS__]() \
+	Engine::Get().SubmitToUpdateThread([createInfo = m_CreateInfo, __VA_ARGS__]() \
 	{ \
 		ImGui::SetCurrentContext(createInfo.Context); \
 		GLFWwindow* window = static_cast<GLFWwindow*>(createInfo.Window->GetHandle()); \

@@ -66,7 +66,9 @@ namespace Liquid {
 			return;
 		}
 
+#ifdef LQ_BUILD_DEBUG
 		LQ_TRACE_ARGS("DX11Swapchain::Resize({0}, {1}, {2})", width, height, fullscreen);
+#endif
 
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();

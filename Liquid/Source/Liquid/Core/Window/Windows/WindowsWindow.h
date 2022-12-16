@@ -13,6 +13,10 @@ namespace Liquid {
 		WindowsWindow(const WindowCreateInfo& createInfo);
 		virtual ~WindowsWindow();
 
+		virtual void CreateContext() override;
+		virtual void BeginFrame() override;
+		virtual void SwapBuffers() override;
+
 		virtual void PollEvents() const override;
 		virtual void WaitEvents() const override;
 		virtual void PostEmptyEvent() const override;
@@ -41,6 +45,9 @@ namespace Liquid {
 
 		virtual uint32 GetWidth() const override { return m_Data.Backups[m_Data.CurrentBackupIndex].Width; }
 		virtual uint32 GetHeight() const override { return m_Data.Backups[m_Data.CurrentBackupIndex].Height; }
+
+		virtual Ref<GraphicsContext> GetContext() const { return m_Context; }
+		virtual Ref<Swapchain> GetSwapchain() const { return m_Swapchain; }
 	private:
 		void Init(const WindowCreateInfo& createInfo);
 		void Shutdown();
@@ -73,6 +80,10 @@ namespace Liquid {
 		GLFWmonitor* m_Monitor = nullptr;
 
 		std::thread::id m_ThreadID;
+		std::thread::id m_ContextThreadID;
+
+		Ref<GraphicsContext> m_Context;
+		Ref<Swapchain> m_Swapchain;
 	};
 
 }

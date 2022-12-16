@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Liquid/Renderer/API/GraphicsContext.h"
+#include "Liquid/Renderer/API/Swapchain.h"
+
 namespace Liquid {
 
 	struct WindowCreateInfo
@@ -17,6 +20,10 @@ namespace Liquid {
 	{
 	public:
 		virtual ~Window() {}
+
+		virtual void CreateContext() = 0;
+		virtual void BeginFrame() = 0;
+		virtual void SwapBuffers() = 0;
 
 		virtual void PollEvents() const = 0;
 		virtual void WaitEvents() const = 0;
@@ -46,6 +53,9 @@ namespace Liquid {
 
 		virtual uint32 GetWidth() const = 0;
 		virtual uint32 GetHeight() const = 0;
+
+		virtual Ref<GraphicsContext> GetContext() const = 0;
+		virtual Ref<Swapchain> GetSwapchain() const = 0;
 
 		static Ref<Window> Create(const WindowCreateInfo& createInfo);
 	};

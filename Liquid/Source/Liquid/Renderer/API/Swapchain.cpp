@@ -1,7 +1,7 @@
 #include "LiquidPCH.h"
 #include "Swapchain.h"
 
-#include "Liquid/Core/Application.h"
+#include "Liquid/Core/Engine.h"
 
 #include "DX11/DX11Swapchain.h"
 
@@ -9,7 +9,7 @@ namespace Liquid {
 
 	Ref<Swapchain> Swapchain::Create(const SwapchainCreateInfo& createInfo)
 	{
-		switch (Application::GetGraphicsAPI())
+		switch (LQ_CURRENT_GRAPHICS_API)
 		{
 		case GraphicsAPI::DX11: return Ref<DX11Swapchain>::Create(createInfo);
 		}

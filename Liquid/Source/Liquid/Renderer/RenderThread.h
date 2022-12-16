@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Liquid/Core/Application.h"
-
 namespace Liquid {
 
 	class RenderThreadQueue

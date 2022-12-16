@@ -34,6 +34,10 @@ namespace Liquid {
 
 	DEFINE_ENUM_OPERATORS(SwapchainBufferType);
 
+#define BUFFER_COLOR SwapchainBufferType::Color
+#define BUFFER_DEPTH SwapchainBufferType::Depth
+#define BUFFER_STENCIL SwapchainBufferType::Stencil
+
 	class Swapchain : public RenderResource
 	{
 	public:
