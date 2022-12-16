@@ -308,6 +308,7 @@ namespace Liquid {
 			}
 
 			DeleteObject(s_Data.Bitmap);
+			s_Data.Bitmap = NULL;
 		}
 
 		// Delete fonts

@@ -36,6 +36,18 @@ namespace Liquid {
 		stbi_image_free(data);
 	}
 
+
+	Texture2D::Texture2D(uint32 width, uint32 height, PixelFormat format, const void* data)
+	{
+		ImageCreateInfo imageCreateInfo;
+		imageCreateInfo.Data = data;
+		imageCreateInfo.Format = format;
+		imageCreateInfo.Width = width;
+		imageCreateInfo.Height = height;
+
+		m_Image = Image2D::Create(imageCreateInfo);
+	}
+
 	void Texture2D::Bind(uint32 slot) const
 	{
 		m_Image->Bind(slot);

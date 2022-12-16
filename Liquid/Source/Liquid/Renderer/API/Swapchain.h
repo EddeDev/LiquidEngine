@@ -46,6 +46,8 @@ namespace Liquid {
 		virtual void SetVSync(bool enabled) = 0;
 		virtual bool IsVSyncEnabled() const = 0;
 
+		RENDER_RESOURCE_TYPE(Swapchain);
+
 		static Ref<Swapchain> Create(const SwapchainCreateInfo& createInfo);
 	};
 

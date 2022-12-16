@@ -1,37 +1,72 @@
 #include "LiquidPCH.h"
 #include "DX11Image.h"
 
+#include "Liquid/Renderer/RenderThread.h"
+
 #include "DX11Device.h"
+#include "DX11StateManager.h"
 #include "DX11PixelFormat.h"
 
 namespace Liquid {
 
+	static ID3D11ShaderResourceView* s_NullShaderResourceView = nullptr;
+
 	DX11Image2D::DX11Image2D(const ImageCreateInfo& createInfo)
+		: m_Width(createInfo.Width), m_Height(createInfo.Height), m_Format(createInfo.Format)
+	{
+		uint32 dataSize = m_Width * m_Height * PixelFormatUtils::ComputeBytesPerPixel(m_Format);
+		if (dataSize == 0)
+			LQ_PLATFORM_BREAK();
+
+		m_Buffer.Allocate(dataSize);
+		if (createInfo.Data)
+			m_Buffer.Insert(createInfo.Data, dataSize);
+		else
+			m_Buffer.FillWithZeroes();
+
+		Invalidate();
+	}
+
+	DX11Image2D::~DX11Image2D()
+	{
+		Release();
+	}
+
+	void DX11Image2D::Invalidate()
+	{
+		Ref<DX11Image2D> instance = this;
+		RT_SUBMIT(Invalidate)([instance]() mutable
+		{
+			instance->RT_Invalidate();
+		});
+	}
+
+	void DX11Image2D::RT_Invalidate()
 	{
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
 		D3D11_TEXTURE2D_DESC textureDesc = {};
-		textureDesc.Width = createInfo.Width;
-		textureDesc.Height = createInfo.Height;
+		textureDesc.Width = m_Width;
+		textureDesc.Height = m_Height;
 		textureDesc.MipLevels = 1;
 		textureDesc.ArraySize = 1;
-		textureDesc.Format = DX11PixelFormat(createInfo.Format);
+		textureDesc.Format = DX11PixelFormat(m_Format);
 		textureDesc.SampleDesc.Count = 1;
 		textureDesc.Usage = D3D11_USAGE_DEFAULT;
 		textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 		textureDesc.CPUAccessFlags = 0;
 
 		D3D11_SUBRESOURCE_DATA subresource = {};
-		subresource.pSysMem = createInfo.Data;
-		subresource.SysMemPitch = textureDesc.Width * PixelFormatUtils::ComputeBytesPerPixel(createInfo.Format);
+		subresource.pSysMem = m_Buffer.Get();
+		subresource.SysMemPitch = textureDesc.Width * PixelFormatUtils::ComputeBytesPerPixel(m_Format);
 		subresource.SysMemSlicePitch = 0;
 		DX_CHECK(device->CreateTexture2D(&textureDesc, &subresource, &m_Texture));
 
 		if (textureDesc.BindFlags & D3D11_BIND_SHADER_RESOURCE)
 		{
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-			srvDesc.Format = DX11SRVFormat(createInfo.Format);
+			srvDesc.Format = DX11SRVFormat(m_Format);
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			srvDesc.Texture2D.MipLevels = 1;
 			srvDesc.Texture2D.MostDetailedMip = 0;
@@ -39,27 +74,57 @@ namespace Liquid {
 		}
 	}
 
-	DX11Image2D::~DX11Image2D()
+	void DX11Image2D::Release()
 	{
-		m_Texture->Release();
-		m_ShaderResourceView->Release();
+		ID3D11Texture2D* texture = m_Texture;
+		ID3D11ShaderResourceView* shaderResourceView = m_ShaderResourceView;
+		RT_SUBMIT_RELEASE(Release)([texture, shaderResourceView]()
+		{
+			if (texture)
+				texture->Release();
+			if (shaderResourceView)
+				shaderResourceView->Release();
+		});
+
+		m_Buffer.Release();
 	}
 
-	void DX11Image2D::Bind(uint32 slot) const
+	void DX11Image2D::RT_Release()
 	{
-		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
-		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+		if (m_Texture)
+			m_Texture->Release();
+		if (m_ShaderResourceView)
+			m_ShaderResourceView->Release();
 
-		deviceContext->PSSetShaderResources(slot, 1, &m_ShaderResourceView);
+		m_Buffer.Release();
 	}
 
-	void DX11Image2D::Unbind(uint32 slot) const
+	void DX11Image2D::Bind(uint32 slot, ShaderStage stage) const
 	{
-		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
-		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+		Ref<const DX11Image2D> instance = this;
+		RT_SUBMIT(Bind)([instance, slot, stage]()
+		{
+			DX11StateManager::BindShaderResourceView(stage, instance->m_ShaderResourceView, slot);
+		});
+	}
 
-		ID3D11ShaderResourceView* nullSRV = nullptr;
-		deviceContext->PSSetShaderResources(slot, 1, &nullSRV);
+	void DX11Image2D::RT_Bind(uint32 slot, ShaderStage stage) const
+	{
+		DX11StateManager::BindShaderResourceView(stage, m_ShaderResourceView, slot);
+	}
+
+	void DX11Image2D::Unbind(uint32 slot, ShaderStage stage) const
+	{
+		Ref<const DX11Image2D> instance = this;
+		RT_SUBMIT(Unbind)([instance, slot, stage]()
+		{
+			DX11StateManager::UnbindShaderResourceView(stage, slot);
+		});
+	}
+
+	void DX11Image2D::RT_Unbind(uint32 slot, ShaderStage stage) const
+	{
+		DX11StateManager::UnbindShaderResourceView(stage, slot);
 	}
 
 }

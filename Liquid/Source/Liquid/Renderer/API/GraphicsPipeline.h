@@ -16,6 +16,8 @@ namespace Liquid {
 	public:
 		virtual ~GraphicsPipeline() {}
 
+		RENDER_RESOURCE_TYPE(GraphicsPipeline);
+
 		static Ref<GraphicsPipeline> Create(const GraphicsPipelineCreateInfo& createInfo);
 	};
 

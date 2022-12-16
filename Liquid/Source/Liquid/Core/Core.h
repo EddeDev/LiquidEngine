@@ -4,6 +4,7 @@
 #include "AssertionMacros.h"
 #include "PrimitiveTypes.h"
 #include "RefCounting.h"
+#include "DynamicBuffer.h"
 #include "String.h"
 #include "Enum.h"
 

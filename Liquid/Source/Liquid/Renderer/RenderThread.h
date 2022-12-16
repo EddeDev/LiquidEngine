@@ -16,15 +16,21 @@ namespace Liquid {
 		typedef void(*CommandFn)(void*);
 		static uint8* Allocate(CommandFn function, size_t size);
 
-		template<typename TSubmitInfo, typename TLambda>
+		template<typename TSubmitInfo, bool TRelease, typename TLambda>
 		static void Submit(TLambda&& lambda)
 		{
 #ifdef LQ_BUILD_DEBUG
 			if (!s_IsInitialized.load())
 				LQ_PLATFORM_BREAK();
 
-			if (s_Flushing.load())
-				LQ_PLATFORM_BREAK();
+			// TODO: Deferred release queue
+			// TEMP
+			if constexpr (!TRelease)
+			{
+				if (s_Flushing.load())
+					LQ_PLATFORM_BREAK();
+			}
+			
 #endif
 
 #if 0
@@ -65,6 +71,13 @@ struct type##Name \
 { \
 	static const char* GetName() { return #type; } \
 }; \
-RenderThreadQueue::Submit<type##Name>
+RenderThreadQueue::Submit<type##Name, false>
+
+#define RT_SUBMIT_RELEASE(type) \
+struct type##Name \
+{ \
+	static const char* GetName() { return #type; } \
+}; \
+RenderThreadQueue::Submit<type##Name, true>
 
 }

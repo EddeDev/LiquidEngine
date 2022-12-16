@@ -19,6 +19,7 @@ namespace Liquid {
 	Ref<GraphicsContext> Application::s_Context;
 	Ref<Swapchain> Application::s_Swapchain;
 	Ref<ImGuiRenderer> Application::s_ImGuiRenderer;
+	Ref<Texture2D> Application::s_TestTexture;
 	Unique<ThemeBuilder> Application::s_ThemeBuilder;
 
 	std::queue<std::function<void()>> Application::s_MainThreadQueue;
@@ -138,6 +139,7 @@ namespace Liquid {
 		}
 
 		s_UpdateThread->Wait();
+		s_RenderThread->Wait();
 
 		s_UpdateThread.reset();
 		s_RenderThread.reset();
@@ -217,7 +219,7 @@ namespace Liquid {
 			using namespace std::chrono_literals;
 			std::this_thread::sleep_for(2000ms);
 
-			Ref<Texture2D> texture = Ref<Texture2D>::Create("Resources/Splash/Splash.bmp");
+			s_TestTexture = Ref<Texture2D>::Create("Resources/Splash/Splash.bmp");
 
 			// load resources here
 		}
@@ -295,6 +297,9 @@ namespace Liquid {
 			s_UpdateThreadTime = frameTimer.Elapsed();
 		}
 
+		// Temp
+		s_TestTexture = nullptr;
+
 		SubmitToMainThread([]()
 		{
 			s_MainWindow->SetVisible(false);
@@ -339,6 +344,12 @@ namespace Liquid {
 		bool vsync = s_Swapchain->IsVSyncEnabled();
 		if (ImGui::Checkbox("V-Sync", &vsync))
 			s_Swapchain->SetVSync(vsync);
+
+		Ref<ImGuiImplementation> imgui = s_ImGuiRenderer->GetImplementation();
+		float aspectRatio = (float)s_TestTexture->GetWidth() / (float)s_TestTexture->GetHeight();
+		float width = ImGui::GetContentRegionAvail().x;
+		float height = width * (1.0f / aspectRatio);
+		imgui->Image(s_TestTexture->GetImage(), { width, height });
 
 		ImGui::End();
 

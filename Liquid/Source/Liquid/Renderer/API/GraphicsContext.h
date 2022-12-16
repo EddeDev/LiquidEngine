@@ -16,6 +16,8 @@ namespace Liquid {
 	public:
 		virtual ~GraphicsContext() {}
 
+		RENDER_RESOURCE_TYPE(GraphicsContext);
+
 		static Ref<GraphicsContext> Create(const GraphicsContextCreateInfo& createInfo);
 	};
 
