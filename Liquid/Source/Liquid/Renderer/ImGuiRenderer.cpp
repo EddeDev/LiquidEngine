@@ -48,8 +48,7 @@ namespace Liquid {
 		if (m_PreviousContext)
 		{
 			ImGuiRenderer* previousRenderer = s_ContextMap.at(m_PreviousContext);
-			if (!previousRenderer)
-				LQ_PLATFORM_BREAK();
+			LQ_CHECK(previousRenderer);
 
 			ImGui::SetCurrentContext(m_PreviousContext);
 		}
@@ -77,8 +76,7 @@ namespace Liquid {
 
 	void ImGuiRenderer::EndFrame()
 	{
-		if (ImGui::GetCurrentContext() != m_Context)
-			LQ_PLATFORM_BREAK();
+		LQ_CHECK(ImGui::GetCurrentContext() == m_Context);
 
 		ImGui::Render();
 
@@ -94,8 +92,7 @@ namespace Liquid {
 		if (m_PreviousContext)
 		{
 			ImGuiRenderer* previousRenderer = s_ContextMap.at(m_PreviousContext);
-			if (!previousRenderer)
-				LQ_PLATFORM_BREAK();
+			LQ_CHECK(previousRenderer);
 
 			ImGui::SetCurrentContext(m_PreviousContext);
 		}

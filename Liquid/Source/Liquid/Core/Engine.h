@@ -47,8 +47,9 @@ namespace Liquid {
 
 	class Engine
 	{
-	public:
+	protected:
 		Engine(const EngineCreateInfo& createInfo);
+	public:
 		~Engine();
 
 		void Run();
@@ -66,10 +67,10 @@ namespace Liquid {
 
 		static Engine& Get() { return *s_Instance; }
 	protected:
-		virtual void OnInit();
-		virtual void OnShutdown();
-		virtual void OnUpdate();
-		virtual void OnUIRender();
+		virtual void OnInit() {}
+		virtual void OnShutdown() {}
+		virtual void OnUpdate() {}
+		virtual void OnUIRender() {}
 	private:
 		void UT_MainLoop();
 

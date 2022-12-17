@@ -16,8 +16,7 @@ namespace Liquid {
 
 	Engine::Engine(const EngineCreateInfo& createInfo)
 	{
-		if (s_Instance)
-			LQ_PLATFORM_BREAK();
+		LQ_CHECK(!s_Instance);
 		s_Instance = this;
 
 		m_MainThreadID = std::this_thread::get_id();
@@ -225,22 +224,6 @@ namespace Liquid {
 	void Engine::OnWindowCloseCallback()
 	{
 		m_Running = false;
-	}
-
-	void Engine::OnInit()
-	{
-	}
-
-	void Engine::OnShutdown()
-	{
-	}
-
-	void Engine::OnUpdate()
-	{
-	}
-
-	void Engine::OnUIRender()
-	{
 	}
 
 	void Engine::OnWindowSizeCallback(uint32 width, uint32 height)

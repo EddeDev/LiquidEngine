@@ -2,13 +2,15 @@
 
 #include "CommandLineArgs.h"
 
-#define LQ_EDITOR
+// #define LQ_EDITOR
+#define LQ_RUNTIME
+
 #ifdef LQ_EDITOR
 #include "Liquid/Core/EditorEngine.h"
 #endif
 
 #ifdef LQ_RUNTIME
-#include "Liquid/Core/Engine.h"
+#include "Liquid/Core/GameEngine.h"
 #endif
 
 namespace Liquid {
@@ -31,7 +33,7 @@ namespace Liquid {
 		createInfo.ShowSplashScreen = false;
 		createInfo.MaximizeOnStart = false;
 
-		return new Engine(createInfo);
+		return new GameEngine(createInfo);
 #endif
 
 		return nullptr;

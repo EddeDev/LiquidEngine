@@ -15,14 +15,13 @@ namespace Liquid {
 		: m_Width(createInfo.Width), m_Height(createInfo.Height), m_Format(createInfo.Format)
 	{
 		uint32 dataSize = m_Width * m_Height * PixelFormatUtils::ComputeBytesPerPixel(m_Format);
-		if (dataSize == 0)
-			LQ_PLATFORM_BREAK();
+		LQ_CHECK(dataSize > 0);
 
-		m_Buffer.Allocate(dataSize);
+		m_Storage.Allocate(dataSize);
 		if (createInfo.Data)
-			m_Buffer.Insert(createInfo.Data, dataSize);
+			m_Storage.Insert(createInfo.Data, dataSize);
 		else
-			m_Buffer.FillWithZeroes();
+			m_Storage.FillWithZeroes();
 
 		Invalidate();
 	}
@@ -58,7 +57,7 @@ namespace Liquid {
 		textureDesc.CPUAccessFlags = 0;
 
 		D3D11_SUBRESOURCE_DATA subresource = {};
-		subresource.pSysMem = m_Buffer.Get();
+		subresource.pSysMem = m_Storage.GetData();
 		subresource.SysMemPitch = textureDesc.Width * PixelFormatUtils::ComputeBytesPerPixel(m_Format);
 		subresource.SysMemSlicePitch = 0;
 		DX_CHECK(device->CreateTexture2D(&textureDesc, &subresource, &m_Texture));
@@ -76,9 +75,7 @@ namespace Liquid {
 
 	void DX11Image2D::Release()
 	{
-		ID3D11Texture2D* texture = m_Texture;
-		ID3D11ShaderResourceView* shaderResourceView = m_ShaderResourceView;
-		RT_SUBMIT_RELEASE(Release)([texture, shaderResourceView]()
+		RT_SUBMIT_RELEASE(Release)([texture = m_Texture, shaderResourceView = m_ShaderResourceView]()
 		{
 			if (texture)
 				texture->Release();
@@ -86,7 +83,7 @@ namespace Liquid {
 				shaderResourceView->Release();
 		});
 
-		m_Buffer.Release();
+		m_Storage.Release();
 	}
 
 	void DX11Image2D::RT_Release()
@@ -96,7 +93,7 @@ namespace Liquid {
 		if (m_ShaderResourceView)
 			m_ShaderResourceView->Release();
 
-		m_Buffer.Release();
+		m_Storage.Release();
 	}
 
 	void DX11Image2D::Bind(uint32 slot, ShaderStage stage) const

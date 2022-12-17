@@ -15,7 +15,7 @@ namespace Liquid {
 		RenderResourceList& list = s_GlobalReferences.at(type);
 		if (list.empty())
 		{
-			LQ_PLATFORM_BREAK();
+			LQ_CHECK(false);
 			return 0;
 		}
 

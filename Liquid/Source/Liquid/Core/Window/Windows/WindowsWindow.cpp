@@ -218,7 +218,7 @@ namespace Liquid {
 	void WindowsWindow::BeginFrame()
 	{
 		m_Swapchain->BeginFrame();
-		m_Swapchain->Clear(BUFFER_COLOR | BUFFER_DEPTH);
+		m_Swapchain->Clear(SB_COLOR | SB_DEPTH);
 	}
 
 	void WindowsWindow::SwapBuffers()

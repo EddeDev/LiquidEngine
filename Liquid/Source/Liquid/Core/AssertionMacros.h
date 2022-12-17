@@ -11,6 +11,11 @@
 
 #ifdef LQ_BUILD_DEBUG
 	#define LQ_ENABLE_ASSERTS
+	#define LQ_ENABLE_CHECKS
+#endif
+
+#ifdef LQ_ENABLE_CHECKS
+	#define LQ_CHECK(expression) if (!(expression)) LQ_PLATFORM_BREAK()
 #endif
 
 #ifdef LQ_ENABLE_ASSERTS

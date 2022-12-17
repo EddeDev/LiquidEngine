@@ -18,16 +18,12 @@ namespace Liquid {
 		static void Submit(TLambda&& lambda)
 		{
 #ifdef LQ_BUILD_DEBUG
-			if (!s_IsInitialized.load())
-				LQ_PLATFORM_BREAK();
+			LQ_CHECK(s_IsInitialized.load());
 
 			// TODO: Deferred release queue
 			// TEMP
 			if constexpr (!TRelease)
-			{
-				if (s_Flushing.load())
-					LQ_PLATFORM_BREAK();
-			}
+				LQ_CHECK(!s_Flushing.load());
 			
 #endif
 

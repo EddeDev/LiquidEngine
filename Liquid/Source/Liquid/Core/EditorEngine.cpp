@@ -10,8 +10,6 @@ namespace Liquid {
 
 	void EditorEngine::OnInit()
 	{
-		uint32 imageCount = RenderResourceManager::GetResourceCount(RenderResourceType::Image2D);
-
 		m_ThemeBuilder = CreateUnique<ThemeBuilder>();
 	}
 

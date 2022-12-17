@@ -31,12 +31,11 @@ namespace Liquid {
 		Depth = BIT(1),
 		Stencil = BIT(2)
 	};
-
 	DEFINE_ENUM_OPERATORS(SwapchainBufferType);
 
-#define BUFFER_COLOR SwapchainBufferType::Color
-#define BUFFER_DEPTH SwapchainBufferType::Depth
-#define BUFFER_STENCIL SwapchainBufferType::Stencil
+#define SB_COLOR SwapchainBufferType::Color
+#define SB_DEPTH SwapchainBufferType::Depth
+#define SB_STENCIL SwapchainBufferType::Stencil
 
 	class Swapchain : public RenderResource
 	{

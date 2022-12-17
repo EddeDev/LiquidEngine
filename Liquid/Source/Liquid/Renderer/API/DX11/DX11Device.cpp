@@ -24,6 +24,7 @@ namespace Liquid {
 
 	DX11Device::DX11Device(const GraphicsDeviceCreateInfo& createInfo, DXRef<IDXGIAdapter> adapter)
 	{
+		LQ_CHECK(!s_Instance);
 		s_Instance = this;
 
 		uint32 flags = D3D11_CREATE_DEVICE_SINGLETHREADED;

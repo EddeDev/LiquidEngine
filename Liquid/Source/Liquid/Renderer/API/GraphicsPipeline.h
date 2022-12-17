@@ -3,6 +3,7 @@
 #include "Liquid/Renderer/RenderResource.h"
 
 #include "Shader.h"
+#include "Buffer.h"
 
 namespace Liquid {
 
@@ -15,6 +16,8 @@ namespace Liquid {
 	{
 	public:
 		virtual ~GraphicsPipeline() {}
+
+		virtual void DrawIndexed(Ref<Buffer> vertexBuffer, Ref<Buffer> indexBuffer) const = 0;
 
 		RENDER_RESOURCE_TYPE(GraphicsPipeline);
 

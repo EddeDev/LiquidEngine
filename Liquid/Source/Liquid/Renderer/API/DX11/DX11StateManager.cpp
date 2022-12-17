@@ -22,8 +22,10 @@ namespace Liquid {
 		ID3D11UnorderedAccessView* CurrentlyBoundUAV = nullptr;
 		ID3D11DepthStencilView* CurrentlyBoundDSV = nullptr;
 		std::array<ID3D11RenderTargetView*, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT> CurrentlyBoundRTVs;
-
 		int32 CurrentlyBoundResourceSlot = -1;
+
+		// Buffers
+		ID3D11Buffer* CurrentlyBoundBuffer = nullptr;
 	};
 
 	static DX11StateManagerData s_Data;
@@ -33,13 +35,8 @@ namespace Liquid {
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
-		if (s_Data.CurrentlyBoundShader)
-			LQ_PLATFORM_BREAK();
-		if (s_Data.ActiveShaderStage != ShaderStage::None)
-			LQ_PLATFORM_BREAK();
-
-		s_Data.ActiveShaderStage = stage;
-		s_Data.CurrentlyBoundShader = shader;
+		LQ_CHECK(!s_Data.CurrentlyBoundShader);
+		LQ_CHECK(s_Data.ActiveShaderStage == ShaderStage::None);
 
 		switch (stage)
 		{
@@ -59,6 +56,9 @@ namespace Liquid {
 			break;
 		}
 		}
+
+		s_Data.CurrentlyBoundShader = shader;
+		s_Data.ActiveShaderStage = stage;
 	}
 
 	void DX11StateManager::UnbindShader(ShaderStage stage)
@@ -66,10 +66,8 @@ namespace Liquid {
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
-		if (!s_Data.CurrentlyBoundShader)
-			LQ_PLATFORM_BREAK();
-		if (stage != s_Data.ActiveShaderStage)
-			LQ_PLATFORM_BREAK();
+		LQ_CHECK(s_Data.CurrentlyBoundShader);
+		LQ_CHECK(stage == s_Data.ActiveShaderStage);
 
 		switch (stage)
 		{
@@ -99,12 +97,8 @@ namespace Liquid {
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 		
-		if (!s_Data.CurrentlyBoundSRV)
-			LQ_PLATFORM_BREAK();
-		if (s_Data.CurrentlyBoundResourceSlot != -1)
-			LQ_PLATFORM_BREAK();
-		if (stage != s_Data.ActiveShaderStage)
-			LQ_PLATFORM_BREAK();
+		LQ_CHECK(!s_Data.CurrentlyBoundSRV);
+		LQ_CHECK(s_Data.CurrentlyBoundResourceSlot == -1);
 
 		switch (stage)
 		{
@@ -134,12 +128,9 @@ namespace Liquid {
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
-		if (s_Data.CurrentlyBoundSRV)
-			LQ_PLATFORM_BREAK();
-		if (s_Data.CurrentlyBoundResourceSlot == -1)
-			LQ_PLATFORM_BREAK();
-		if (stage != s_Data.ActiveShaderStage)
-			LQ_PLATFORM_BREAK();
+		LQ_CHECK(!s_Data.CurrentlyBoundSRV);
+		LQ_CHECK(s_Data.CurrentlyBoundResourceSlot != -1);
+		LQ_CHECK(stage == s_Data.ActiveShaderStage);
 
 		switch (stage)
 		{
@@ -169,12 +160,8 @@ namespace Liquid {
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
-		if (s_Data.ActiveShaderStage != ShaderStage::Compute)
-			LQ_PLATFORM_BREAK();
-		if (!s_Data.CurrentlyBoundUAV)
-			LQ_PLATFORM_BREAK();
-		if (s_Data.CurrentlyBoundResourceSlot != -1)
-			LQ_PLATFORM_BREAK();
+		LQ_CHECK(!s_Data.CurrentlyBoundUAV);
+		LQ_CHECK(s_Data.CurrentlyBoundResourceSlot == -1);
 
 		deviceContext->CSSetUnorderedAccessViews(slot, 1, &unorderedAccessView, nullptr);
 
@@ -187,12 +174,8 @@ namespace Liquid {
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
-		if (s_Data.ActiveShaderStage != ShaderStage::Compute)
-			LQ_PLATFORM_BREAK();
-		if (s_Data.CurrentlyBoundUAV)
-			LQ_PLATFORM_BREAK();
-		if (s_Data.CurrentlyBoundResourceSlot == -1)
-			LQ_PLATFORM_BREAK();
+		LQ_CHECK(!s_Data.CurrentlyBoundUAV);
+		LQ_CHECK(s_Data.CurrentlyBoundResourceSlot != -1);
 
 		deviceContext->CSSetUnorderedAccessViews(slot, 1, &s_Data.NullUnorderedAccessView, nullptr);
 
@@ -205,14 +188,10 @@ namespace Liquid {
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
-		if (!s_Data.CurrentlyBoundDSV)
-			LQ_PLATFORM_BREAK();
+		LQ_CHECK(!s_Data.CurrentlyBoundDSV);
 		
 		for (size_t i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
-		{
-			if (s_Data.CurrentlyBoundRTVs[i])
-				LQ_PLATFORM_BREAK();
-		}
+			LQ_CHECK(!s_Data.CurrentlyBoundRTVs[i]);
 
 		deviceContext->OMSetRenderTargets(static_cast<uint32>(renderTargetViews.size()), renderTargetViews.data(), s_Data.CurrentlyBoundDSV);
 

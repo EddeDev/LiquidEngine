@@ -34,8 +34,7 @@ namespace Liquid {
 
 	void DX11ImGuiImplementation::BeginFrame()
 	{
-		if (std::this_thread::get_id() == m_ThreadID)
-			LQ_PLATFORM_BREAK();
+		LQ_CHECK(std::this_thread::get_id() != m_ThreadID);
 
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -44,16 +43,14 @@ namespace Liquid {
 	void DX11ImGuiImplementation::EndFrame()
 	{
 		ImDrawData* drawData = ImGui::GetDrawData();
-		if (!drawData->Valid)
-			LQ_PLATFORM_BREAK();
+		LQ_CHECK(drawData->Valid);
 
 		ImGui_ImplDX11_RenderDrawData(drawData);
 	}
 
 	void DX11ImGuiImplementation::Image(Ref<Image2D> image, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1) const
 	{
-		if (std::this_thread::get_id() == m_ThreadID)
-			LQ_PLATFORM_BREAK();
+		LQ_CHECK(std::this_thread::get_id() != m_ThreadID);
 
 		Ref<DX11Image2D> dxImage = image.As<DX11Image2D>();
 		ID3D11ShaderResourceView* srv = dxImage->GetShaderResourceView();
@@ -66,8 +63,7 @@ namespace Liquid {
 
 	void DX11ImGuiImplementation::InstallCallbacks()
 	{
-		if (std::this_thread::get_id() != m_ThreadID)
-			LQ_PLATFORM_BREAK();
+		LQ_CHECK(std::this_thread::get_id() == m_ThreadID);
 
 		m_CreateInfo.Window->AddFocusCallback(LQ_BIND_CALLBACK(OnWindowFocusCallback, this));
 		m_CreateInfo.Window->AddCursorEnterCallback(LQ_BIND_CALLBACK(OnCursorEnterCallback, this));

@@ -71,10 +71,7 @@ namespace Liquid {
 
 	uint8* RenderThreadQueue::Allocate(CommandFn function, size_t size)
 	{
-#if LQ_BUILD_DEBUG
-		if (!s_Data)
-			LQ_PLATFORM_BREAK();
-#endif
+		LQ_CHECK(s_Data);
 
 		*(CommandFn*)s_Data->BufferPtr = function;
 		s_Data->BufferPtr += sizeof(CommandFn);

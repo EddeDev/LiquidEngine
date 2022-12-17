@@ -25,8 +25,7 @@ namespace Liquid {
 
 		void Insert(const void* data, uint32 size = 0)
 		{
-			if (!Data || !data)
-				LQ_PLATFORM_BREAK();
+			LQ_CHECK(Data && data);
 
 			memcpy(Data, data, size == 0 ? Size : size);
 		}
@@ -47,8 +46,10 @@ namespace Liquid {
 		operator bool() { return Data != nullptr; }
 		operator bool() const { return Data != nullptr; }
 
-		uint8* Get() { return Data; }
-		const uint8* Get() const { return Data; }
+		uint8* GetData() { return Data; }
+		const uint8* GetData() const { return Data; }
+
+		uint32 GetSize() const { return Size; }
 	};
 
 }
