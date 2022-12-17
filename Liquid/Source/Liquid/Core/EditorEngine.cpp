@@ -10,12 +10,13 @@ namespace Liquid {
 
 	void EditorEngine::OnInit()
 	{
+		uint32 imageCount = RenderResourceManager::GetResourceCount(RenderResourceType::Image2D);
+
 		m_ThemeBuilder = CreateUnique<ThemeBuilder>();
 	}
 
 	void EditorEngine::OnShutdown()
 	{
-		m_ThemeBuilder = nullptr;
 	}
 
 	void EditorEngine::OnUpdate()
@@ -25,6 +26,48 @@ namespace Liquid {
 	void EditorEngine::OnUIRender()
 	{
 		m_ThemeBuilder->Render();
+
+		static bool renderResourcesWindowOpen = true;
+		if (renderResourcesWindowOpen)
+		{
+			ImGui::Begin("Render Resources", &renderResourcesWindowOpen);
+
+			auto& globalReferences = RenderResourceManager::GetGlobalReferences();
+			for (const auto& [type, list] : globalReferences)
+			{
+				ImGui::PushID((int32)type);
+
+				const char* label = RenderResourceUtils::RenderResourceTypeToString(type);
+				if (ImGui::CollapsingHeader(label))
+				{
+					for (const auto& resource : list)
+					{
+						ImGui::PushID(&resource);
+
+						String resourceStr = fmt::format("{0} {1}", label, (void*)resource);
+						if (ImGui::TreeNodeEx(resourceStr.c_str()))
+						{
+							std::time_t time = resource->GetTime();
+							std::tm* localTime = std::localtime(&time);
+
+							char buffer[32];
+							std::strftime(buffer, 32, "%Y.%m.%d %H:%M:%S", localTime);
+
+							ImGui::Text("Created: %s", buffer);
+							ImGui::Text("Reference Count: %d", resource->GetReferenceCount());
+
+							ImGui::TreePop();
+						}
+
+						ImGui::PopID();
+					}
+				}
+
+				ImGui::PopID();
+			}
+
+			ImGui::End();
+		}
 
 		ImGui::Begin("Liquid Engine");
 

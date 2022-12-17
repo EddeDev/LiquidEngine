@@ -2,8 +2,7 @@
 
 #include "CommandLineArgs.h"
 
-#define LQ_RUNTIME
-
+#define LQ_EDITOR
 #ifdef LQ_EDITOR
 #include "Liquid/Core/EditorEngine.h"
 #endif
