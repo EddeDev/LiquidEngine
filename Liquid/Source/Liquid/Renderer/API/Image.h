@@ -25,11 +25,11 @@ namespace Liquid {
 		virtual void Release() = 0;
 		virtual void RT_Release() = 0;
 
-		virtual void Bind(uint32 slot = 0, ShaderStage stage = ShaderStage::Fragment) const = 0;
-		virtual void Unbind(uint32 slot = 0, ShaderStage stage = ShaderStage::Fragment) const = 0;
+		virtual void Bind(uint32 slot = 0, ShaderStage stage = ShaderStage::Pixel) const = 0;
+		virtual void Unbind(uint32 slot = 0, ShaderStage stage = ShaderStage::Pixel) const = 0;
 
-		virtual void RT_Bind(uint32 slot = 0, ShaderStage stage = ShaderStage::Fragment) const = 0;
-		virtual void RT_Unbind(uint32 slot = 0, ShaderStage stage = ShaderStage::Fragment) const = 0;
+		virtual void RT_Bind(uint32 slot = 0, ShaderStage stage = ShaderStage::Pixel) const = 0;
+		virtual void RT_Unbind(uint32 slot = 0, ShaderStage stage = ShaderStage::Pixel) const = 0;
 	};
 
 	class Image2D : public Image

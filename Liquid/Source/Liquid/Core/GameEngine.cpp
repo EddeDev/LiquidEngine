@@ -38,7 +38,10 @@ namespace Liquid {
 		m_IndexBuffer = Buffer::Create(quadIndices, sizeof(QuadIndex) * 2, BUFFER_USAGE_INDEX_BUFFER | BUFFER_USAGE_STATIC);
 	
 		GraphicsPipelineCreateInfo pipelineCreateInfo;
-		pipelineCreateInfo.Shader = nullptr;
+		pipelineCreateInfo.InputLayout = {
+			{ "Position", ShaderDataType::Vec3 }
+		};
+		pipelineCreateInfo.Shader = Shader::Create("Resources/Shaders/VertexShader.hlsl", "Resources/Shaders/PixelShader.hlsl");
 
 		m_Pipeline = GraphicsPipeline::Create(pipelineCreateInfo);
 	}

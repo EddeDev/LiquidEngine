@@ -18,11 +18,11 @@ namespace Liquid {
 		virtual void Release() override;
 		virtual void RT_Release() override;
 
-		virtual void Bind(uint32 slot = 0, ShaderStage stage = ShaderStage::Fragment) const override;
-		virtual void Unbind(uint32 slot = 0, ShaderStage stage = ShaderStage::Fragment) const override;
+		virtual void Bind(uint32 slot = 0, ShaderStage stage = ShaderStage::Pixel) const override;
+		virtual void Unbind(uint32 slot = 0, ShaderStage stage = ShaderStage::Pixel) const override;
 
-		virtual void RT_Bind(uint32 slot = 0, ShaderStage stage = ShaderStage::Fragment) const override;
-		virtual void RT_Unbind(uint32 slot = 0, ShaderStage stage = ShaderStage::Fragment) const override;
+		virtual void RT_Bind(uint32 slot = 0, ShaderStage stage = ShaderStage::Pixel) const override;
+		virtual void RT_Unbind(uint32 slot = 0, ShaderStage stage = ShaderStage::Pixel) const override;
 
 		virtual uint32 GetWidth() const override { return m_Width; }
 		virtual uint32 GetHeight() const override { return m_Height; }

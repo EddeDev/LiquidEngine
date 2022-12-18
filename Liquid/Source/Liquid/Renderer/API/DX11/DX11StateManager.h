@@ -4,8 +4,6 @@
 
 #include "Liquid/Renderer/API/Shader.h"
 
-// State manager (Bind/Unbind calls to DX11)
-
 namespace Liquid {
 
 	class DX11StateManager

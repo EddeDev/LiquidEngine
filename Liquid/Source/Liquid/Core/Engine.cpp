@@ -171,8 +171,6 @@ namespace Liquid {
 		{
 			Timer frameTimer(TimeUnit::Milliseconds);
 
-			OnUpdate();
-
 			// Execute queue
 			{
 				std::unique_lock<std::mutex> lock(m_UpdateThreadMutex);
@@ -190,6 +188,8 @@ namespace Liquid {
 				{
 					m_MainWindow->BeginFrame();
 				});
+
+				OnUpdate();
 
 				if (m_ImGuiRenderer)
 				{

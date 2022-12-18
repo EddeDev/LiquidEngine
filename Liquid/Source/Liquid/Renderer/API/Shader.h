@@ -9,13 +9,8 @@ namespace Liquid {
 		None = 0,
 
 		Vertex,
-		Fragment,
+		Pixel,
 		Compute
-	};
-
-	struct ShaderCreateInfo
-	{
-
 	};
 
 	class Shader : public RenderResource
@@ -28,6 +23,8 @@ namespace Liquid {
 		virtual void RT_Unbind() const = 0;
 
 		RENDER_RESOURCE_TYPE(Shader);
+
+		static Ref<Shader> Create(const String& vertexShaderPath, const String& fragmentShaderPath);
 	};
 
 }

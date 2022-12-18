@@ -14,8 +14,9 @@ namespace Liquid {
 		static constexpr ID3D11DepthStencilView* NullDepthStencilView = nullptr;
 
 		// Shader
-		ShaderStage ActiveShaderStage = ShaderStage::None;
-		ID3D11DeviceChild* CurrentlyBoundShader = nullptr;
+		ID3D11DeviceChild* CurrentlyBoundVS = nullptr;
+		ID3D11DeviceChild* CurrentlyBoundPS = nullptr;
+		ID3D11DeviceChild* CurrentlyBoundCS = nullptr;
 
 		// Resource views
 		ID3D11ShaderResourceView* CurrentlyBoundSRV = nullptr;
@@ -35,30 +36,30 @@ namespace Liquid {
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
-		LQ_CHECK(!s_Data.CurrentlyBoundShader);
-		LQ_CHECK(s_Data.ActiveShaderStage == ShaderStage::None);
-
 		switch (stage)
 		{
 		case ShaderStage::Vertex:
 		{
+			LQ_CHECK(!s_Data.CurrentlyBoundVS);
 			deviceContext->VSSetShader(static_cast<ID3D11VertexShader*>(shader), nullptr, 0);
+			s_Data.CurrentlyBoundVS = shader;
 			break;
 		}
-		case ShaderStage::Fragment:
+		case ShaderStage::Pixel:
 		{
+			LQ_CHECK(!s_Data.CurrentlyBoundPS);
 			deviceContext->PSSetShader(static_cast<ID3D11PixelShader*>(shader), nullptr, 0);
+			s_Data.CurrentlyBoundPS = shader;
 			break;
 		}
 		case ShaderStage::Compute:
 		{
+			LQ_CHECK(!s_Data.CurrentlyBoundCS);
 			deviceContext->CSSetShader(static_cast<ID3D11ComputeShader*>(shader), nullptr, 0);
+			s_Data.CurrentlyBoundCS = shader;
 			break;
 		}
 		}
-
-		s_Data.CurrentlyBoundShader = shader;
-		s_Data.ActiveShaderStage = stage;
 	}
 
 	void DX11StateManager::UnbindShader(ShaderStage stage)
@@ -66,30 +67,30 @@ namespace Liquid {
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
-		LQ_CHECK(s_Data.CurrentlyBoundShader);
-		LQ_CHECK(stage == s_Data.ActiveShaderStage);
-
 		switch (stage)
 		{
 		case ShaderStage::Vertex:
 		{
+			LQ_CHECK(s_Data.CurrentlyBoundVS);
 			deviceContext->VSSetShader(nullptr, nullptr, 0);
+			s_Data.CurrentlyBoundVS = nullptr;
 			break;
 		}
-		case ShaderStage::Fragment:
+		case ShaderStage::Pixel:
 		{
+			LQ_CHECK(s_Data.CurrentlyBoundPS);
 			deviceContext->PSSetShader(nullptr, nullptr, 0);
+			s_Data.CurrentlyBoundPS = nullptr;
 			break;
 		}
 		case ShaderStage::Compute:
 		{
+			LQ_CHECK(s_Data.CurrentlyBoundCS);
 			deviceContext->CSSetShader(nullptr, nullptr, 0);
+			s_Data.CurrentlyBoundCS = nullptr;
 			break;
 		}
 		}
-
-		s_Data.ActiveShaderStage = ShaderStage::None;
-		s_Data.CurrentlyBoundShader = nullptr;
 	}
 
 	void DX11StateManager::BindShaderResourceView(ShaderStage stage, ID3D11ShaderResourceView* shaderResourceView, uint32 slot)
@@ -107,7 +108,7 @@ namespace Liquid {
 			deviceContext->VSSetShaderResources(slot, 1, &shaderResourceView);
 			break;
 		}
-		case ShaderStage::Fragment:
+		case ShaderStage::Pixel:
 		{
 			deviceContext->PSSetShaderResources(slot, 1, &shaderResourceView);
 			break;
@@ -130,7 +131,6 @@ namespace Liquid {
 
 		LQ_CHECK(!s_Data.CurrentlyBoundSRV);
 		LQ_CHECK(s_Data.CurrentlyBoundResourceSlot != -1);
-		LQ_CHECK(stage == s_Data.ActiveShaderStage);
 
 		switch (stage)
 		{
@@ -139,7 +139,7 @@ namespace Liquid {
 			deviceContext->VSSetShaderResources(slot, 1, &s_Data.NullShaderResourceView);
 			break;
 		}
-		case ShaderStage::Fragment:
+		case ShaderStage::Pixel:
 		{
 			deviceContext->PSSetShaderResources(slot, 1, &s_Data.NullShaderResourceView);
 			break;
