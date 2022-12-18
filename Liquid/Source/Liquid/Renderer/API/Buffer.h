@@ -25,6 +25,7 @@ namespace Liquid {
 #define BUFFER_USAGE_NONE BufferUsage::None
 #define BUFFER_USAGE_STATIC BufferUsage::Static
 #define BUFFER_USAGE_DYNAMIC BufferUsage::Dynamic
+#define BUFFER_USAGE_VOLATILE BufferUsage::Volatile
 #define BUFFER_USAGE_VERTEX_BUFFER BufferUsage::VertexBuffer
 #define BUFFER_USAGE_INDEX_BUFFER BufferUsage::IndexBuffer
 #define BUFFER_USAGE_SHADER_RESOURCE BufferUsage::ShaderResource

@@ -26,7 +26,7 @@ namespace Liquid {
 			D3D11_BUFFER_DESC bufferDesc = {};
 			bufferDesc.ByteWidth = instance->m_Storage.GetSize();
 
-			if (Enum::HasAnyFlags(instance->m_Usage, BUFFER_USAGE_ANY_DYNAMIC))
+			if (Enum::HasAnyFlags(instance->m_Usage, BUFFER_USAGE_DYNAMIC | BUFFER_USAGE_VOLATILE))
 			{
 				bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 				bufferDesc.CPUAccessFlags |= D3D11_CPU_ACCESS_WRITE;
@@ -76,7 +76,7 @@ namespace Liquid {
 			D3D11_BUFFER_DESC bufferDesc = {};
 			bufferDesc.ByteWidth = instance->m_Storage.GetSize();
 
-			if (Enum::HasAnyFlags(instance->m_Usage, BUFFER_USAGE_ANY_DYNAMIC))
+			if (Enum::HasAnyFlags(instance->m_Usage, BUFFER_USAGE_DYNAMIC | BUFFER_USAGE_VOLATILE))
 			{
 				bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 				bufferDesc.CPUAccessFlags |= D3D11_CPU_ACCESS_WRITE;
