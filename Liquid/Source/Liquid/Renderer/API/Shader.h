@@ -24,7 +24,7 @@ namespace Liquid {
 
 		RENDER_RESOURCE_TYPE(Shader);
 
-		static Ref<Shader> Create(const String& vertexShaderPath, const String& fragmentShaderPath);
+		static Ref<Shader> Create(const String& vertexShaderPath, const String& pixelShaderPath);
 	};
 
 }

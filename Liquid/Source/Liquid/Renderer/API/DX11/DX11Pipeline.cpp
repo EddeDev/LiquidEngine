@@ -17,7 +17,7 @@ namespace Liquid {
 			{
 			case PrimitiveTopology::Triangles: return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 			}
-			LQ_ASSERT(false, "Unknown PrimitiveTopology");
+			LQ_VERIFY(false, "Unknown PrimitiveTopology");
 			return D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED;
 		}
 
@@ -34,7 +34,7 @@ namespace Liquid {
 			case ShaderDataType::IVec3: return DXGI_FORMAT_R32G32B32_SINT;
 			case ShaderDataType::IVec4: return DXGI_FORMAT_R32G32B32A32_SINT;
 			}
-			LQ_ASSERT(false, "Unknown ShaderDataType");
+			LQ_VERIFY(false, "Unknown ShaderDataType");
 			return DXGI_FORMAT_UNKNOWN;
 		}
 
@@ -48,7 +48,15 @@ namespace Liquid {
 
 	DX11Pipeline::~DX11Pipeline()
 	{
-		// release objects
+		RT_SUBMIT_RELEASE(Release)([inputLayout = m_InputLayout, rasterizerState = m_RasterizerState, depthStencilState = m_DepthStencilState]()
+		{
+			if (inputLayout)
+				inputLayout->Release();
+			if (rasterizerState)
+				rasterizerState->Release();
+			if (depthStencilState)
+				depthStencilState->Release();
+		});
 	}
 
 	void DX11Pipeline::Invalidate()

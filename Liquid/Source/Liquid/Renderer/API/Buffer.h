@@ -18,9 +18,7 @@ namespace Liquid {
 		ShaderResource = BIT(5),
 		UnorderedAccess = BIT(6),
 		DrawIndirect = BIT(7),
-		Shared = BIT(8),
-
-		AnyDynamic = (Dynamic | Volatile)
+		Shared = BIT(8)
 	};
 	DEFINE_ENUM_OPERATORS(BufferUsage);
 
@@ -33,7 +31,6 @@ namespace Liquid {
 #define BUFFER_USAGE_UNORDERED_ACCESS BufferUsage::UnorderedAccess
 #define BUFFER_USAGE_DRAW_INDIRECT BufferUsage::DrawIndirect
 #define BUFFER_USAGE_SHARED BufferUsage::Shared
-#define BUFFER_USAGE_ANY_DYNAMIC BufferUsage::AnyDynamic
 
 	class Buffer : public RenderResource
 	{

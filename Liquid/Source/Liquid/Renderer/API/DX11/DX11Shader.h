@@ -20,7 +20,7 @@ namespace Liquid {
 	class DX11Shader : public Shader
 	{
 	public:
-		DX11Shader(const String& vertexShaderPath, const String& fragmentShaderPath);
+		DX11Shader(const String& vertexShaderPath, const String& pixelShaderPath);
 		virtual ~DX11Shader();
 
 		virtual void Bind() const override;

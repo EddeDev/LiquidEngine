@@ -10,6 +10,7 @@ namespace Liquid {
 
 	namespace Utils {
 
+		// TODO: move to file utilities
 		static String ReadFile(const std::string& filepath)
 		{
 			String result;
@@ -34,9 +35,9 @@ namespace Liquid {
 		{
 			switch (stage)
 			{
-			case ShaderStage::Vertex:   return fmt::format("vs_{0}", version);
-			case ShaderStage::Pixel: return fmt::format("ps_{0}", version);
-			case ShaderStage::Compute:  return fmt::format("cs_{0}", version);
+			case ShaderStage::Vertex:  return fmt::format("vs_{0}", version);
+			case ShaderStage::Pixel:   return fmt::format("ps_{0}", version);
+			case ShaderStage::Compute: return fmt::format("cs_{0}", version);
 			}
 			LQ_VERIFY(false, "Unknown shader stage");
 			return "";
@@ -44,15 +45,15 @@ namespace Liquid {
 
 	}
 
-	DX11Shader::DX11Shader(const String& vertexShaderPath, const String& fragmentShaderPath)
+	DX11Shader::DX11Shader(const String& vertexShaderPath, const String& pixelShaderPath)
 	{
-		std::unordered_map<ShaderStage, String> sources;
-		sources[ShaderStage::Vertex] = Utils::ReadFile(vertexShaderPath);
-		sources[ShaderStage::Pixel] = Utils::ReadFile(fragmentShaderPath);
-
 		Ref<DX11Shader> instance = this;
-		RT_SUBMIT(Compile)([instance, sources]() mutable
+		RT_SUBMIT(Compile)([instance, vertexShaderPath, pixelShaderPath]() mutable
 		{
+			std::unordered_map<ShaderStage, String> sources;
+			sources[ShaderStage::Vertex] = Utils::ReadFile(vertexShaderPath);
+			sources[ShaderStage::Pixel] = Utils::ReadFile(pixelShaderPath);
+
 			instance->Compile(sources);
 		});
 	}

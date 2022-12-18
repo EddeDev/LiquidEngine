@@ -7,11 +7,11 @@
 
 namespace Liquid {
 
-	Ref<Shader> Shader::Create(const String& vertexShaderPath, const String& fragmentShaderPath)
+	Ref<Shader> Shader::Create(const String& vertexShaderPath, const String& pixelShaderPath)
 	{
 		switch (LQ_CURRENT_GRAPHICS_API)
 		{
-		case GraphicsAPI::DX11: return Ref<DX11Shader>::Create(vertexShaderPath, fragmentShaderPath);
+		case GraphicsAPI::DX11: return Ref<DX11Shader>::Create(vertexShaderPath, pixelShaderPath);
 		}
 		LQ_VERIFY(false, "Unknown GraphicsAPI");
 		return nullptr;
