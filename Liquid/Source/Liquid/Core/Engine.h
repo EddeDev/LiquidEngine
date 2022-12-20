@@ -39,6 +39,7 @@ namespace Liquid {
 		CommandLineArgs Args;
 		uint32 WindowWidth = 1280;
 		uint32 WindowHeight = 720;
+		String WindowTitle = "Liquid Engine";
 		bool EnableImGui = true;
 		bool ShowSplashScreen = true;
 		bool MaximizeOnStart = true;
@@ -60,6 +61,7 @@ namespace Liquid {
 		GraphicsAPI GetGraphicsAPI() const;
 
 		Ref<Window> GetMainWindow() const { return m_MainWindow; }
+		Ref<ImGuiRenderer> GetImGuiRenderer() const { return m_ImGuiRenderer; }
 		Ref<GraphicsDevice> GetDevice() const { return m_Device; }
 
 		const Unique<Thread>& GetUpdateThread() const { return m_UpdateThread; }

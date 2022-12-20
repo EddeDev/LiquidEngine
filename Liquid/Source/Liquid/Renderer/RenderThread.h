@@ -22,8 +22,8 @@ namespace Liquid {
 
 			// TODO: Deferred release queue
 			// TEMP
-			if constexpr (!TRelease)
-				LQ_CHECK(!s_Flushing.load());
+			// if constexpr (!TRelease)
+				// LQ_CHECK(!s_Flushing.load());
 			
 #endif
 

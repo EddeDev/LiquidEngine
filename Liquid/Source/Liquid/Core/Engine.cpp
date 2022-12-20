@@ -51,7 +51,7 @@ namespace Liquid {
 			WindowCreateInfo windowCreateInfo;
 			windowCreateInfo.Width = createInfo.WindowWidth;
 			windowCreateInfo.Height = createInfo.WindowHeight;
-			windowCreateInfo.Title = "Liquid Engine";
+			windowCreateInfo.Title = createInfo.WindowTitle;
 			windowCreateInfo.Fullscreen = createInfo.Fullscreen;
 			windowCreateInfo.Maximize = createInfo.MaximizeOnStart;
 

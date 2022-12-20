@@ -36,6 +36,29 @@ namespace Liquid {
 		stbi_image_free(data);
 	}
 
+	Texture2D::Texture2D(const void* data, uint32 size)
+	{
+		stbi_set_flip_vertically_on_load(true);
+
+		int32 width, height;
+		uint8* imageData = stbi_load_from_memory((const stbi_uc*)data, size, &width, &height, nullptr, STBI_rgb_alpha);
+		if (!data)
+		{
+			String errorMessage = stbi_failure_reason();
+			LQ_ERROR_CATEGORY("Texture2D", "STBI: {0}", errorMessage);
+			return;
+		}
+
+		ImageCreateInfo imageCreateInfo;
+		imageCreateInfo.Data = imageData;
+		imageCreateInfo.Format = PixelFormat::RGBA;
+		imageCreateInfo.Width = width;
+		imageCreateInfo.Height = height;
+
+		m_Image = Image2D::Create(imageCreateInfo);
+
+		stbi_image_free(imageData);
+	}
 
 	Texture2D::Texture2D(uint32 width, uint32 height, PixelFormat format, const void* data)
 	{

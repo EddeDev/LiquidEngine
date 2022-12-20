@@ -21,6 +21,10 @@ namespace Liquid {
 
 		String FormatBytes(size_t bytes);
 
+		std::vector<String> SplitString(String s, const String& delimiter);
+		String ToLowerString(String string);
+		String VectorToString(const std::vector<String> strings);
+
 	}
 
 }

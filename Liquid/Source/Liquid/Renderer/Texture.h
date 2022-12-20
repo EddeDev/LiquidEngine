@@ -19,6 +19,7 @@ namespace Liquid {
 	{
 	public:
 		Texture2D(const String& path);
+		Texture2D(const void* data, uint32 size);
 		Texture2D(uint32 width, uint32 height, PixelFormat format = PixelFormat::RGBA, const void* data = nullptr);
 
 		virtual void Bind(uint32 slot = 0) const override;
