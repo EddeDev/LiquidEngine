@@ -16,6 +16,8 @@
 
 #ifdef LQ_ENABLE_CHECKS
 	#define LQ_CHECK(expression) if (!(expression)) LQ_PLATFORM_BREAK()
+#else
+	#define LQ_CHECK(expression)
 #endif
 
 #ifdef LQ_ENABLE_ASSERTS

@@ -73,6 +73,7 @@ project "Liquid"
             "Ws2_32.lib",
             "Version.lib",
             "Bcrypt.lib",
+            "Urlmon.lib",
 
             "d3d11.lib",
             "d3d12.lib",
