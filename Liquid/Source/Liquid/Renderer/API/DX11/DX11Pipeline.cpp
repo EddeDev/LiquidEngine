@@ -6,6 +6,7 @@
 #include "DX11Device.h"
 #include "DX11Shader.h"
 #include "DX11Buffer.h"
+#include "DX11StateManager.h"
 
 namespace Liquid {
 	
@@ -48,7 +49,7 @@ namespace Liquid {
 
 	DX11Pipeline::~DX11Pipeline()
 	{
-		RT_SUBMIT_RELEASE(Release)([inputLayout = m_InputLayout, rasterizerState = m_RasterizerState, depthStencilState = m_DepthStencilState]()
+		RT_SUBMIT_RELEASE(Release)([inputLayout = m_InputLayout, rasterizerState = m_RasterizerState, depthStencilState = m_DepthStencilState]()	
 		{
 			if (inputLayout)
 				inputLayout->Release();
@@ -89,7 +90,7 @@ namespace Liquid {
 		{
 			m_VertexElements.clear();
 			uint32 elementIndex = 0;
-			for (auto& element : m_CreateInfo.VertexElements)
+			for (const auto& element : m_CreateInfo.VertexElements)
 			{
 				D3D11_INPUT_ELEMENT_DESC& elementDesc = m_VertexElements.emplace_back();
 				elementDesc.SemanticName = element.Name.c_str();
@@ -137,39 +138,73 @@ namespace Liquid {
 		DX_CHECK(device->CreateDepthStencilState(&depthStencilDesc, &m_DepthStencilState));
 	}
 
-	void DX11Pipeline::DrawIndexed(Ref<Buffer> vertexBuffer, Ref<Buffer> indexBuffer) const
+	void DX11Pipeline::Bind() const
 	{
 		Ref<const DX11Pipeline> instance = this;
-		RT_SUBMIT(DrawIndexed)([instance, vertexBuffer, indexBuffer]()
+		RT_SUBMIT(Bind)([instance]()
 		{
-			DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
-			DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
-
-			instance->m_CreateInfo.Shader->RT_Bind();
-
-			deviceContext->IASetInputLayout(instance->m_InputLayout);
-			deviceContext->RSSetState(instance->m_RasterizerState);
-			deviceContext->OMSetDepthStencilState(instance->m_DepthStencilState, 0);
-
-			if (vertexBuffer)
-			{
-				uint32 stride = instance->m_CreateInfo.VertexElements.GetStride();
-				uint32 offset = instance->m_CreateInfo.VertexElements.GetOffset();
-				ID3D11Buffer* buffer = vertexBuffer.As<DX11Buffer>()->GetBuffer();
-				deviceContext->IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
-			}
-
-			if (indexBuffer)
-			{
-				DXGI_FORMAT format = DXGI_FORMAT_R32_UINT;
-				deviceContext->IASetIndexBuffer(indexBuffer.As<DX11Buffer>()->GetBuffer(), format, 0);
-			}
-			
-			deviceContext->IASetPrimitiveTopology(Utils::DX11PrimitiveTopology(instance->m_CreateInfo.Topology));
-			deviceContext->DrawIndexed(indexBuffer->GetSize() / sizeof(uint32), 0, 0);
-
-			instance->m_CreateInfo.Shader->RT_Unbind();
+			instance->RT_Bind();
 		});
 	}
+
+	void DX11Pipeline::RT_Bind() const
+	{
+		DX11StateManager::BindVertexBuffer(DX11Buffer::GetCurrentlyBoundVertexBuffer(), m_CreateInfo.VertexElements.GetStride(), m_CreateInfo.VertexElements.GetOffset());
+		DX11StateManager::BindInputLayout(m_InputLayout);
+		DX11StateManager::BindRasterizerState(m_RasterizerState);
+		DX11StateManager::BindDepthStencilState(m_DepthStencilState);
+		DX11StateManager::BindPrimitiveTopology(Utils::DX11PrimitiveTopology(m_CreateInfo.Topology));
+	}
+
+	void DX11Pipeline::Unbind() const
+	{
+		Ref<const DX11Pipeline> instance = this;
+		RT_SUBMIT(Unbind)([instance]()
+		{
+			instance->RT_Unbind();
+		});
+	}
+
+	void DX11Pipeline::RT_Unbind() const
+	{
+		DX11StateManager::UnbindPrimitiveTopology();
+		DX11StateManager::UnbindDepthStencilState();
+		DX11StateManager::UnbindRasterizerState();
+		DX11StateManager::UnbindInputLayout();
+		DX11StateManager::UnbindVertexBuffer();
+	}
+
+	void DX11Pipeline::Draw(uint32 vertexCount, uint32 startVertexLocation) const
+	{
+		Ref<const DX11Pipeline> instance = this;
+		RT_SUBMIT(Draw)([instance, vertexCount, startVertexLocation]()
+		{
+			instance->RT_Draw(vertexCount, startVertexLocation);
+		});
+	}
+
+	void DX11Pipeline::RT_Draw(uint32 vertexCount, uint32 startVertexLocation) const
+	{
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+		deviceContext->Draw(vertexCount, startVertexLocation);
+	}
+
+	void DX11Pipeline::DrawIndexed(uint32 indexCount, uint32 startIndexLocation, int32 baseVertexLocation) const
+	{
+		Ref<const DX11Pipeline> instance = this;
+		RT_SUBMIT(DrawIndexed)([instance, indexCount, startIndexLocation, baseVertexLocation]()
+		{
+			instance->RT_DrawIndexed(indexCount, startIndexLocation, baseVertexLocation);
+		});
+	}
+
+	void DX11Pipeline::RT_DrawIndexed(uint32 indexCount, uint32 startIndexLocation, int32 baseVertexLocation) const
+	{
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+		deviceContext->DrawIndexed(indexCount, startIndexLocation, baseVertexLocation);
+	}
+
 
 }

@@ -9,8 +9,6 @@
 
 namespace Liquid {
 
-	static ID3D11ShaderResourceView* s_NullShaderResourceView = nullptr;
-
 	DX11Image2D::DX11Image2D(const ImageCreateInfo& createInfo)
 		: m_Width(createInfo.Width), m_Height(createInfo.Height), m_Format(createInfo.Format)
 	{
@@ -101,7 +99,7 @@ namespace Liquid {
 		Ref<const DX11Image2D> instance = this;
 		RT_SUBMIT(Bind)([instance, slot, stage]()
 		{
-			DX11StateManager::BindShaderResourceView(stage, instance->m_ShaderResourceView, slot);
+			instance->RT_Bind(slot, stage);
 		});
 	}
 
@@ -115,7 +113,7 @@ namespace Liquid {
 		Ref<const DX11Image2D> instance = this;
 		RT_SUBMIT(Unbind)([instance, slot, stage]()
 		{
-			DX11StateManager::UnbindShaderResourceView(stage, slot);
+			instance->RT_Unbind(slot, stage);
 		});
 	}
 

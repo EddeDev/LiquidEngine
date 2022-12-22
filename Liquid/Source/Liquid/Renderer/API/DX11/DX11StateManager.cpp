@@ -13,7 +13,7 @@ namespace Liquid {
 		static constexpr ID3D11RenderTargetView* NullRenderTargetView = nullptr;
 		static constexpr ID3D11DepthStencilView* NullDepthStencilView = nullptr;
 
-		// Shader
+		// Shaders
 		ID3D11DeviceChild* CurrentlyBoundVS = nullptr;
 		ID3D11DeviceChild* CurrentlyBoundPS = nullptr;
 		ID3D11DeviceChild* CurrentlyBoundCS = nullptr;
@@ -26,7 +26,15 @@ namespace Liquid {
 		int32 CurrentlyBoundResourceSlot = -1;
 
 		// Buffers
-		ID3D11Buffer* CurrentlyBoundBuffer = nullptr;
+		ID3D11Buffer* CurrentlyBoundVB = nullptr;
+		ID3D11Buffer* CurrentlyBoundIB = nullptr;
+
+		// States
+		ID3D11InputLayout* CurrentlyBoundInputLayout = nullptr;
+		ID3D11RasterizerState* CurrentlyBoundRasterizerState = nullptr;
+		ID3D11DepthStencilState* CurrentlyBoundDepthStencilState = nullptr;
+
+		D3D11_PRIMITIVE_TOPOLOGY CurrentlyBoundPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED;
 	};
 
 	static DX11StateManagerData s_Data;
@@ -91,6 +99,130 @@ namespace Liquid {
 			break;
 		}
 		}
+	}
+
+	void DX11StateManager::BindVertexBuffer(ID3D11Buffer* buffer, uint32 stride, uint32 offset)
+	{
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+
+		LQ_CHECK(!s_Data.CurrentlyBoundVB);
+
+		deviceContext->IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
+		s_Data.CurrentlyBoundVB = buffer;
+	}
+
+	void DX11StateManager::UnbindVertexBuffer()
+	{
+		LQ_CHECK(s_Data.CurrentlyBoundVB);
+
+		s_Data.CurrentlyBoundVB = nullptr;
+	}
+
+	void DX11StateManager::BindIndexBuffer(ID3D11Buffer* buffer)
+	{
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+
+		LQ_CHECK(!s_Data.CurrentlyBoundIB);
+
+		deviceContext->IASetIndexBuffer(buffer, DXGI_FORMAT_R32_UINT, 0);
+		s_Data.CurrentlyBoundIB = buffer;
+	}
+
+	void DX11StateManager::UnbindIndexBuffer()
+	{
+		LQ_CHECK(s_Data.CurrentlyBoundIB);
+
+		s_Data.CurrentlyBoundIB = nullptr;
+	}
+
+	void DX11StateManager::BindInputLayout(ID3D11InputLayout* inputLayout)
+	{
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+
+		LQ_CHECK(!s_Data.CurrentlyBoundInputLayout);
+
+		deviceContext->IASetInputLayout(inputLayout);
+		s_Data.CurrentlyBoundInputLayout = inputLayout;
+	}
+
+	void DX11StateManager::UnbindInputLayout()
+	{
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+
+		LQ_CHECK(s_Data.CurrentlyBoundInputLayout);
+
+		deviceContext->IASetInputLayout(nullptr);
+		s_Data.CurrentlyBoundInputLayout = nullptr;
+	}
+
+	void DX11StateManager::BindRasterizerState(ID3D11RasterizerState* rasterizerState)
+	{
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+
+		LQ_CHECK(!s_Data.CurrentlyBoundRasterizerState);
+
+		deviceContext->RSSetState(rasterizerState);
+		s_Data.CurrentlyBoundRasterizerState = rasterizerState;
+	}
+
+	void DX11StateManager::UnbindRasterizerState()
+	{
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+
+		LQ_CHECK(s_Data.CurrentlyBoundRasterizerState);
+
+		deviceContext->RSSetState(nullptr);
+		s_Data.CurrentlyBoundRasterizerState = nullptr;
+	}
+
+	void DX11StateManager::BindDepthStencilState(ID3D11DepthStencilState* depthStencilState)
+	{
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+
+		LQ_CHECK(!s_Data.CurrentlyBoundDepthStencilState);
+
+		deviceContext->OMSetDepthStencilState(depthStencilState, 0);
+		s_Data.CurrentlyBoundDepthStencilState = depthStencilState;
+	}
+
+	void DX11StateManager::UnbindDepthStencilState()
+	{
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+
+		LQ_CHECK(s_Data.CurrentlyBoundDepthStencilState);
+
+		deviceContext->OMSetDepthStencilState(nullptr, 0);
+		s_Data.CurrentlyBoundDepthStencilState = nullptr;
+	}
+
+	void DX11StateManager::BindPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY topology)
+	{
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+
+		LQ_CHECK(s_Data.CurrentlyBoundPrimitiveTopology == D3D_PRIMITIVE_TOPOLOGY_UNDEFINED);
+
+		deviceContext->IASetPrimitiveTopology(topology);
+		s_Data.CurrentlyBoundPrimitiveTopology = topology;
+	}
+
+	void DX11StateManager::UnbindPrimitiveTopology()
+	{
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+
+		LQ_CHECK(s_Data.CurrentlyBoundPrimitiveTopology != D3D_PRIMITIVE_TOPOLOGY_UNDEFINED);
+
+		deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_UNDEFINED);
+		s_Data.CurrentlyBoundPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 	}
 
 	void DX11StateManager::BindShaderResourceView(ShaderStage stage, ID3D11ShaderResourceView* shaderResourceView, uint32 slot)
@@ -188,6 +320,7 @@ namespace Liquid {
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
+		// TODO
 		LQ_CHECK(s_Data.CurrentlyBoundDSV);
 		
 		for (size_t i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)

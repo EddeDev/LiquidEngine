@@ -17,6 +17,7 @@ namespace Liquid {
 		virtual void OnUpdate() override;
 	private:
 		Ref<GraphicsPipeline> m_Pipeline;
+		Ref<Shader> m_Shader;
 
 		Ref<Buffer> m_VertexBuffer;
 		Ref<Buffer> m_IndexBuffer;
