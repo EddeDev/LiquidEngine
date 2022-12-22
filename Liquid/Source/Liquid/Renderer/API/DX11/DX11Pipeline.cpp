@@ -21,20 +21,20 @@ namespace Liquid {
 			return D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED;
 		}
 
-		static DXGI_FORMAT ShaderDataTypeToDX11Type(ShaderDataType type)
+		static DXGI_FORMAT VertexElementTypeToDX11Format(VertexElementType type)
 		{
 			switch (type)
 			{
-			case ShaderDataType::Float: return DXGI_FORMAT_R32_FLOAT;
-			case ShaderDataType::Vec2:  return DXGI_FORMAT_R32G32_FLOAT;
-			case ShaderDataType::Vec3:  return DXGI_FORMAT_R32G32B32_FLOAT;
-			case ShaderDataType::Vec4:  return DXGI_FORMAT_R32G32B32A32_FLOAT;
-			case ShaderDataType::Int:   return DXGI_FORMAT_R32_SINT;
-			case ShaderDataType::IVec2: return DXGI_FORMAT_R32G32_SINT;
-			case ShaderDataType::IVec3: return DXGI_FORMAT_R32G32B32_SINT;
-			case ShaderDataType::IVec4: return DXGI_FORMAT_R32G32B32A32_SINT;
+			case VertexElementType::Float:  return DXGI_FORMAT_R32_FLOAT;
+			case VertexElementType::Float2: return DXGI_FORMAT_R32G32_FLOAT;
+			case VertexElementType::Float3: return DXGI_FORMAT_R32G32B32_FLOAT;
+			case VertexElementType::Float4: return DXGI_FORMAT_R32G32B32A32_FLOAT;
+			case VertexElementType::Int:    return DXGI_FORMAT_R32_SINT;
+			case VertexElementType::Int2:   return DXGI_FORMAT_R32G32_SINT;
+			case VertexElementType::Int3:   return DXGI_FORMAT_R32G32B32_SINT;
+			case VertexElementType::Int4:   return DXGI_FORMAT_R32G32B32A32_SINT;
 			}
-			LQ_VERIFY(false, "Unknown ShaderDataType");
+			LQ_VERIFY(false, "Unknown VertexElementType");
 			return DXGI_FORMAT_UNKNOWN;
 		}
 
@@ -80,30 +80,30 @@ namespace Liquid {
 		if (m_DepthStencilState)
 			m_DepthStencilState->Release();
 
-		LQ_CHECK(m_CreateInfo.InputLayout.GetAttributeCount() > 0);
-
-		std::vector<D3D11_INPUT_ELEMENT_DESC> elements;
-		uint32 attributeIndex = 0;
-		for (const auto& attribute : m_CreateInfo.InputLayout)
-		{
-			D3D11_INPUT_ELEMENT_DESC elementDesc = {};
-			elementDesc.SemanticName = attribute.Name.c_str();
-			elementDesc.SemanticIndex = attributeIndex;
-			elementDesc.Format = Utils::ShaderDataTypeToDX11Type(attribute.Type);
-			elementDesc.InputSlot = 0;
-			elementDesc.AlignedByteOffset = attribute.Offset;
-			elementDesc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-			elementDesc.InstanceDataStepRate = 0;
-
-			elements.push_back(elementDesc);
-			attributeIndex++;
-		}
-
 		Ref<DX11Shader> shader = m_CreateInfo.Shader.As<DX11Shader>();
 		LQ_CHECK(shader);
 
 		auto& shaderData = shader->GetShaderData();
-		DX_CHECK(device->CreateInputLayout(elements.data(), m_CreateInfo.InputLayout.GetAttributeCount(), shaderData.VertexShaderBlob->GetBufferPointer(), shaderData.VertexShaderBlob->GetBufferSize(), &m_InputLayout));
+
+		if (m_CreateInfo.VertexElements.GetCount() > 0 && shaderData.VertexShaderBlob)
+		{
+			m_VertexElements.clear();
+			uint32 elementIndex = 0;
+			for (auto& element : m_CreateInfo.VertexElements)
+			{
+				D3D11_INPUT_ELEMENT_DESC& elementDesc = m_VertexElements.emplace_back();
+				elementDesc.SemanticName = element.Name.c_str();
+				elementDesc.SemanticIndex = elementIndex;
+				elementDesc.Format = Utils::VertexElementTypeToDX11Format(element.Type);
+				elementDesc.InputSlot = 0;
+				elementDesc.AlignedByteOffset = element.Offset;
+				elementDesc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+				elementDesc.InstanceDataStepRate = 0;
+				elementIndex++;
+			}
+
+			DX_CHECK(device->CreateInputLayout(m_VertexElements.data(), static_cast<uint32>(m_VertexElements.size()), shaderData.VertexShaderBlob->GetBufferPointer(), shaderData.VertexShaderBlob->GetBufferSize(), &m_InputLayout));
+		}
 
 		D3D11_RASTERIZER_DESC rasterizerDesc = {};
 		rasterizerDesc.FillMode = m_CreateInfo.Wireframe ? D3D11_FILL_WIREFRAME : D3D11_FILL_SOLID;
@@ -153,8 +153,8 @@ namespace Liquid {
 
 			if (vertexBuffer)
 			{
-				uint32 offset = instance->m_CreateInfo.InputLayout.GetOffset();
-				uint32 stride = instance->m_CreateInfo.InputLayout.GetStride();
+				uint32 stride = instance->m_CreateInfo.VertexElements.GetStride();
+				uint32 offset = instance->m_CreateInfo.VertexElements.GetOffset();
 				ID3D11Buffer* buffer = vertexBuffer.As<DX11Buffer>()->GetBuffer();
 				deviceContext->IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
 			}

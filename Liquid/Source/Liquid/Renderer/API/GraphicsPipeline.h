@@ -12,81 +12,84 @@ namespace Liquid {
 		Triangles = 0
 	};
 
-	enum class ShaderDataType : uint8
+	enum class VertexElementType : uint8
 	{
 		None = 0,
-		Float, Vec2, Vec3, Vec4,
-		Mat3, Mat4,
-		Int, IVec2, IVec3, IVec4,
+		Float,
+		Float2,
+		Float3,
+		Float4,
+		Int,
+		Int2,
+		Int3,
+		Int4,
 		Bool
 	};
 
-	static uint32 ShaderDataTypeComponentCount(ShaderDataType type)
+	static uint32 VertexElementTypeComponentCount(VertexElementType type)
 	{
 		switch (type)
 		{
-		case ShaderDataType::Float: return 1;
-		case ShaderDataType::Vec2:  return 2;
-		case ShaderDataType::Vec3:  return 3;
-		case ShaderDataType::Vec4:  return 4;
-		case ShaderDataType::Mat3:  return 3 * 3;
-		case ShaderDataType::Mat4:  return 4 * 4;
-		case ShaderDataType::Int:   return 1;
-		case ShaderDataType::IVec2: return 2;
-		case ShaderDataType::IVec3: return 3;
-		case ShaderDataType::IVec4: return 4;
-		case ShaderDataType::Bool:  return 1;
+		case VertexElementType::Float:  return 1;
+		case VertexElementType::Float2: return 2;
+		case VertexElementType::Float3: return 3;
+		case VertexElementType::Float4: return 4;
+		case VertexElementType::Int:    return 1;
+		case VertexElementType::Int2:   return 2;
+		case VertexElementType::Int3:   return 3;
+		case VertexElementType::Int4:   return 4;
+		case VertexElementType::Bool:   return 1;
 		}
-		LQ_ASSERT(false, "Unknown ShaderDataType");
+		LQ_VERIFY(false, "Unknown VertexElementType");
 		return 0;
 	}
 
-	static uint32 ShaderDataTypeSize(ShaderDataType type)
+	static uint32 VertexElementTypeSize(VertexElementType type)
 	{
-		const uint32 componentCount = ShaderDataTypeComponentCount(type);
+		const uint32 componentCount = VertexElementTypeComponentCount(type);
 		switch (type)
 		{
-		case ShaderDataType::Float: return sizeof(float) * componentCount;
-		case ShaderDataType::Vec2:  return sizeof(float) * componentCount;
-		case ShaderDataType::Vec3:  return sizeof(float) * componentCount;
-		case ShaderDataType::Vec4:  return sizeof(float) * componentCount;
-		case ShaderDataType::Mat3:  return sizeof(float) * componentCount;
-		case ShaderDataType::Mat4:  return sizeof(float) * componentCount;
-		case ShaderDataType::Int:   return sizeof(int32) * componentCount;
-		case ShaderDataType::IVec2: return sizeof(int32) * componentCount;
-		case ShaderDataType::IVec3: return sizeof(int32) * componentCount;
-		case ShaderDataType::IVec4: return sizeof(int32) * componentCount;
-		case ShaderDataType::Bool:  return sizeof(bool)  * componentCount;
+		case VertexElementType::Float:  return sizeof(float) * componentCount;
+		case VertexElementType::Float2: return sizeof(float) * componentCount;
+		case VertexElementType::Float3: return sizeof(float) * componentCount;
+		case VertexElementType::Float4: return sizeof(float) * componentCount;
+		case VertexElementType::Int:    return sizeof(int32) * componentCount;
+		case VertexElementType::Int2:   return sizeof(int32) * componentCount;
+		case VertexElementType::Int3:   return sizeof(int32) * componentCount;
+		case VertexElementType::Int4:   return sizeof(int32) * componentCount;
+		case VertexElementType::Bool:   return sizeof(bool) * componentCount;
 		}
-		LQ_ASSERT(false, "Unknown ShaderDataType");
+		LQ_VERIFY(false, "Unknown VertexElementType");
 		return 0;
 	}
 
-	struct VertexInputAttribute
+	struct VertexElement
 	{
-		std::string Name;
-		ShaderDataType Type = ShaderDataType::None;
-		uint32 Size = 0;
-		uint32 ComponentCount = 0;
-		uint32 Offset = 0;
-		bool Normalized = false;
+		String Name;
+		VertexElementType Type;
+		uint32 Size;
+		uint32 ComponentCount;
+		uint32 Offset;
 
-		VertexInputAttribute() = default;
-		VertexInputAttribute(const std::string& name, ShaderDataType type, bool normalized = false)
-			: Name(name), Type(type), Size(ShaderDataTypeSize(type)), ComponentCount(ShaderDataTypeComponentCount(type)), Normalized(normalized)
-		{
-		}
+		VertexElement() = default;
+		VertexElement(String name, VertexElementType type) :
+			Name(name),
+			Type(type),
+			Size(VertexElementTypeSize(type)),
+			ComponentCount(VertexElementTypeComponentCount(type)),
+			Offset(0)
+		{}
 	};
 
-	class VertexInputLayout
+	class VertexElementLayout
 	{
 	public:
-		VertexInputLayout() = default;
-		VertexInputLayout(const std::initializer_list<VertexInputAttribute>& attributes)
-			: m_Attributes(attributes)
+		VertexElementLayout() = default;
+		VertexElementLayout(const std::initializer_list<VertexElement>& elements)
+			: m_Elements(elements)
 		{
 			uint32 offset = m_Offset;
-			for (auto& attribute : m_Attributes)
+			for (auto& attribute : m_Elements)
 			{
 				attribute.Offset = offset;
 				offset += attribute.Size;
@@ -96,22 +99,22 @@ namespace Liquid {
 
 		uint32 GetOffset() const { return m_Offset; };
 		uint32 GetStride() const { return m_Stride; };
-		uint32 GetAttributeCount() const { return (uint32)m_Attributes.size(); };
-		const std::vector<VertexInputAttribute>& GetAttributes() const { return m_Attributes; }
+		uint32 GetCount() const { return (uint32)m_Elements.size(); };
 
-		[[nodiscard]] std::vector<VertexInputAttribute>::iterator begin() { return m_Attributes.begin(); }
-		[[nodiscard]] std::vector<VertexInputAttribute>::iterator end() { return m_Attributes.end(); }
-		[[nodiscard]] std::vector<VertexInputAttribute>::const_iterator begin() const { return m_Attributes.begin(); }
-		[[nodiscard]] std::vector<VertexInputAttribute>::const_iterator end() const { return m_Attributes.end(); }
+		std::vector<VertexElement>::iterator begin() { return m_Elements.begin(); }
+		std::vector<VertexElement>::iterator end() { return m_Elements.end(); }
+		std::vector<VertexElement>::const_iterator begin() const { return m_Elements.begin(); }
+		std::vector<VertexElement>::const_iterator end() const { return m_Elements.end(); }
 	private:
-		std::vector<VertexInputAttribute> m_Attributes;
+		std::vector<VertexElement> m_Elements;
 		uint32 m_Offset = 0;
 		uint32 m_Stride = 0;
 	};
 
 	struct GraphicsPipelineCreateInfo
 	{
-		VertexInputLayout InputLayout;
+		VertexElementLayout VertexElements;
+
 		Ref<Shader> Shader;
 
 		PrimitiveTopology Topology = PrimitiveTopology::Triangles;

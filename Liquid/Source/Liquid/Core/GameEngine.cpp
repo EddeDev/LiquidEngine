@@ -36,10 +36,10 @@ namespace Liquid {
 
 		m_VertexBuffer = Buffer::Create(quadVertices, sizeof(QuadVertex) * 4, BUFFER_USAGE_VERTEX_BUFFER | BUFFER_USAGE_STATIC);
 		m_IndexBuffer = Buffer::Create(quadIndices, sizeof(QuadIndex) * 2, BUFFER_USAGE_INDEX_BUFFER | BUFFER_USAGE_STATIC);
-	
+
 		GraphicsPipelineCreateInfo pipelineCreateInfo;
-		pipelineCreateInfo.InputLayout = {
-			{ "Position", ShaderDataType::Vec3 }
+		pipelineCreateInfo.VertexElements = {
+			{ "Position", VertexElementType::Float3 }
 		};
 		pipelineCreateInfo.Shader = Shader::Create("Resources/Shaders/VertexShader.hlsl", "Resources/Shaders/PixelShader.hlsl");
 

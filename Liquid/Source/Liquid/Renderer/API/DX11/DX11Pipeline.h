@@ -20,6 +20,7 @@ namespace Liquid {
 		GraphicsPipelineCreateInfo m_CreateInfo;
 
 		ID3D11InputLayout* m_InputLayout = nullptr;
+		std::vector<D3D11_INPUT_ELEMENT_DESC> m_VertexElements;
 
 		ID3D11RasterizerState* m_RasterizerState = nullptr;
 		ID3D11DepthStencilState* m_DepthStencilState = nullptr;

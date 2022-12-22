@@ -129,7 +129,7 @@ namespace Liquid {
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
-		LQ_CHECK(!s_Data.CurrentlyBoundSRV);
+		LQ_CHECK(s_Data.CurrentlyBoundSRV);
 		LQ_CHECK(s_Data.CurrentlyBoundResourceSlot != -1);
 
 		switch (stage)
@@ -174,7 +174,7 @@ namespace Liquid {
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
-		LQ_CHECK(!s_Data.CurrentlyBoundUAV);
+		LQ_CHECK(s_Data.CurrentlyBoundUAV);
 		LQ_CHECK(s_Data.CurrentlyBoundResourceSlot != -1);
 
 		deviceContext->CSSetUnorderedAccessViews(slot, 1, &s_Data.NullUnorderedAccessView, nullptr);
@@ -188,7 +188,7 @@ namespace Liquid {
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
-		LQ_CHECK(!s_Data.CurrentlyBoundDSV);
+		LQ_CHECK(s_Data.CurrentlyBoundDSV);
 		
 		for (size_t i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
 			LQ_CHECK(!s_Data.CurrentlyBoundRTVs[i]);
