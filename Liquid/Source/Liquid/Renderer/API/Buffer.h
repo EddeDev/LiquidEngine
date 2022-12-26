@@ -38,12 +38,6 @@ namespace Liquid {
 	public:
 		RENDER_RESOURCE_TYPE(Buffer);
 
-		virtual void Bind() const = 0;
-		virtual void Unbind() const = 0;
-
-		virtual void RT_Bind() const = 0;
-		virtual void RT_Unbind() const = 0;
-
 		virtual uint32 GetSize() const = 0;
 
 		static Ref<Buffer> Create(const void* data, uint32 size, BufferUsage usage);

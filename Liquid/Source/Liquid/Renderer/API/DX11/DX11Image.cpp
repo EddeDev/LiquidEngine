@@ -4,10 +4,11 @@
 #include "Liquid/Renderer/RenderThread.h"
 
 #include "DX11Device.h"
-#include "DX11StateManager.h"
 #include "DX11PixelFormat.h"
 
 namespace Liquid {
+
+	static ID3D11ShaderResourceView* s_NullShaderResourceView = nullptr;
 
 	DX11Image2D::DX11Image2D(const ImageCreateInfo& createInfo)
 		: m_Width(createInfo.Width), m_Height(createInfo.Height), m_Format(createInfo.Format)
@@ -105,7 +106,27 @@ namespace Liquid {
 
 	void DX11Image2D::RT_Bind(uint32 slot, ShaderStage stage) const
 	{
-		DX11StateManager::BindShaderResourceView(stage, m_ShaderResourceView, slot);
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+
+		switch (stage)
+		{
+		case ShaderStage::Vertex:
+		{
+			deviceContext->VSSetShaderResources(slot, 1, &m_ShaderResourceView);
+			break;
+		}
+		case ShaderStage::Pixel:
+		{
+			deviceContext->PSSetShaderResources(slot, 1, &m_ShaderResourceView);
+			break;
+		}
+		case ShaderStage::Compute:
+		{
+			deviceContext->CSSetShaderResources(slot, 1, &m_ShaderResourceView);
+			break;
+		}
+		}
 	}
 
 	void DX11Image2D::Unbind(uint32 slot, ShaderStage stage) const
@@ -119,7 +140,27 @@ namespace Liquid {
 
 	void DX11Image2D::RT_Unbind(uint32 slot, ShaderStage stage) const
 	{
-		DX11StateManager::UnbindShaderResourceView(stage, slot);
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+
+		switch (stage)
+		{
+		case ShaderStage::Vertex:
+		{
+			deviceContext->VSSetShaderResources(slot, 1, &s_NullShaderResourceView);
+			break;
+		}
+		case ShaderStage::Pixel:
+		{
+			deviceContext->PSSetShaderResources(slot, 1, &s_NullShaderResourceView);
+			break;
+		}
+		case ShaderStage::Compute:
+		{
+			deviceContext->CSSetShaderResources(slot, 1, &s_NullShaderResourceView);
+			break;
+		}
+		}
 	}
 
 }

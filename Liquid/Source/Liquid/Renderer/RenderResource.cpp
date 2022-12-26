@@ -44,7 +44,7 @@ namespace Liquid {
 		RenderResource* instance = this;
 		RT_SUBMIT(RenderResource)([instance]()
 		{
-			instance->m_Time = std::time(0);
+			instance->m_Time = std::time(nullptr);
 			RenderResourceManager::OnResourceAdded(instance);
 		});
 	}

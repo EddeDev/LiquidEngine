@@ -4,7 +4,6 @@
 #include "Liquid/Renderer/RenderThread.h"
 
 #include "DX11Device.h"
-#include "DX11StateManager.h"
 
 namespace Liquid {
 
@@ -83,54 +82,6 @@ namespace Liquid {
 		initData.SysMemSlicePitch = 0;
 
 		DX_CHECK(device->CreateBuffer(&bufferDesc, &initData, &m_Buffer));
-	}
-
-	void DX11Buffer::Bind() const
-	{
-		Ref<const DX11Buffer> instance = this;
-		RT_SUBMIT(Bind)([instance]()
-		{
-			instance->RT_Bind();
-		});
-	}
-
-	void DX11Buffer::RT_Bind() const
-	{
-		if (Enum::HasAnyFlags(m_Usage, BUFFER_USAGE_VERTEX_BUFFER))
-		{
-			// This will be set later in the pipeline
-			s_CurrentlyBoundVertexBuffer = m_Buffer;
-		}
-
-		if (Enum::HasAnyFlags(m_Usage, BUFFER_USAGE_INDEX_BUFFER))
-		{
-			DX11StateManager::BindIndexBuffer(m_Buffer);
-			s_CurrentlyBoundIndexBuffer = m_Buffer;
-		}
-	}
-
-	void DX11Buffer::Unbind() const
-	{
-		Ref<const DX11Buffer> instance = this;
-		RT_SUBMIT(Unbind)([instance]()
-		{
-			instance->RT_Unbind();
-		});
-	}
-
-	void DX11Buffer::RT_Unbind() const
-	{
-		if (Enum::HasAnyFlags(m_Usage, BUFFER_USAGE_VERTEX_BUFFER))
-		{
-			// This will be set later in the pipeline
-			s_CurrentlyBoundVertexBuffer = nullptr;
-		}
-
-		if (Enum::HasAnyFlags(m_Usage, BUFFER_USAGE_INDEX_BUFFER))
-		{
-			DX11StateManager::UnbindIndexBuffer();
-			s_CurrentlyBoundIndexBuffer = nullptr;
-		}
 	}
 	
 }

@@ -9,7 +9,10 @@ namespace Liquid {
 
 	enum class PrimitiveTopology : uint8
 	{
-		Triangles = 0
+		TriangleList = 0,
+		TriangleStrip,
+		LineList,
+		PointList
 	};
 
 	enum class VertexElementType : uint8
@@ -117,7 +120,7 @@ namespace Liquid {
 
 		Ref<Shader> Shader;
 
-		PrimitiveTopology Topology = PrimitiveTopology::Triangles;
+		PrimitiveTopology Topology = PrimitiveTopology::TriangleList;
 		bool DepthTest = true;
 		bool DepthWrite = true;
 		bool BackfaceCulling = false;
@@ -132,17 +135,11 @@ namespace Liquid {
 		virtual void Invalidate() = 0;
 		virtual void RT_Invalidate() = 0;
 
-		virtual void Bind() const = 0;
-		virtual void Unbind() const = 0;
+		virtual void Bind(Ref<Buffer> vertexBuffer) const = 0;
+		virtual void RT_Bind(Ref<Buffer> vertexBuffer) const = 0;
 
-		virtual void RT_Bind() const = 0;
-		virtual void RT_Unbind() const = 0;
-
-		virtual void Draw(uint32 vertexCount, uint32 startVertexLocation = 0) const = 0;
-		virtual void RT_Draw(uint32 vertexCount, uint32 startVertexLocation = 0) const = 0;
-
-		virtual void DrawIndexed(uint32 indexCount, uint32 startIndexLocation = 0, int32 baseVertexLocation = 0) const = 0;
-		virtual void RT_DrawIndexed(uint32 indexCount, uint32 startIndexLocation = 0, int32 baseVertexLocation = 0) const = 0;
+		virtual void DrawIndexed(Ref<Buffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const = 0;
+		virtual void RT_DrawIndexed(Ref<Buffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const = 0;
 
 		RENDER_RESOURCE_TYPE(GraphicsPipeline);
 

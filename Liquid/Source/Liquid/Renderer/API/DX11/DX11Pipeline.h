@@ -15,17 +15,11 @@ namespace Liquid {
 		virtual void Invalidate() override;
 		virtual void RT_Invalidate() override;
 
-		virtual void Bind() const override;
-		virtual void Unbind() const override;
+		virtual void Bind(Ref<Buffer> vertexBuffer) const override;
+		virtual void RT_Bind(Ref<Buffer> vertexBuffer) const override;
 
-		virtual void RT_Bind() const override;
-		virtual void RT_Unbind() const override;
-
-		virtual void Draw(uint32 vertexCount, uint32 startVertexLocation) const override;
-		virtual void RT_Draw(uint32 vertexCount, uint32 startVertexLocation) const override;
-
-		virtual void DrawIndexed(uint32 indexCount, uint32 startIndexLocation, int32 baseVertexLocation) const override;
-		virtual void RT_DrawIndexed(uint32 indexCount, uint32 startIndexLocation, int32 baseVertexLocation) const override;
+		virtual void DrawIndexed(Ref<Buffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const override;
+		virtual void RT_DrawIndexed(Ref<Buffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const override;
 	private:
 		GraphicsPipelineCreateInfo m_CreateInfo;
 

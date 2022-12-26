@@ -35,6 +35,7 @@ namespace Liquid {
 		BufferUsage m_Usage = BufferUsage::None;
 		DynamicBuffer m_Storage;
 		ID3D11Buffer* m_Buffer = nullptr;
+		uint32 m_Stride = 0;
 	};
 
 }

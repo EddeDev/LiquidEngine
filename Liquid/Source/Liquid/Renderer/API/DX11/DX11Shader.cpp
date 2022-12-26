@@ -4,7 +4,6 @@
 #include "Liquid/Renderer/RenderThread.h"
 
 #include "DX11Device.h"
-#include "DX11StateManager.h"
 
 namespace Liquid {
 
@@ -77,13 +76,21 @@ namespace Liquid {
 		Ref<const DX11Shader> instance = this;
 		RT_SUBMIT(Compile)([instance]()
 		{
-			if (instance->m_ShaderData.VertexShader)
-				DX11StateManager::BindShader(ShaderStage::Vertex, instance->m_ShaderData.VertexShader);
-			if (instance->m_ShaderData.PixelShader)
-				DX11StateManager::BindShader(ShaderStage::Pixel, instance->m_ShaderData.PixelShader);
-			if (instance->m_ShaderData.ComputeShader)
-				DX11StateManager::BindShader(ShaderStage::Compute, instance->m_ShaderData.ComputeShader);
+			instance->RT_Bind();
 		});
+	}
+
+	void DX11Shader::RT_Bind() const
+	{
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+
+		if (m_ShaderData.VertexShader)
+			deviceContext->VSSetShader(m_ShaderData.VertexShader, nullptr, 0);
+		if (m_ShaderData.PixelShader)
+			deviceContext->PSSetShader(m_ShaderData.PixelShader, nullptr, 0);
+		if (m_ShaderData.ComputeShader)
+			deviceContext->CSSetShader(m_ShaderData.ComputeShader, nullptr, 0);
 	}
 
 	void DX11Shader::Unbind() const
@@ -91,33 +98,21 @@ namespace Liquid {
 		Ref<const DX11Shader> instance = this;
 		RT_SUBMIT(Compile)([instance]()
 		{
-			if (instance->m_ShaderData.VertexShader)
-				DX11StateManager::UnbindShader(ShaderStage::Vertex);
-			if (instance->m_ShaderData.PixelShader)
-				DX11StateManager::UnbindShader(ShaderStage::Pixel);
-			if (instance->m_ShaderData.ComputeShader)
-				DX11StateManager::UnbindShader(ShaderStage::Compute);
+			instance->RT_Unbind();
 		});
-	}
-
-	void DX11Shader::RT_Bind() const
-	{
-		if (m_ShaderData.VertexShader)
-			DX11StateManager::BindShader(ShaderStage::Vertex, m_ShaderData.VertexShader);
-		if (m_ShaderData.PixelShader)
-			DX11StateManager::BindShader(ShaderStage::Pixel, m_ShaderData.PixelShader);
-		if (m_ShaderData.ComputeShader)
-			DX11StateManager::BindShader(ShaderStage::Compute, m_ShaderData.ComputeShader);
 	}
 
 	void DX11Shader::RT_Unbind() const
 	{
+		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
+		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
+
 		if (m_ShaderData.VertexShader)
-			DX11StateManager::UnbindShader(ShaderStage::Vertex);
+			deviceContext->VSSetShader(nullptr, nullptr, 0);
 		if (m_ShaderData.PixelShader)
-			DX11StateManager::UnbindShader(ShaderStage::Pixel);
+			deviceContext->PSSetShader(nullptr, nullptr, 0);
 		if (m_ShaderData.ComputeShader)
-			DX11StateManager::UnbindShader(ShaderStage::Compute);
+			deviceContext->CSSetShader(nullptr, nullptr, 0);
 	}
 
 	void DX11Shader::Compile(const std::unordered_map<ShaderStage, String>& sources)
