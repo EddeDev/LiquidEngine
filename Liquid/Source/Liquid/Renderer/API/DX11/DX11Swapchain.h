@@ -22,7 +22,9 @@ namespace Liquid {
 		virtual bool IsVSyncEnabled() const override { return m_VSync; }
 	private:
 		SwapchainCreateInfo m_CreateInfo;
-		bool m_VSync;
+		uint32 m_Width = 0;
+		uint32 m_Height = 0;
+		bool m_VSync = false;
 
 		DXRef<IDXGISwapChain> m_SwapChain;
 

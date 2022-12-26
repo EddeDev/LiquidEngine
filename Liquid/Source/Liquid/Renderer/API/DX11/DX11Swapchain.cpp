@@ -127,21 +127,24 @@ namespace Liquid {
 		DX_CHECK(device->CreateTexture2D(&depthStencilDesc, nullptr, &m_DepthStencilBuffer));
 		DX_CHECK(device->CreateDepthStencilView(m_DepthStencilBuffer.Get(), nullptr, &m_DepthStencilView));
 		deviceContext->OMSetRenderTargets(1, m_BackBuffer.GetAddressOf(), m_DepthStencilView.Get());
-
-		D3D11_VIEWPORT viewport;
-		viewport.TopLeftX = 0.0f;
-		viewport.TopLeftY = 0.0f;
-		viewport.Width = (float)width;
-		viewport.Height = (float)height;
-		viewport.MinDepth = 0.0f;
-		viewport.MaxDepth = 1.0f;
-		deviceContext->RSSetViewports(1, &viewport);
+	
+		m_Width = width;
+		m_Height = height;
 	}
 
 	void DX11Swapchain::BeginFrame() const
 	{
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 		deviceContext->OMSetRenderTargets(1, m_BackBuffer.GetAddressOf(), m_DepthStencilView.Get());
+
+		D3D11_VIEWPORT viewport;
+		viewport.TopLeftX = 0.0f;
+		viewport.TopLeftY = 0.0f;
+		viewport.Width = (float)m_Width;
+		viewport.Height = (float)m_Height;
+		viewport.MinDepth = 0.0f;
+		viewport.MaxDepth = 1.0f;
+		deviceContext->RSSetViewports(1, &viewport);
 	}
 
 	void DX11Swapchain::Present() const

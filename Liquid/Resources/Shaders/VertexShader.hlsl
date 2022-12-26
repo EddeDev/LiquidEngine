@@ -3,6 +3,11 @@ struct VertexInput
 	float4 Position : POSITION;
 };
 
+cbuffer PushConstants
+{
+    float4x4 Transform;
+};
+
 struct VertexOutput
 {
 	float4 Position : SV_POSITION;
