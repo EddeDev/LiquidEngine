@@ -15,6 +15,7 @@ namespace Liquid {
 		struct QuadVertex
 		{
 			glm::vec3 Position;
+			glm::vec4 Color;
 		};
 
 		struct QuadIndex
@@ -24,11 +25,13 @@ namespace Liquid {
 			uint32 V3;
 		};
 
+		float size = 1.0f;
+
 		QuadVertex quadVertices[4];
-		quadVertices[0] = { { -0.5f, -0.5f, 0.0f } };
-		quadVertices[1] = { {  0.5f, -0.5f, 0.0f } };
-		quadVertices[2] = { {  0.5f,  0.5f, 0.0f } };
-		quadVertices[3] = { { -0.5f,  0.5f, 0.0f } };
+		quadVertices[0] = { { -size, -size, 0.0f }, { 0.8f, 0.8f, 0.8f, 1.0f } };
+		quadVertices[1] = { {  size, -size, 0.0f }, { 0.8f, 0.8f, 0.8f, 1.0f } };
+		quadVertices[2] = { {  size,  size, 0.0f }, { 0.2f, 0.4f, 0.8f, 1.0f } };
+		quadVertices[3] = { { -size,  size, 0.0f }, { 0.2f, 0.4f, 0.8f, 1.0f } };
 
 		QuadIndex quadIndices[2];
 		quadIndices[0] = { 0, 1, 2 };
@@ -41,7 +44,8 @@ namespace Liquid {
 
 		GraphicsPipelineCreateInfo pipelineCreateInfo;
 		pipelineCreateInfo.VertexElements = {
-			{ "Position", VertexElementType::Float3 }
+			{ "Position", VertexElementType::Float3 },
+			{ "Color", VertexElementType::Float4 }
 		};
 		pipelineCreateInfo.Shader = m_Shader;
 		m_Pipeline = GraphicsPipeline::Create(pipelineCreateInfo);
@@ -59,7 +63,7 @@ namespace Liquid {
 		m_IndexBuffer->Bind();
 
 		m_Shader->Bind();
-		m_Pipeline->DrawIndexed(m_IndexBuffer, 0, 4, 0, 2);
+		m_Pipeline->DrawIndexed(m_IndexBuffer->GetCount());
 	}
 
 }

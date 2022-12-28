@@ -18,8 +18,8 @@ namespace Liquid {
 		virtual void Bind() const override;
 		virtual void RT_Bind() const override;
 
-		virtual void DrawIndexed(Ref<IndexBuffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const override;
-		virtual void RT_DrawIndexed(Ref<IndexBuffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const override;
+		virtual void DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation) const override;
+		virtual void RT_DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation) const override;
 	private:
 		GraphicsPipelineCreateInfo m_CreateInfo;
 

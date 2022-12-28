@@ -139,8 +139,8 @@ namespace Liquid {
 		virtual void Bind() const = 0;
 		virtual void RT_Bind() const = 0;
 
-		virtual void DrawIndexed(Ref<IndexBuffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const = 0;
-		virtual void RT_DrawIndexed(Ref<IndexBuffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const = 0;
+		virtual void DrawIndexed(uint32 indexCount, uint32 startIndexLocation = 0, uint32 baseVertexLocation = 0) const = 0;
+		virtual void RT_DrawIndexed(uint32 indexCount, uint32 startIndexLocation = 0, uint32 baseVertexLocation = 0) const = 0;
 
 		RENDER_RESOURCE_TYPE(GraphicsPipeline);
 

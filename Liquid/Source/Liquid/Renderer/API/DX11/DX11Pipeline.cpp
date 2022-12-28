@@ -170,22 +170,21 @@ namespace Liquid {
 		deviceContext->OMSetDepthStencilState(m_DepthStencilState, 0);
 	}
 
-	void DX11Pipeline::DrawIndexed(Ref<IndexBuffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const
+	void DX11Pipeline::DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation) const
 	{
 		Ref<const DX11Pipeline> instance = this;
-		RT_SUBMIT(DrawIndexed)([instance, indexBuffer, baseVertexIndex, vertexCount, startIndex, primitiveCount]()
+		RT_SUBMIT(DrawIndexed)([instance, indexCount, startIndexLocation, baseVertexLocation]()
 		{
-			instance->RT_DrawIndexed(indexBuffer, baseVertexIndex, vertexCount, startIndex, primitiveCount);
+			instance->RT_DrawIndexed(indexCount, startIndexLocation, baseVertexLocation);
 		});
 	}
 
-	void DX11Pipeline::RT_DrawIndexed(Ref<IndexBuffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const
+	void DX11Pipeline::RT_DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation) const
 	{
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
-		LQ_CHECK((startIndex + indexBuffer->GetCount()) * (indexBuffer->GetSize() / indexBuffer->GetCount()) <= indexBuffer->GetSize());
-		deviceContext->DrawIndexed(indexBuffer->GetCount(), startIndex, baseVertexIndex);
+		deviceContext->DrawIndexed(indexCount, startIndexLocation, baseVertexLocation);
 	}
 
 
