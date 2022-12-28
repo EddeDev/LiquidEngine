@@ -23,7 +23,8 @@ namespace Liquid {
 
 		std::vector<String> SplitString(String s, const String& delimiter);
 		String ToLowerString(String string);
-		String VectorToString(const std::vector<String> strings);
+		String ToUpperString(String string);
+		String VectorToString(const std::vector<String>& strings);
 
 	}
 

@@ -16,7 +16,10 @@ namespace Liquid {
 		Swapchain,
 		ImGuiImplementation,
 		Shader,
-		Buffer,
+		VertexBuffer,
+		IndexBuffer,
+		UniformBuffer,
+		StorageBuffer,
 		Image2D
 	};
 
@@ -74,7 +77,10 @@ namespace Liquid {
 			case RenderResourceType::Swapchain:           return "Swapchain";
 			case RenderResourceType::ImGuiImplementation: return "ImGuiImplementation";
 			case RenderResourceType::Shader:              return "Shader";
-			case RenderResourceType::Buffer:              return "Buffer";
+			case RenderResourceType::VertexBuffer:        return "VertexBuffer";
+			case RenderResourceType::IndexBuffer:         return "IndexBuffer";
+			case RenderResourceType::UniformBuffer:       return "UniformBuffer";
+			case RenderResourceType::StorageBuffer:       return "StorageBuffer";
 			case RenderResourceType::Image2D:             return "Image2D";
 			}
 			return "UnknownRenderResourceType";

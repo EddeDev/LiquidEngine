@@ -3,7 +3,8 @@
 #include "Liquid/Renderer/RenderResource.h"
 
 #include "Shader.h"
-#include "Buffer.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
 
 namespace Liquid {
 
@@ -135,11 +136,11 @@ namespace Liquid {
 		virtual void Invalidate() = 0;
 		virtual void RT_Invalidate() = 0;
 
-		virtual void Bind(Ref<Buffer> vertexBuffer) const = 0;
-		virtual void RT_Bind(Ref<Buffer> vertexBuffer) const = 0;
+		virtual void Bind() const = 0;
+		virtual void RT_Bind() const = 0;
 
-		virtual void DrawIndexed(Ref<Buffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const = 0;
-		virtual void RT_DrawIndexed(Ref<Buffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const = 0;
+		virtual void DrawIndexed(Ref<IndexBuffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const = 0;
+		virtual void RT_DrawIndexed(Ref<IndexBuffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const = 0;
 
 		RENDER_RESOURCE_TYPE(GraphicsPipeline);
 

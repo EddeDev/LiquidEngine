@@ -61,17 +61,25 @@ namespace Liquid {
 		return result;
 	}
 
-	Liquid::String StringUtils::ToLowerString(String string)
+	String StringUtils::ToLowerString(String string)
 	{
-		std::transform(string.begin(), string.end(), string.begin(),
-		[](uint8 c)
+		std::transform(string.begin(), string.end(), string.begin(), [](uint8 c)
 		{
 			return std::tolower(c);
 		});
 		return string;
 	}
 
-	String StringUtils::VectorToString(const std::vector<String> strings)
+	String StringUtils::ToUpperString(String string)
+	{
+		std::transform(string.begin(), string.end(), string.begin(), [](uint8 c)
+		{
+			return std::toupper(c);
+		});
+		return string;
+	}
+
+	String StringUtils::VectorToString(const std::vector<String>& strings)
 	{
 		std::stringstream ss;
 		for (size_t i = 0; i < strings.size(); i++)

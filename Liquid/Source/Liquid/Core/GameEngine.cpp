@@ -34,8 +34,8 @@ namespace Liquid {
 		quadIndices[0] = { 0, 1, 2 };
 		quadIndices[1] = { 2, 3, 0 };
 
-		m_VertexBuffer = Buffer::Create(quadVertices, sizeof(QuadVertex) * 4, BUFFER_USAGE_VERTEX_BUFFER | BUFFER_USAGE_STATIC);
-		m_IndexBuffer = Buffer::Create(quadIndices, sizeof(QuadIndex) * 2,  BUFFER_USAGE_INDEX_BUFFER | BUFFER_USAGE_STATIC);
+		m_VertexBuffer = VertexBuffer::Create(quadVertices, sizeof(QuadVertex) * 4);
+		m_IndexBuffer = IndexBuffer::Create(quadIndices, sizeof(QuadIndex) * 2);
 
 		m_Shader = Shader::Create("Resources/Shaders/VertexShader.hlsl", "Resources/Shaders/PixelShader.hlsl");
 
@@ -54,7 +54,9 @@ namespace Liquid {
 
 	void GameEngine::OnUpdate()
 	{
-		m_Pipeline->Bind(m_VertexBuffer);
+		m_VertexBuffer->Bind();
+		m_Pipeline->Bind();
+		m_IndexBuffer->Bind();
 
 		m_Shader->Bind();
 		m_Pipeline->DrawIndexed(m_IndexBuffer, 0, 4, 0, 2);

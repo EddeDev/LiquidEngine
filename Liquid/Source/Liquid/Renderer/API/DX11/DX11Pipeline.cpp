@@ -5,7 +5,8 @@
 
 #include "DX11Device.h"
 #include "DX11Shader.h"
-#include "DX11Buffer.h"
+#include "DX11VertexBuffer.h"
+#include "DX11IndexBuffer.h"
 
 namespace Liquid {
 	
@@ -39,14 +40,6 @@ namespace Liquid {
 			}
 			LQ_VERIFY(false, "Unknown VertexElementType");
 			return DXGI_FORMAT_UNKNOWN;
-		}
-
-		static uint32 ComputeIndexCount(uint32 primitiveCount, PrimitiveTopology topology)
-		{
-			uint32 vertexCount = topology == PrimitiveTopology::TriangleList ? 3 : topology == PrimitiveTopology::LineList ? 2 : 1;
-			uint32 offset = topology == PrimitiveTopology::TriangleStrip ? 2 : 0;
-
-			return primitiveCount * vertexCount + offset;
 		}
 
 	}
@@ -148,26 +141,26 @@ namespace Liquid {
 		DX_CHECK(device->CreateDepthStencilState(&depthStencilDesc, &m_DepthStencilState));
 	}
 
-	void DX11Pipeline::Bind(Ref<Buffer> vertexBuffer) const
+	void DX11Pipeline::Bind() const
 	{
 		Ref<const DX11Pipeline> instance = this;
-		RT_SUBMIT(Bind)([instance, vertexBuffer]()
+		RT_SUBMIT(Bind)([instance]()
 		{
-			instance->RT_Bind(vertexBuffer);
+			instance->RT_Bind();
 		});
 	}
 
-	void DX11Pipeline::RT_Bind(Ref<Buffer> vertexBuffer) const
+	void DX11Pipeline::RT_Bind() const
 	{
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
 
+		ID3D11Buffer* vertexBuffer = DX11VertexBuffer::GetCurrentlyBoundBuffer();
 		if (vertexBuffer)
 		{
-			ID3D11Buffer* buffer = vertexBuffer.As<DX11Buffer>()->GetBuffer();
 			uint32 stride = m_CreateInfo.VertexElements.GetStride();
 			uint32 offset = m_CreateInfo.VertexElements.GetOffset();
-			deviceContext->IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
+			deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
 		}
 
 		deviceContext->IASetInputLayout(m_InputLayout);
@@ -176,7 +169,7 @@ namespace Liquid {
 		deviceContext->OMSetDepthStencilState(m_DepthStencilState, 0);
 	}
 
-	void DX11Pipeline::DrawIndexed(Ref<Buffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const
+	void DX11Pipeline::DrawIndexed(Ref<IndexBuffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const
 	{
 		Ref<const DX11Pipeline> instance = this;
 		RT_SUBMIT(DrawIndexed)([instance, indexBuffer, baseVertexIndex, vertexCount, startIndex, primitiveCount]()
@@ -185,22 +178,13 @@ namespace Liquid {
 		});
 	}
 
-	void DX11Pipeline::RT_DrawIndexed(Ref<Buffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const
+	void DX11Pipeline::RT_DrawIndexed(Ref<IndexBuffer> indexBuffer, uint32 baseVertexIndex, uint32 vertexCount, uint32 startIndex, uint32 primitiveCount) const
 	{
 		DXRef<ID3D11Device> device = DX11Device::Get().GetDevice();
 		DXRef<ID3D11DeviceContext> deviceContext = DX11Device::Get().GetDeviceContext();
-	
-		LQ_CHECK(primitiveCount > 0);
 
-		uint32 indexCount = Utils::ComputeIndexCount(primitiveCount, m_CreateInfo.Topology);
-		uint32 stride = indexBuffer->GetSize() / indexCount;
-		LQ_CHECK((startIndex + indexCount) * stride <= indexBuffer->GetSize());
-
-		DXGI_FORMAT format = stride == sizeof(uint16) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
-		ID3D11Buffer* buffer = indexBuffer.As<DX11Buffer>()->GetBuffer();
-		deviceContext->IASetIndexBuffer(buffer, format, 0);
-
-		deviceContext->DrawIndexed(indexCount, startIndex, baseVertexIndex);
+		LQ_CHECK((startIndex + indexBuffer->GetCount()) * (indexBuffer->GetSize() / indexBuffer->GetCount()) <= indexBuffer->GetSize());
+		deviceContext->DrawIndexed(indexBuffer->GetCount(), startIndex, baseVertexIndex);
 	}
 
 

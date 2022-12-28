@@ -3,7 +3,9 @@
 #include "Engine.h"
 
 #include "Liquid/Renderer/API/GraphicsPipeline.h"
-#include "Liquid/Renderer/API/Buffer.h"
+
+#include "Liquid/Renderer/API/VertexBuffer.h"
+#include "Liquid/Renderer/API/IndexBuffer.h"
 
 namespace Liquid {
 
@@ -19,8 +21,8 @@ namespace Liquid {
 		Ref<GraphicsPipeline> m_Pipeline;
 		Ref<Shader> m_Shader;
 
-		Ref<Buffer> m_VertexBuffer;
-		Ref<Buffer> m_IndexBuffer;
+		Ref<VertexBuffer> m_VertexBuffer;
+		Ref<IndexBuffer> m_IndexBuffer;
 	};
 
 }
