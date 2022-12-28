@@ -30,6 +30,8 @@ namespace Liquid {
 		{
 			ImGui::Begin("Render Resources", &renderResourcesWindowOpen);
 
+			ImGui::Text("Reference count: %d", RenderResourceManager::GetResourceCount());
+
 			auto& globalReferences = RenderResourceManager::GetGlobalReferences();
 			for (const auto& [type, list] : globalReferences)
 			{

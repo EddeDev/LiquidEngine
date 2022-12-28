@@ -92,6 +92,7 @@ namespace Liquid {
 		if (m_CreateInfo.VertexElements.GetCount() > 0 && shaderData.VertexShaderBlob)
 		{
 			m_VertexElements.clear();
+
 			uint32 elementIndex = 0;
 			for (const auto& element : m_CreateInfo.VertexElements)
 			{

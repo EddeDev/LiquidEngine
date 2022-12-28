@@ -53,6 +53,7 @@ namespace Liquid {
 	class RenderResourceManager
 	{
 	public:
+		static uint32 GetResourceCount();
 		static uint32 GetResourceCount(RenderResourceType type);
 
 		static const RenderResourceMap& GetGlobalReferences() { return s_GlobalReferences; }

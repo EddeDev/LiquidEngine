@@ -7,6 +7,14 @@ namespace Liquid {
 
 	RenderResourceMap RenderResourceManager::s_GlobalReferences;
 
+	uint32 RenderResourceManager::GetResourceCount()
+	{
+		uint32 result = 0;
+		for (const auto& [type, list] : s_GlobalReferences)
+			result += list.size();
+		return result;
+	}
+
 	uint32 RenderResourceManager::GetResourceCount(RenderResourceType type)
 	{
 		if (s_GlobalReferences.find(type) == s_GlobalReferences.end())
@@ -24,7 +32,7 @@ namespace Liquid {
 
 	bool RenderResourceManager::HasResource(RenderResource* resource)
 	{
-		for (auto& [type, list] : s_GlobalReferences)
+		for (const auto& [type, list] : s_GlobalReferences)
 		{
 			if (std::find(list.begin(), list.end(), resource) != list.end())
 				return true;

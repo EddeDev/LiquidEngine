@@ -56,7 +56,7 @@ namespace Liquid {
 		if (m_Usage == VertexBufferUsage::Dynamic)
 		{
 			bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-			bufferDesc.CPUAccessFlags |= D3D11_CPU_ACCESS_WRITE;
+			bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 		}
 
 		D3D11_SUBRESOURCE_DATA initData = {};
