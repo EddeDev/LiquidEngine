@@ -45,6 +45,11 @@ namespace Liquid {
 		return fmt::format("{0} byte{1}", bytes, bytes != 1 ? "s" : "");
 	}
 
+	bool StringUtils::ContainsIgnoreCase(const String& string, const String& searchString)
+	{
+		return ToLowerString(string) == ToLowerString(searchString);
+	}
+
 	std::vector<Liquid::String> StringUtils::SplitString(String s, const String& delimiter)
 	{
 		size_t begin = 0, end, delimiterLength = delimiter.length();

@@ -23,11 +23,12 @@ namespace Liquid {
 			Size = size;
 		}
 
-		void Insert(const void* data, uint32 size = 0)
+		template<typename TSizeType = uint32>
+		void Insert(const void* data, TSizeType size = 0)
 		{
 			LQ_CHECK(Data && data);
 
-			memcpy(Data, data, size == 0 ? Size : size);
+			memcpy(Data, data, static_cast<size_t>(size == 0 ? Size : size));
 		}
 
 		void Release()
@@ -46,8 +47,17 @@ namespace Liquid {
 		operator bool() { return Data != nullptr; }
 		operator bool() const { return Data != nullptr; }
 
-		uint8* GetData() { return Data; }
-		const uint8* GetData() const { return Data; }
+		template<typename T = uint8>
+		T* GetData()
+		{
+			return (T*)Data;
+		}
+
+		template<typename T = uint8>
+		const T* GetData() const
+		{
+			return (T*)Data;
+		}
 
 		uint32 GetSize() const { return Size; }
 	};

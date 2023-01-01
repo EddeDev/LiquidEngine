@@ -14,3 +14,6 @@
 [submodule "Liquid/Libraries/Spdlog"]
 	path = Liquid/Libraries/Spdlog
 	url = https://github.com/gabime/spdlog
+[submodule "Liquid/Libraries/JSON"]
+	path = Liquid/Libraries/JSON
+	url = https://github.com/nlohmann/json

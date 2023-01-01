@@ -32,6 +32,7 @@ project "Liquid"
         "%{prj.name}/Source",
         "%{prj.name}/Libraries/GLFW/include",
         "%{prj.name}/Libraries/Spdlog/include",
+        "%{prj.name}/Libraries/JSON/include",
         "%{prj.name}/Libraries/ImGui",
         "%{prj.name}/Libraries/STB",
         "%{prj.name}/Libraries/GLM",
@@ -71,6 +72,8 @@ project "Liquid"
         {
             "Winmm.lib",
             "Ws2_32.lib",
+            "Mswsock.lib",
+            "AdvApi32.lib",
             "Version.lib",
             "Bcrypt.lib",
             "Urlmon.lib",

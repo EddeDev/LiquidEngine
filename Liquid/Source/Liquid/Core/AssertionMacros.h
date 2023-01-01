@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Logging/Logger.h"
+
 #if defined(LQ_PLATFORM_WINDOWS)
 	#define LQ_PLATFORM_BREAK() __debugbreak()
 #elif defined(LQ_PLATFORM_LINUX)

@@ -11,7 +11,7 @@ namespace Liquid {
 	{
 		uint32 result = 0;
 		for (const auto& [type, list] : s_GlobalReferences)
-			result += list.size();
+			result += static_cast<uint32>(list.size());
 		return result;
 	}
 

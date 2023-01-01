@@ -19,6 +19,9 @@ namespace Liquid {
 		LQ_CHECK(!s_Instance);
 		s_Instance = this;
 
+		// TODO: move to platform utils
+		SetConsoleTitleA(createInfo.Title.c_str());
+
 		m_MainThreadID = std::this_thread::get_id();
 
 		void* mainThreadHandle = ThreadUtils::CurrentThreadHandle();
@@ -51,7 +54,7 @@ namespace Liquid {
 			WindowCreateInfo windowCreateInfo;
 			windowCreateInfo.Width = createInfo.WindowWidth;
 			windowCreateInfo.Height = createInfo.WindowHeight;
-			windowCreateInfo.Title = createInfo.WindowTitle;
+			windowCreateInfo.Title = createInfo.Title;
 			windowCreateInfo.Fullscreen = createInfo.Fullscreen;
 			windowCreateInfo.Maximize = createInfo.MaximizeOnStart;
 

@@ -39,7 +39,7 @@ namespace Liquid {
 		CommandLineArgs Args;
 		uint32 WindowWidth = 1280;
 		uint32 WindowHeight = 720;
-		String WindowTitle = "Liquid Engine";
+		String Title = "Liquid Engine";
 		bool EnableImGui = true;
 		bool ShowSplashScreen = true;
 		bool MaximizeOnStart = true;
