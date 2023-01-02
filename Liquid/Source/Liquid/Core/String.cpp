@@ -45,6 +45,17 @@ namespace Liquid {
 		return fmt::format("{0} byte{1}", bytes, bytes != 1 ? "s" : "");
 	}
 
+	String StringUtils::ReplaceAll(String string, const std::string& from, const std::string& to)
+	{
+		size_t begin = 0;
+		while ((begin = string.find(from, begin)) != std::string::npos)
+		{
+			string.replace(begin, from.length(), to);
+			begin += to.length();
+		}
+		return string;
+	}
+
 	bool StringUtils::ContainsIgnoreCase(const String& string, const String& searchString)
 	{
 		return ToLowerString(string) == ToLowerString(searchString);

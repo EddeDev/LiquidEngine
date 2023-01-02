@@ -21,6 +21,8 @@ namespace Liquid {
 
 		String FormatBytes(size_t bytes);
 
+		String ReplaceAll(String string, const std::string& from, const std::string& to);
+
 		bool ContainsIgnoreCase(const String& string, const String& searchString);
 
 		std::vector<String> SplitString(String s, const String& delimiter);
