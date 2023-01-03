@@ -67,7 +67,8 @@ namespace Liquid {
 		String token;
 		std::vector<String> result;
 
-		while ((end = s.find(delimiter, begin)) != String::npos) {
+		while ((end = s.find(delimiter, begin)) != String::npos)
+		{
 			token = s.substr(begin, end - begin);
 			begin = end + delimiterLength;
 			result.push_back(token);

@@ -57,6 +57,7 @@ namespace Liquid {
 			windowCreateInfo.Title = createInfo.Title;
 			windowCreateInfo.Fullscreen = createInfo.Fullscreen;
 			windowCreateInfo.Maximize = createInfo.MaximizeOnStart;
+			windowCreateInfo.Decorated = createInfo.Decorated;
 
 			SplashScreen::SetProgress(20, "Creating window...");
 			m_MainWindow = Window::Create(windowCreateInfo);

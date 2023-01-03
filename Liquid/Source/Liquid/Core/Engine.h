@@ -44,6 +44,7 @@ namespace Liquid {
 		bool ShowSplashScreen = true;
 		bool MaximizeOnStart = true;
 		bool Fullscreen = false;
+		bool Decorated = true;
 	};
 
 	class Engine
